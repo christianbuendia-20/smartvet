@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartVet — Mis Mascotas</title>
+    <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Mis Mascotas</h2>
+            <p>Listado de tus mascotas registradas en SmartVet</p>
+        </div>
+        <a th:href="@{/mascotas/nueva}" class="btn btn-verde">+ Registrar mascota</a>
+    </div>
+
+    <!-- Mensaje de éxito flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- Tabla de mascotas -->
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(mascotas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Especie</th>
+                    <th>Raza</th>
+                    <th>Sexo</th>
+                    <th>Fecha de nacimiento</th>
+                    <th>Peso (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="mascota : ${mascotas}">
+                    <td th:text="${mascota.idMascota}">-</td>
+                    <td>
+                        <strong th:text="${mascota.nombre}">-</strong>
+                    </td>
+                    <td th:text="${mascota.especie}">-</td>
+                    <td th:text="${mascota.raza ?: '—'}">—</td>
+                    <td th:text="${mascota.sexo}">-</td>
+                    <td th:text="${mascota.fechaNacimiento != null ?
+                        #temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy') : '—'}">—</td>
+                    <td th:text="${mascota.peso != null ? mascota.peso : '—'}">—</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(mascotas)}">
+            <span class="icono-vacio">🐾</span>
+            Aún no tienes mascotas registradas.
+            <br>
+            <a th:href="@{/mascotas/nueva}" style="margin-top:0.75rem; display:inline-block;">
+                Registra tu primera mascota
+            </a>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

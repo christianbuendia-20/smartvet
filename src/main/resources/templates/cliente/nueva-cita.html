@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Agendar Cita')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Agendar Nueva Cita</h2>
+        <p>Selecciona tu mascota, el veterinario y el horario que prefieras. Los campos con * son obligatorios.</p>
+    </div>
+
+    <!-- Sin mascotas registradas -->
+    <div th:if="${#lists.isEmpty(mascotas)}" class="alerta alerta-aviso">
+        Necesitas tener al menos una mascota registrada para agendar una cita.
+        <a th:href="@{/cliente/mascotas/nueva}">Registra una mascota primero.</a>
+    </div>
+
+    <!-- Error de disponibilidad -->
+    <div th:if="${errorForm}" class="alerta alerta-error">
+        <strong>No fue posible agendar la cita:</strong>
+        <span th:text="${errorForm}"></span>
+    </div>
+
+    <div class="tabla-card" style="padding: 2rem;" th:if="${not #lists.isEmpty(mascotas)}">
+        <form th:action="@{/cliente/citas/nueva}" method="post">
+
+            <div class="form-fila">
+                <!-- Mascota -->
+                <div class="form-grupo">
+                    <label for="idMascota">Mi mascota *</label>
+                    <select id="idMascota" name="idMascota" required>
+                        <option value="" disabled th:selected="${idMascotaPrev == null}">
+                            — Selecciona tu mascota —
+                        </option>
+                        <option th:each="mascota : ${mascotas}"
+                                th:value="${mascota.idMascota}"
+                                th:text="${mascota.nombre + ' (' + mascota.especie + ')'}"
+                                th:selected="${idMascotaPrev != null and idMascotaPrev == mascota.idMascota}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Veterinario -->
+                <div class="form-grupo">
+                    <label for="idVeterinario">Veterinario *</label>
+                    <select id="idVeterinario" name="idVeterinario" required>
+                        <option value="" disabled th:selected="${idVeterinarioxPrev == null}">
+                            — Selecciona un veterinario —
+                        </option>
+                        <option th:each="vet : ${veterinarios}"
+                                th:value="${vet.idVeterinario}"
+                                th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}"
+                                th:selected="${idVeterinarioxPrev != null and idVeterinarioxPrev == vet.idVeterinario}">
+                        </option>
+                    </select>
+                    <!-- Horario de atención si el vet seleccionado tiene horario -->
+                    <span class="hint">Consulta los horarios disponibles al seleccionar un veterinario.</span>
+                </div>
+            </div>
+
+            <div class="form-fila">
+                <!-- Tipo de cita -->
+                <div class="form-grupo">
+                    <label for="tipoCita">Tipo de consulta *</label>
+                    <select id="tipoCita" name="tipoCita" required>
+                        <option value="" disabled th:selected="${tipoCitaPrev == null}">
+                            — Selecciona el tipo —
+                        </option>
+                        <option th:each="tipo : ${tiposCita}"
+                                th:value="${tipo.name()}"
+                                th:text="${tipo.name()}"
+                                th:selected="${tipoCitaPrev != null and tipoCitaPrev.name() == tipo.name()}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Fecha y hora -->
+                <div class="form-grupo">
+                    <label for="fechaHora">Fecha y hora *</label>
+                    <input type="datetime-local"
+                           id="fechaHora"
+                           name="fechaHora"
+                           required
+                           th:attr="min=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd') + 'T08:00'}"
+                           th:value="${fechaHoraPrev != null ?
+                               #temporals.format(fechaHoraPrev, 'yyyy-MM-dd') + 'T' + #temporals.format(fechaHoraPrev, 'HH:mm') : ''}">
+                    <span class="hint">
+                        Cada veterinario atiende en bloques de 30 minutos.
+                        Elige un horario dentro del horario de atención.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Motivo -->
+            <div class="form-grupo">
+                <label for="motivo">Motivo de la consulta *</label>
+                <textarea id="motivo"
+                          name="motivo"
+                          rows="3"
+                          required
+                          maxlength="500"
+                          placeholder="Describe brevemente el motivo de la consulta. Ej: revisión anual, vacunación, malestar general..."
+                          th:text="${motivoPrev}"></textarea>
+                <span class="hint">Máximo 500 caracteres. Cuanto más específico, mejor preparado estará el veterinario.</span>
+            </div>
+
+            <hr class="divisor">
+
+            <!-- Horarios de los veterinarios (informativo) -->
+            <div th:if="${not #lists.isEmpty(veterinarios)}" class="alerta alerta-info" style="margin-bottom:1.5rem;">
+                <strong>Horarios de atención:</strong>
+                <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                    <li th:each="vet : ${veterinarios}"
+                        th:if="${vet.horarioAtencion != null}">
+                        <strong th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}">-</strong>:
+                        <span th:text="${vet.horarioAtencion}">-</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-verde">Confirmar cita</button>
+                <a th:href="@{/cliente/dashboard}" class="btn btn-outline">Volver al panel</a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Si no tiene mascotas, solo botón para regresar -->
+    <div th:if="${#lists.isEmpty(mascotas)}" style="margin-top:1rem;">
+        <a th:href="@{/cliente/dashboard}" class="btn btn-outline">Volver al panel</a>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

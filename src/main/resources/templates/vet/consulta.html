@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Registrar Consulta')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Registrar Consulta Médica</h2>
+            <p>Completa el diagnóstico y, opcionalmente, genera una receta con medicamentos.</p>
+        </div>
+        <a th:href="@{/vet/historial/{id}(id=${cita.mascota.idMascota})}" class="btn btn-outline">
+            📋 Ver Historial Clínico
+        </a>
+    </div>
+
+    <!-- Error del servicio -->
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <form th:action="@{/vet/consulta/{id}(id=${cita.idCita})}" method="post">
+
+        <!-- ── Resumen de la cita ─────────────────────────────────────── -->
+        <div class="seccion-card">
+            <p class="seccion-titulo">📋 Datos de la Cita</p>
+            <dl class="info-cita">
+                <div>
+                    <dt>Cita N°</dt>
+                    <dd th:text="${cita.idCita}">-</dd>
+                </div>
+                <div>
+                    <dt>Fecha y hora</dt>
+                    <dd th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy HH:mm')}">-</dd>
+                </div>
+                <div>
+                    <dt>Mascota</dt>
+                    <dd th:text="${cita.mascota.nombre + ' (' + cita.mascota.especie + ')'}">-</dd>
+                </div>
+                <div>
+                    <dt>Propietario</dt>
+                    <dd th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</dd>
+                </div>
+                <div>
+                    <dt>Tipo</dt>
+                    <dd th:text="${cita.tipoCita}">-</dd>
+                </div>
+                <div>
+                    <dt>Motivo</dt>
+                    <dd th:text="${cita.motivo ?: '—'}">—</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- ── Signos vitales ────────────────────────────────────────── -->
+        <div class="seccion-card">
+            <p class="seccion-titulo">🌡️ Signos Vitales <span class="hint" style="font-weight:400;">(opcionales)</span></p>
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="temperatura">Temperatura (°C)</label>
+                    <input type="number" id="temperatura" name="temperatura"
+                           step="0.1" min="30" max="45" placeholder="Ej: 38.5">
+                </div>
+                <div class="form-grupo">
+                    <label for="peso">Peso (kg)</label>
+                    <input type="number" id="peso" name="peso"
+                           step="0.01" min="0.01" placeholder="Ej: 12.3">
+                </div>
+                <div class="form-grupo">
+                    <label for="frecuenciaCardiaca">Frec. cardíaca (lpm)</label>
+                    <input type="number" id="frecuenciaCardiaca" name="frecuenciaCardiaca"
+                           min="1" max="300" placeholder="Ej: 80">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Diagnóstico y tratamiento ─────────────────────────────── -->
+        <div class="seccion-card">
+            <p class="seccion-titulo">🩺 Diagnóstico y Tratamiento</p>
+
+            <div class="form-grupo">
+                <label for="diagnostico">Diagnóstico *</label>
+                <textarea id="diagnostico" name="diagnostico" rows="3" required maxlength="1000"
+                          placeholder="Describe el diagnóstico clínico del paciente..."
+                          th:text="${diagnosticoPrev}"></textarea>
+            </div>
+
+            <div class="form-grupo">
+                <label for="tratamiento">Tratamiento <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                <textarea id="tratamiento" name="tratamiento" rows="2" maxlength="1000"
+                          placeholder="Describe el tratamiento indicado..."
+                          th:text="${tratamientoPrev}"></textarea>
+            </div>
+
+            <div class="form-grupo">
+                <label for="observaciones">Observaciones <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                <textarea id="observaciones" name="observaciones" rows="2" maxlength="500"
+                          placeholder="Notas adicionales, indicaciones al propietario..."
+                          th:text="${observacionesPrev}"></textarea>
+            </div>
+        </div>
+
+        <!-- ── Receta médica ──────────────────────────────────────────── -->
+        <div class="seccion-card">
+            <p class="seccion-titulo">💊 Receta Médica</p>
+
+            <div class="form-grupo" style="display:flex; align-items:center; gap:0.75rem;">
+                <input type="checkbox" id="incluirReceta" name="incluirReceta"
+                       style="width:auto;" onchange="toggleReceta(this.checked)">
+                <label for="incluirReceta" style="margin:0; font-weight:600; cursor:pointer;">
+                    Generar receta con medicamentos
+                </label>
+            </div>
+
+            <div id="seccion-receta" style="display:none; margin-top:1rem;">
+
+                <div class="form-fila">
+                    <div class="form-grupo">
+                        <label for="instruccionesReceta">Instrucciones generales *</label>
+                        <textarea id="instruccionesReceta" name="instruccionesReceta" rows="2"
+                                  placeholder="Ej: Administrar con comida, mantener en reposo..."></textarea>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="vigenciaDias">Vigencia de la receta (días)</label>
+                        <input type="number" id="vigenciaDias" name="vigenciaDias"
+                               min="1" max="365" placeholder="Ej: 30">
+                    </div>
+                </div>
+
+                <!-- Tabla de medicamentos -->
+                <p style="font-size:0.85rem; font-weight:600; margin-bottom:0.5rem;">Medicamentos</p>
+                <div style="overflow-x:auto;">
+                    <table class="tabla-medicamentos">
+                        <thead>
+                            <tr>
+                                <th style="min-width:200px;">Medicamento *</th>
+                                <th style="width:90px;">Cant. *</th>
+                                <th style="min-width:110px;">Dosis</th>
+                                <th style="min-width:130px;">Frecuencia</th>
+                                <th style="width:100px;">Duración (días)</th>
+                                <th style="min-width:160px;">Instrucciones adicionales</th>
+                                <th style="width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="medicamentos-body">
+                            <!-- Fila plantilla (visible, primera fila obligatoria) -->
+                            <tr class="fila-medicamento">
+                                <td>
+                                    <select name="idProducto">
+                                        <option value="">— Medicamento —</option>
+                                        <option th:each="p : ${productos}"
+                                                th:value="${p.idProducto}"
+                                                th:text="${p.nombre}">
+                                        </option>
+                                    </select>
+                                </td>
+                                <td><input type="number" name="cantidad" min="1" placeholder="1"></td>
+                                <td><input type="text"   name="dosis"    placeholder="Ej: 250mg"></td>
+                                <td><input type="text"   name="frecuencia" placeholder="Ej: Cada 8h"></td>
+                                <td><input type="number" name="duracionDias" min="1" placeholder="7"></td>
+                                <td><input type="text"   name="instruccionesAdicionales" placeholder="Opcional"></td>
+                                <td>
+                                    <button type="button" class="btn-eliminar-fila"
+                                            onclick="eliminarFila(this)" title="Eliminar fila">✕</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-outline"
+                        onclick="agregarMedicamento()"
+                        style="margin-top:0.75rem; font-size:0.85rem;">
+                    + Agregar medicamento
+                </button>
+
+            </div>
+        </div>
+
+        <!-- ── Acciones ───────────────────────────────────────────────── -->
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; padding-bottom:2rem;">
+            <button type="submit" class="btn btn-verde">Guardar consulta</button>
+            <a th:href="@{/vet/dashboard}" class="btn btn-outline">Cancelar</a>
+        </div>
+
+    </form>
+</main>
+
+<script>
+    /* ── Opciones de productos (se reutilizan al clonar filas) ───────────── */
+    const opcionesProducto = document.querySelector('#medicamentos-body select').innerHTML;
+
+    function toggleReceta(activo) {
+        document.getElementById('seccion-receta').style.display = activo ? 'block' : 'none';
+        const instrucciones = document.getElementById('instruccionesReceta');
+        instrucciones.required = activo;
+    }
+
+    function agregarMedicamento() {
+        const cuerpo    = document.getElementById('medicamentos-body');
+        const plantilla = cuerpo.querySelector('.fila-medicamento');
+        const nueva     = plantilla.cloneNode(true);
+
+        nueva.querySelectorAll('input').forEach(el => el.value = '');
+        nueva.querySelector('select').innerHTML = opcionesProducto;
+        cuerpo.appendChild(nueva);
+    }
+
+    function eliminarFila(btn) {
+        const filas = document.querySelectorAll('.fila-medicamento');
+        if (filas.length > 1) {
+            btn.closest('tr').remove();
+        }
+    }
+</script>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

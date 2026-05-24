@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Mi Panel')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <div>
+            <h2>Mi Panel</h2>
+            <p>Bienvenido/a, <strong sec:authentication="principal.nombreCompleto">Cliente</strong>.
+               Aquí puedes ver tus mascotas y citas.</p>
+        </div>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- ── Estadísticas rápidas ──────────────────────────────────────────── -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <span class="stat-icono">🐾</span>
+            <span class="stat-numero" th:text="${totalMascotas}">0</span>
+            <span class="stat-label">Mis mascotas</span>
+        </div>
+
+        <div class="stat-card" th:classappend="${totalProximas > 0 ? ' verde' : ''}">
+            <span class="stat-icono">📅</span>
+            <span class="stat-numero" th:text="${totalProximas}">0</span>
+            <span class="stat-label">Próximas citas</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icono">📋</span>
+            <span class="stat-numero" th:text="${totalHistoricas}">0</span>
+            <span class="stat-label">Citas históricas</span>
+        </div>
+
+    </div>
+
+    <!-- ── Acciones Rápidas ──────────────────────────────────────────────── -->
+    <p class="seccion-titulo">⚡ Acciones Rápidas</p>
+    <div class="acciones-grid">
+
+        <a th:href="@{/cliente/citas/nueva}" class="accion-card">
+            <span class="accion-icono">📅</span>
+            <span class="accion-titulo">Nueva Cita</span>
+            <span class="accion-desc">Agenda una consulta para tu mascota</span>
+        </a>
+
+        <a th:href="@{/cliente/mascotas/nueva}" class="accion-card">
+            <span class="accion-icono">➕</span>
+            <span class="accion-titulo">Registrar Mascota</span>
+            <span class="accion-desc">Añade una nueva mascota a tu perfil</span>
+        </a>
+
+    </div>
+
+    <!-- ── Mis mascotas ───────────────────────────────────────────────────── -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <p class="seccion-titulo" style="margin-bottom:0;">🐾 Mis Mascotas</p>
+        <a th:href="@{/cliente/mascotas}" class="btn btn-outline" style="font-size:0.85rem;">Ver todas</a>
+    </div>
+
+    <div class="mascotas-grid" th:if="${not #lists.isEmpty(mascotas)}">
+        <div class="mascota-card" th:each="mascota : ${mascotas}">
+            <div class="mascota-card-nombre" th:text="${mascota.nombre}">-</div>
+            <div class="mascota-card-especie"
+                 th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '')}">-</div>
+            <dl>
+                <dt>Sexo</dt>
+                <dd th:text="${mascota.sexo}">-</dd>
+
+                <dt th:if="${mascota.fechaNacimiento != null}">Nacimiento</dt>
+                <dd th:if="${mascota.fechaNacimiento != null}"
+                    th:text="${#temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy')}">-</dd>
+
+                <dt th:if="${mascota.peso != null}">Peso</dt>
+                <dd th:if="${mascota.peso != null}" th:text="${mascota.peso} + ' kg'">-</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="tabla-card" th:if="${#lists.isEmpty(mascotas)}" style="margin-bottom:2rem;">
+        <div class="tabla-vacia">
+            <span class="icono-vacio">🐾</span>
+            Aún no tienes mascotas registradas.
+            <br>
+            <a th:href="@{/cliente/mascotas/nueva}" style="margin-top:0.75rem; display:inline-block;">
+                Registra tu primera mascota
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Próximas citas ─────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">📅 Próximas Citas</p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(proximasCitas)}">
+            <thead>
+                <tr>
+                    <th>Fecha y hora</th>
+                    <th>Mascota</th>
+                    <th>Veterinario</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${proximasCitas}">
+                    <td>
+                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.82rem;"
+                              th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
+                    </td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td style="max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                        th:text="${cita.motivo ?: '—'}">—</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA' ? ' badge-programada' : ' badge-confirmada'}">
+                        </span>
+                    </td>
+                    <td>
+                        <form th:action="@{/cliente/citas/{id}/cancelar(id=${cita.idCita})}"
+                              method="post"
+                              onsubmit="return confirm('¿Confirmas la cancelación de esta cita?')">
+                            <button type="submit" class="btn btn-peligro"
+                                    style="padding:0.3rem 0.75rem; font-size:0.8rem;">
+                                Cancelar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(proximasCitas)}">
+            <span class="icono-vacio">📭</span>
+            No tienes citas próximas programadas.
+            <br>
+            <a th:href="@{/cliente/citas/nueva}" style="margin-top:0.75rem; display:inline-block;">
+                Agenda tu primera cita
+            </a>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

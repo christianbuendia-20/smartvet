@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title=|SmartVet — Historial de ${mascota.nombre}|)}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <!-- ── Encabezado ────────────────────────────────────────────────────────── -->
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2 th:text="'Historial Clínico — ' + ${mascota.nombre}">Historial Clínico</h2>
+            <p th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '') +
+                          ' · Propietario: ' + mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}">
+                Especie · Propietario
+            </p>
+        </div>
+        <a th:href="@{/vet/dashboard}" class="btn btn-outline">← Volver</a>
+    </div>
+
+    <!-- ── Ficha de la mascota ────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">🐾 Datos del Paciente</p>
+    <dl class="ficha-grid">
+        <div>
+            <dt>Especie</dt>
+            <dd th:text="${mascota.especie}">-</dd>
+        </div>
+        <div>
+            <dt>Raza</dt>
+            <dd th:text="${mascota.raza ?: '—'}">—</dd>
+        </div>
+        <div>
+            <dt>Sexo</dt>
+            <dd th:text="${mascota.sexo}">-</dd>
+        </div>
+        <div>
+            <dt>Color</dt>
+            <dd th:text="${mascota.color ?: '—'}">—</dd>
+        </div>
+        <div th:if="${mascota.fechaNacimiento != null}">
+            <dt>Fecha de nacimiento</dt>
+            <dd th:text="${#temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy')}">-</dd>
+        </div>
+        <div th:if="${mascota.peso != null}">
+            <dt>Último peso registrado</dt>
+            <dd th:text="${mascota.peso} + ' kg'">-</dd>
+        </div>
+        <div>
+            <dt>Propietario</dt>
+            <dd th:text="${mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}">-</dd>
+        </div>
+        <div>
+            <dt>Historia abierta el</dt>
+            <dd th:text="${historia.fechaApertura != null ?
+                           #temporals.format(historia.fechaApertura, 'dd/MM/yyyy') : '—'}">—</dd>
+        </div>
+    </dl>
+
+    <!-- ── Historia clínica ──────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">🗂️ Historia Clínica</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:2rem;">
+
+        <!-- Alergias -->
+        <div class="hc-campo" th:classappend="${historia.alergias != null and !historia.alergias.isBlank() ? ' alerta-campo' : ''}">
+            <div class="hc-campo-titulo">⚠ Alergias</div>
+            <div th:if="${historia.alergias != null and !historia.alergias.isBlank()}"
+                 class="hc-campo-valor" th:text="${historia.alergias}">-</div>
+            <div th:unless="${historia.alergias != null and !historia.alergias.isBlank()}"
+                 class="hc-campo-vacio">Sin alergias registradas</div>
+        </div>
+
+        <!-- Enfermedades crónicas -->
+        <div class="hc-campo" th:classappend="${historia.enfermedadesCronicas != null and !historia.enfermedadesCronicas.isBlank() ? ' alerta-campo' : ''}">
+            <div class="hc-campo-titulo">🩺 Enfermedades crónicas</div>
+            <div th:if="${historia.enfermedadesCronicas != null and !historia.enfermedadesCronicas.isBlank()}"
+                 class="hc-campo-valor" th:text="${historia.enfermedadesCronicas}">-</div>
+            <div th:unless="${historia.enfermedadesCronicas != null and !historia.enfermedadesCronicas.isBlank()}"
+                 class="hc-campo-vacio">Sin enfermedades crónicas registradas</div>
+        </div>
+
+        <!-- Notas generales -->
+        <div class="hc-campo" style="grid-column: 1 / -1;">
+            <div class="hc-campo-titulo">📝 Notas generales</div>
+            <div th:if="${historia.notasGenerales != null and !historia.notasGenerales.isBlank()}"
+                 class="hc-campo-valor" th:text="${historia.notasGenerales}">-</div>
+            <div th:unless="${historia.notasGenerales != null and !historia.notasGenerales.isBlank()}"
+                 class="hc-campo-vacio">Sin notas generales registradas</div>
+        </div>
+
+    </div>
+
+    <!-- ── Consultas previas ──────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">📋 Consultas Previas
+        <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
+              th:text="'(' + ${#lists.size(consultas)} + ' registros)'"></span>
+    </p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(consultas)}">
+            <thead>
+                <tr>
+                    <th style="width:130px;">Fecha</th>
+                    <th>Diagnóstico</th>
+                    <th>Tratamiento</th>
+                    <th>Signos vitales</th>
+                    <th>Veterinario</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${consultas}">
+                    <td>
+                        <strong th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <div style="font-size:0.78rem; color:var(--texto-suave);"
+                             th:text="${#temporals.format(c.fechaHora, 'HH:mm')}">-</div>
+                    </td>
+                    <td>
+                        <span th:text="${c.diagnostico}">-</span>
+                        <div th:if="${c.observaciones != null and !c.observaciones.isBlank()}"
+                             style="font-size:0.78rem; color:var(--texto-suave); margin-top:0.2rem;"
+                             th:text="${'Obs: ' + #strings.abbreviate(c.observaciones, 80)}">-</div>
+                    </td>
+                    <td>
+                        <span th:if="${c.tratamiento != null and !c.tratamiento.isBlank()}"
+                              th:text="${c.tratamiento}">-</span>
+                        <span th:unless="${c.tratamiento != null and !c.tratamiento.isBlank()}"
+                              style="color:var(--texto-suave);">—</span>
+                    </td>
+                    <td>
+                        <div class="signos-vitales">
+                            <span th:if="${c.peso != null}" class="signo">
+                                ⚖ <strong th:text="${c.peso} + ' kg'">-</strong>
+                            </span>
+                            <span th:if="${c.temperatura != null}" class="signo">
+                                🌡 <strong th:text="${c.temperatura} + '°C'">-</strong>
+                            </span>
+                            <span th:if="${c.frecuenciaCardiaca != null}" class="signo">
+                                ♥ <strong th:text="${c.frecuenciaCardiaca} + ' lpm'">-</strong>
+                            </span>
+                            <span th:if="${c.peso == null and c.temperatura == null and c.frecuenciaCardiaca == null}"
+                                  style="color:var(--texto-suave);">—</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:text="${c.veterinario.usuario.nombres + ' ' + c.veterinario.usuario.apellidos}">-</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(consultas)}">
+            <span class="icono-vacio">📭</span>
+            <strong th:text="${mascota.nombre}">Esta mascota</strong> aún no tiene consultas registradas.
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

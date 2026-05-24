@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartVet — Panel de Control</title>
+    <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+</head>
+<body>
+
+<!-- ═══════════════════════════════ NAVBAR ═══════════════════════════════ -->
+<nav class="navbar">
+    <div class="navbar-inner">
+
+        <a class="navbar-brand" th:href="@{/dashboard}">
+            <span class="logo">🐾</span>
+            SmartVet
+        </a>
+
+        <div class="navbar-usuario">
+            <span class="nombre" th:text="${nombreUsuario}">Usuario</span>
+            <span class="badge-rol" th:text="${rolUsuario}">rol</span>
+            <form th:action="@{/auth/logout}" method="post" style="margin:0;">
+                <button type="submit" class="btn-logout">Cerrar sesión</button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+
+<!-- ═══════════════════════════ CONTENIDO PRINCIPAL ══════════════════════ -->
+<main class="main-content">
+
+    <!-- Encabezado de bienvenida -->
+    <div class="page-header">
+        <h2 th:text="'Bienvenido/a, ' + ${nombreUsuario}">Bienvenido/a</h2>
+        <p>Resumen del día y accesos rápidos del sistema</p>
+    </div>
+
+    <!-- ── Tarjetas de estadísticas ─────────────────────────────────── -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <span class="stat-icono">📅</span>
+            <span class="stat-numero" th:text="${totalCitasHoy}">0</span>
+            <span class="stat-label">Citas de hoy</span>
+        </div>
+
+        <div class="stat-card verde">
+            <span class="stat-icono">🕐</span>
+            <span class="stat-numero" th:text="${totalProgramadas}">0</span>
+            <span class="stat-label">Citas programadas</span>
+        </div>
+
+        <div class="stat-card"
+             th:classappend="${totalEnCurso > 0 ? ' naranja' : ''}">
+            <span class="stat-icono">⚕️</span>
+            <span class="stat-numero" th:text="${totalEnCurso}">0</span>
+            <span class="stat-label">Citas en curso</span>
+        </div>
+
+        <div class="stat-card"
+             th:classappend="${totalStockBajo > 0 ? ' rojo' : ''}">
+            <span class="stat-icono">⚠️</span>
+            <span class="stat-numero" th:text="${totalStockBajo}">0</span>
+            <span class="stat-label">Productos stock bajo</span>
+        </div>
+
+    </div>
+
+    <!-- ── Acciones rápidas ──────────────────────────────────────────── -->
+    <p class="seccion-titulo">🚀 Acciones Rápidas</p>
+    <div class="acciones-grid">
+
+        <a th:href="@{/citas/nueva}" class="accion-card">
+            <span class="icono">📋</span>
+            <span class="etiqueta">Nueva Cita</span>
+        </a>
+
+        <a th:href="@{/mascotas/nueva}" class="accion-card">
+            <span class="icono">🐶</span>
+            <span class="etiqueta">Registrar Mascota</span>
+        </a>
+
+        <a th:href="@{/consultas}" class="accion-card">
+            <span class="icono">🩺</span>
+            <span class="etiqueta">Consultas</span>
+        </a>
+
+        <a th:href="@{/productos}" class="accion-card">
+            <span class="icono">💊</span>
+            <span class="etiqueta">Inventario</span>
+        </a>
+
+        <a th:href="@{/clientes}" class="accion-card">
+            <span class="icono">👥</span>
+            <span class="etiqueta">Clientes</span>
+        </a>
+
+        <a th:href="@{/reportes}" class="accion-card">
+            <span class="icono">📊</span>
+            <span class="etiqueta">Reportes</span>
+        </a>
+
+    </div>
+
+    <!-- ── Alerta de inventario bajo ────────────────────────────────── -->
+    <div th:if="${totalStockBajo > 0}">
+        <p class="seccion-titulo">⚠️ Alerta de Inventario</p>
+        <div class="alerta alerta-aviso" style="margin-bottom: 1rem;">
+            <strong th:text="${totalStockBajo} + ' producto(s) tienen stock igual o por debajo del mínimo.'">
+            </strong>
+            Reponga el inventario para evitar interrupciones en el servicio.
+        </div>
+
+        <div class="tabla-card" style="margin-bottom: 2rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Stock actual</th>
+                        <th>Stock mínimo</th>
+                        <th>Unidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${productosStockBajo}">
+                        <td>
+                            <strong th:text="${producto.nombre}">-</strong>
+                        </td>
+                        <td th:text="${producto.tipoProducto}">-</td>
+                        <td>
+                            <span th:text="${producto.stockActual}"
+                                  style="color: var(--rojo); font-weight: 700;">0</span>
+                        </td>
+                        <td th:text="${producto.stockMinimo}">0</td>
+                        <td th:text="${producto.unidadMedida ?: '—'}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── Citas de hoy ─────────────────────────────────────────────── -->
+    <p class="seccion-titulo">📅 Citas de Hoy</p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(citasHoy)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Hora</th>
+                    <th>Mascota</th>
+                    <th>Tipo</th>
+                    <th>Veterinario</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${citasHoy}">
+                    <td th:text="${cita.idCita}">-</td>
+                    <td th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA'  ? ' badge-programada'  :
+                                               cita.estado.name() == 'CONFIRMADA'  ? ' badge-confirmada'  :
+                                               cita.estado.name() == 'EN_CURSO'    ? ' badge-en-curso'    :
+                                               cita.estado.name() == 'COMPLETADA'  ? ' badge-completada'  :
+                                               cita.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
+                                                                                      ' badge-no-asistio'}">
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(citasHoy)}">
+            <span class="icono-vacio">📭</span>
+            No hay citas programadas para hoy.
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

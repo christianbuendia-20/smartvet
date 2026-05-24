@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Registrar Veterinario')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Registrar Nuevo Veterinario</h2>
+        <p>Crea la cuenta de acceso y el perfil del veterinario. Los campos con * son obligatorios.</p>
+    </div>
+
+    <!-- Error de validación / email duplicado -->
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <div class="tabla-card" style="padding: 2rem;">
+        <form th:action="@{/admin/veterinarios/nuevo}" method="post">
+
+            <!-- Datos de acceso -->
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">🔑 Credenciales de acceso</p>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="email">Correo electrónico *</label>
+                    <input type="email" id="email" name="email" required maxlength="100"
+                           th:value="${emailPrev}" placeholder="vet@smartvet.com"
+                           autocomplete="off">
+                </div>
+                <div class="form-grupo">
+                    <label for="password">Contraseña temporal *</label>
+                    <input type="password" id="password" name="password" required
+                           minlength="8" placeholder="Mínimo 8 caracteres"
+                           autocomplete="new-password">
+                    <span class="hint">El veterinario deberá cambiarla en su primer acceso.</span>
+                </div>
+            </div>
+
+            <hr class="divisor">
+
+            <!-- Datos personales -->
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">👤 Datos personales</p>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="nombres">Nombres *</label>
+                    <input type="text" id="nombres" name="nombres" required maxlength="100"
+                           th:value="${nombresPrev}" placeholder="Ej: Carlos Andrés">
+                </div>
+                <div class="form-grupo">
+                    <label for="apellidos">Apellidos *</label>
+                    <input type="text" id="apellidos" name="apellidos" required maxlength="100"
+                           th:value="${apellidosPrev}" placeholder="Ej: Ramírez Torres">
+                </div>
+            </div>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="dni">DNI <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="text" id="dni" name="dni" maxlength="20"
+                           th:value="${dniPrev}" placeholder="Ej: 12345678">
+                </div>
+                <div class="form-grupo">
+                    <label for="telefono">Teléfono <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="text" id="telefono" name="telefono" maxlength="20"
+                           th:value="${telefonoPrev}" placeholder="Ej: +51 999 888 777">
+                </div>
+            </div>
+
+            <hr class="divisor">
+
+            <!-- Perfil veterinario -->
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">🩺 Perfil veterinario</p>
+
+            <div class="form-grupo">
+                <label for="horarioAtencion">Horario de atención <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                <textarea id="horarioAtencion" name="horarioAtencion" rows="2"
+                          placeholder="Ej: Lunes a Viernes de 08:00 a 17:00"
+                          th:text="${horarioPrev}"></textarea>
+                <span class="hint">Descripción libre del horario. Se mostrará a los clientes al agendar citas.</span>
+            </div>
+
+            <hr class="divisor">
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+                <button type="submit" class="btn btn-verde">Registrar veterinario</button>
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline">Volver al panel</a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

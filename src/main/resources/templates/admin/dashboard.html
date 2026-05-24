@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Panel de Administración')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Panel de Administración</h2>
+            <p>Estadísticas globales del sistema SmartVet</p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a th:href="@{/admin/productos/nuevo}" class="btn btn-outline">+ Nuevo Producto</a>
+            <a th:href="@{/admin/veterinarios/nuevo}" class="btn btn-verde">+ Nuevo Veterinario</a>
+        </div>
+    </div>
+
+    <!-- Mensaje flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- ── Tarjetas de estadísticas ───────────────────────────────────────── -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <span class="stat-icono">📅</span>
+            <span class="stat-numero" th:text="${totalCitasHoy}">0</span>
+            <span class="stat-label">Citas de hoy</span>
+        </div>
+
+        <div class="stat-card verde">
+            <span class="stat-icono">🕐</span>
+            <span class="stat-numero" th:text="${totalProgramadas}">0</span>
+            <span class="stat-label">Programadas</span>
+        </div>
+
+        <div class="stat-card" th:classappend="${totalEnCurso > 0 ? ' naranja' : ''}">
+            <span class="stat-icono">⚕️</span>
+            <span class="stat-numero" th:text="${totalEnCurso}">0</span>
+            <span class="stat-label">En curso</span>
+        </div>
+
+        <div class="stat-card" th:classappend="${totalStockBajo > 0 ? ' rojo' : ''}">
+            <span class="stat-icono">⚠️</span>
+            <span class="stat-numero" th:text="${totalStockBajo}">0</span>
+            <span class="stat-label">Stock bajo</span>
+        </div>
+
+        <div class="stat-card" th:classappend="${totalPagosPendientes > 0 ? ' naranja' : ''}">
+            <a th:href="@{/admin/pagos/pendientes}"
+               style="text-decoration:none; color:inherit; display:contents;">
+                <span class="stat-icono">💰</span>
+                <span class="stat-numero" th:text="${totalPagosPendientes}">0</span>
+                <span class="stat-label">Pagos pendientes</span>
+            </a>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icono">👨‍⚕️</span>
+            <span class="stat-numero" th:text="${totalVeterinarios}">0</span>
+            <span class="stat-label">Veterinarios</span>
+        </div>
+
+    </div>
+
+    <!-- ── Citas de hoy ───────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">📅 Citas de Hoy</p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(citasHoy)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Hora</th>
+                    <th>Mascota</th>
+                    <th>Propietario</th>
+                    <th>Veterinario</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${citasHoy}">
+                    <td th:text="${cita.idCita}">-</td>
+                    <td th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
+                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA'  ? ' badge-programada'  :
+                                               cita.estado.name() == 'CONFIRMADA'  ? ' badge-confirmada'  :
+                                               cita.estado.name() == 'EN_CURSO'    ? ' badge-en-curso'    :
+                                               cita.estado.name() == 'COMPLETADA'  ? ' badge-completada'  :
+                                               cita.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
+                                                                                      ' badge-no-asistio'}">
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(citasHoy)}">
+            <span class="icono-vacio">📭</span>
+            No hay citas programadas para hoy.
+        </div>
+    </div>
+
+    <!-- ── Veterinarios registrados ──────────────────────────────────────── -->
+    <p class="seccion-titulo">👨‍⚕️ Veterinarios Registrados</p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(veterinarios)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Horario de atención</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="vet : ${veterinarios}">
+                    <td th:text="${vet.idVeterinario}">-</td>
+                    <td>
+                        <strong th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}">-</strong>
+                    </td>
+                    <td th:text="${vet.usuario.email}">-</td>
+                    <td th:text="${vet.horarioAtencion ?: '—'}">—</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(veterinarios)}">
+            <span class="icono-vacio">👨‍⚕️</span>
+            No hay veterinarios registrados.
+            <br>
+            <a th:href="@{/admin/veterinarios/nuevo}" style="margin-top:0.75rem; display:inline-block;">
+                Registra el primer veterinario
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Alerta de inventario bajo ─────────────────────────────────────── -->
+    <div th:if="${totalStockBajo > 0}">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <p class="seccion-titulo" style="margin-bottom:0;">⚠️ Alerta de Inventario</p>
+            <a th:href="@{/admin/productos}" class="btn btn-outline" style="font-size:0.82rem;">
+                Ver inventario completo
+            </a>
+        </div>
+        <div class="alerta alerta-aviso">
+            <strong th:text="${totalStockBajo} + ' producto(s) tienen stock igual o por debajo del mínimo.'"></strong>
+            Reponga el inventario para evitar interrupciones en el servicio.
+        </div>
+        <div class="tabla-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Stock actual</th>
+                        <th>Stock mínimo</th>
+                        <th>Unidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${productosStockBajo}">
+                        <td><strong th:text="${producto.nombre}">-</strong></td>
+                        <td th:text="${producto.tipoProducto}">-</td>
+                        <td>
+                            <span th:text="${producto.stockActual}"
+                                  style="color:var(--rojo); font-weight:700;">0</span>
+                        </td>
+                        <td th:text="${producto.stockMinimo}">0</td>
+                        <td th:text="${producto.unidadMedida ?: '—'}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

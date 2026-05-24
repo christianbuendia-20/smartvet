@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Mis Mascotas')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Mis Mascotas</h2>
+            <p th:text="${pagina.totalElements} + ' mascota(s) registrada(s)'">0 mascotas</p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a th:href="@{/cliente/dashboard}" class="btn btn-outline">← Mi Panel</a>
+            <a th:href="@{/cliente/mascotas/nueva}" class="btn btn-verde">+ Registrar mascota</a>
+        </div>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- Resumen de página -->
+    <p style="font-size:0.85rem; color:var(--texto-suave); margin-bottom:1rem;"
+       th:if="${pagina.totalElements > 0}">
+        Mostrando
+        <strong th:text="${pagina.number * pagina.size + 1}">1</strong>–<strong
+                th:text="${pagina.number * pagina.size + pagina.numberOfElements}">8</strong>
+        de <strong th:text="${pagina.totalElements}">0</strong> mascota(s).
+    </p>
+
+    <!-- ── Grid de mascotas ──────────────────────────────────────────────── -->
+    <div class="mascotas-grid" th:if="${not #lists.isEmpty(mascotas)}">
+        <div class="mascota-card" th:each="mascota : ${mascotas}">
+            <div class="mascota-card-nombre" th:text="${mascota.nombre}">-</div>
+            <div class="mascota-card-especie"
+                 th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '')}">-</div>
+            <dl>
+                <dt>Sexo</dt>
+                <dd th:text="${mascota.sexo}">-</dd>
+
+                <dt th:if="${mascota.fechaNacimiento != null}">Nacimiento</dt>
+                <dd th:if="${mascota.fechaNacimiento != null}"
+                    th:text="${#temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy')}">-</dd>
+
+                <dt th:if="${mascota.peso != null}">Peso</dt>
+                <dd th:if="${mascota.peso != null}" th:text="${mascota.peso} + ' kg'">-</dd>
+
+                <dt th:if="${mascota.color != null}">Color</dt>
+                <dd th:if="${mascota.color != null}" th:text="${mascota.color}">-</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="tabla-card" th:if="${#lists.isEmpty(mascotas)}" style="margin-bottom:2rem;">
+        <div class="tabla-vacia">
+            <span class="icono-vacio">🐾</span>
+            Aún no tienes mascotas registradas.
+            <br>
+            <a th:href="@{/cliente/mascotas/nueva}" style="margin-top:0.75rem; display:inline-block;">
+                Registra tu primera mascota
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Controles de paginación ────────────────────────────────────────── -->
+    <div class="paginacion" th:if="${pagina.totalPages > 1}">
+        <a th:href="@{/cliente/mascotas(page=${pagina.number - 1})}"
+           th:classappend="${pagina.first ? ' disabled' : ''}"
+           class="btn btn-outline paginacion-btn">← Anterior</a>
+
+        <span class="paginacion-info">
+            Página <strong th:text="${pagina.number + 1}">1</strong>
+            de <strong th:text="${pagina.totalPages}">1</strong>
+        </span>
+
+        <a th:href="@{/cliente/mascotas(page=${pagina.number + 1})}"
+           th:classappend="${pagina.last ? ' disabled' : ''}"
+           class="btn btn-outline paginacion-btn">Siguiente →</a>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

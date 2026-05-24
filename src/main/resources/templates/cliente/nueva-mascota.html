@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Registrar Mascota')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Registrar Mascota</h2>
+        <p>Completa los datos de tu mascota. Los campos marcados con * son obligatorios.</p>
+    </div>
+
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <div class="tabla-card" style="padding: 2rem;">
+        <form th:action="@{/cliente/mascotas/nueva}" method="post">
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="nombre">Nombre *</label>
+                    <input type="text" id="nombre" name="nombre" required maxlength="100"
+                           th:value="${nombrePrev}" placeholder="Ej: Firulais">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="especie">Especie *</label>
+                    <input type="text" id="especie" name="especie" required maxlength="50"
+                           list="especies-lista" th:value="${especiePrev}" placeholder="Ej: Perro">
+                    <datalist id="especies-lista">
+                        <option value="Perro">
+                        <option value="Gato">
+                        <option value="Ave">
+                        <option value="Conejo">
+                        <option value="Hamster">
+                        <option value="Reptil">
+                        <option value="Otro">
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="raza">Raza <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="text" id="raza" name="raza" maxlength="80"
+                           th:value="${razaPrev}" placeholder="Ej: Labrador">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="color">Color <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="text" id="color" name="color" maxlength="50"
+                           th:value="${colorPrev}" placeholder="Ej: Dorado">
+                </div>
+            </div>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="fechaNacimiento">Fecha de nacimiento <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+                           th:value="${fechaNacimientoPrev}" max="9999-12-31">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="sexo">Sexo *</label>
+                    <select id="sexo" name="sexo" required>
+                        <option value="" disabled th:selected="${sexoPrev == null}">— Selecciona —</option>
+                        <option th:each="s : ${sexos}"
+                                th:value="${s.name()}"
+                                th:text="${s.name()}"
+                                th:selected="${sexoPrev != null and sexoPrev.name() == s.name()}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grupo" style="max-width: 280px;">
+                <label for="peso">Peso (kg) <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                <input type="number" id="peso" name="peso" step="0.01" min="0" max="999.99"
+                       th:value="${pesoPrev}" placeholder="Ej: 12.5">
+                <span class="hint">Ingresa el peso en kilogramos con hasta 2 decimales.</span>
+            </div>
+
+            <hr class="divisor">
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-verde">Registrar mascota</button>
+                <a th:href="@{/cliente/dashboard}" class="btn btn-outline">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartVet — Agendar Cita</title>
+    <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Agendar Cita</h2>
+        <p>Selecciona la mascota, el veterinario, la fecha y el motivo de tu consulta.</p>
+    </div>
+
+    <!-- Error de disponibilidad -->
+    <div th:if="${errorForm}" class="alerta alerta-error">
+        <strong>No se pudo agendar la cita:</strong>
+        <span th:text="${errorForm}"></span>
+    </div>
+
+    <!-- Sin mascotas registradas -->
+    <div th:if="${#lists.isEmpty(mascotas)}" class="alerta alerta-aviso">
+        No tienes mascotas registradas. Primero
+        <a th:href="@{/mascotas/nueva}">registra una mascota</a>
+        para poder agendar una cita.
+    </div>
+
+    <div class="tabla-card" style="padding: 2rem;" th:if="${not #lists.isEmpty(mascotas)}">
+        <form th:action="@{/citas/nueva}" method="post">
+
+            <div class="form-fila">
+                <!-- Mascota -->
+                <div class="form-grupo">
+                    <label for="idMascota">Mascota *</label>
+                    <select id="idMascota" name="idMascota" required>
+                        <option value="" disabled th:selected="${idMascotaPrev == null}">— Selecciona tu mascota —</option>
+                        <option th:each="mascota : ${mascotas}"
+                                th:value="${mascota.idMascota}"
+                                th:text="${mascota.nombre + ' (' + mascota.especie + ')'}"
+                                th:selected="${idMascotaPrev != null and idMascotaPrev == mascota.idMascota}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Veterinario -->
+                <div class="form-grupo">
+                    <label for="idVeterinario">Veterinario *</label>
+                    <select id="idVeterinario" name="idVeterinario" required>
+                        <option value="" disabled th:selected="${idVeterinarioxPrev == null}">— Selecciona un veterinario —</option>
+                        <option th:each="vet : ${veterinarios}"
+                                th:value="${vet.idVeterinario}"
+                                th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}"
+                                th:selected="${idVeterinarioxPrev != null and idVeterinarioxPrev == vet.idVeterinario}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-fila">
+                <!-- Tipo de cita -->
+                <div class="form-grupo">
+                    <label for="tipoCita">Tipo de cita *</label>
+                    <select id="tipoCita" name="tipoCita" required>
+                        <option value="" disabled th:selected="${tipoCitaPrev == null}">— Selecciona el tipo —</option>
+                        <option th:each="tipo : ${tiposCita}"
+                                th:value="${tipo.name()}"
+                                th:text="${tipo.name()}"
+                                th:selected="${tipoCitaPrev != null and tipoCitaPrev.name() == tipo.name()}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Fecha y hora -->
+                <div class="form-grupo">
+                    <label for="fechaHora">Fecha y hora *</label>
+                    <input type="datetime-local" id="fechaHora" name="fechaHora" required
+                           th:value="${fechaHoraPrev != null ?
+                               #temporals.format(fechaHoraPrev, 'yyyy-MM-dd') + 'T' + #temporals.format(fechaHoraPrev, 'HH:mm') : ''}">
+                    <span class="hint">El veterinario atiende en bloques de 30 minutos. Verifica disponibilidad.</span>
+                </div>
+            </div>
+
+            <!-- Motivo -->
+            <div class="form-grupo">
+                <label for="motivo">Motivo de la consulta *</label>
+                <textarea id="motivo" name="motivo" rows="3" required maxlength="500"
+                          placeholder="Describe brevemente el motivo de la consulta..."
+                          th:text="${motivoPrev}"></textarea>
+                <span class="hint">Máximo 500 caracteres.</span>
+            </div>
+
+            <hr class="divisor">
+
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-verde">Confirmar cita</button>
+                <a th:href="@{/citas}" class="btn btn-outline">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+</body>
+</html>

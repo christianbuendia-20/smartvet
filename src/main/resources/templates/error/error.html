@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'SmartVet — ' + ${titulo}">SmartVet — Error</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            max-width: 520px;
+            width: 100%;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .badge-codigo {
+            display: inline-block;
+            background-color: #fff0f0;
+            color: #c0392b;
+            border: 1px solid #f5c6c6;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 0.25rem 0.65rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Código 2xx/3xx en azul, 4xx en naranja, 5xx en rojo */
+        .badge-codigo[data-tipo="cliente"]  { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
+        .badge-codigo[data-tipo="servidor"] { background: #fff0f0; color: #c0392b; border-color: #f5c6c6; }
+        .badge-codigo[data-tipo="info"]     { background: #e6f7ff; color: #0958d9; border-color: #91caff; }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.75rem;
+        }
+
+        .mensaje {
+            font-size: 0.95rem;
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .sugerencia {
+            font-size: 0.875rem;
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 1.75rem;
+            padding: 0.75rem 1rem;
+            background: #f7fafc;
+            border-left: 3px solid #48bb78;
+            border-radius: 4px;
+            text-align: left;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn:hover { opacity: 0.85; }
+
+        .btn-primario {
+            background-color: #2b6cb0;
+            color: #ffffff;
+        }
+
+        .btn-secundario {
+            background-color: #edf2f7;
+            color: #2d3748;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 1.75rem 0 1.25rem;
+        }
+
+        .footer-texto {
+            font-size: 0.78rem;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <!-- Código HTTP -->
+    <div class="badge-codigo"
+         th:text="'Error ' + ${codigo}"
+         th:attr="data-tipo=${codigo >= 500 ? 'servidor' : (codigo >= 400 ? 'cliente' : 'info')}">
+        Error 500
+    </div>
+
+    <!-- Título -->
+    <h1 th:text="${titulo}">Error del sistema</h1>
+
+    <!-- Mensaje principal -->
+    <p class="mensaje" th:text="${mensaje}">
+        Ha ocurrido un error inesperado.
+    </p>
+
+    <!-- Sugerencia de acción -->
+    <p class="sugerencia" th:if="${sugerencia}" th:text="${sugerencia}">
+        Por favor, inténtelo de nuevo o contacte al administrador.
+    </p>
+
+    <!-- Botones de navegación -->
+    <div class="acciones">
+        <a class="btn btn-primario" th:href="@{/}">← Ir al inicio</a>
+        <a class="btn btn-secundario" href="javascript:history.back()">Volver atrás</a>
+    </div>
+
+    <hr class="divider">
+    <p class="footer-texto">SmartVet &mdash; Sistema de Gestión Veterinaria</p>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartVet — Citas</title>
+    <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2 th:text="${esVeterinario ? 'Citas Asignadas' : 'Mis Citas'}">Citas</h2>
+            <p th:text="${esVeterinario ?
+                'Citas asignadas a tu agenda como veterinario' :
+                'Historial y próximas citas de tus mascotas'}">
+            </p>
+        </div>
+        <a th:if="${not esVeterinario}" th:href="@{/citas/nueva}" class="btn btn-verde">+ Agendar cita</a>
+    </div>
+
+    <!-- Mensaje de éxito flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- Tabla de citas -->
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(citas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha y hora</th>
+                    <th>Mascota</th>
+                    <th th:if="${not esVeterinario}">Veterinario</th>
+                    <th th:if="${esVeterinario}">Propietario</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${citas}">
+                    <td th:text="${cita.idCita}">-</td>
+                    <td>
+                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.82rem;"
+                              th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
+                    </td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <!-- Columna veterinario (para propietarios) -->
+                    <td th:if="${not esVeterinario}"
+                        th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                    <!-- Columna propietario (para veterinarios) -->
+                    <td th:if="${esVeterinario}"
+                        th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                        th:text="${cita.motivo ?: '—'}">—</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA'  ? ' badge-programada'  :
+                                               cita.estado.name() == 'CONFIRMADA'  ? ' badge-confirmada'  :
+                                               cita.estado.name() == 'EN_CURSO'    ? ' badge-en-curso'    :
+                                               cita.estado.name() == 'COMPLETADA'  ? ' badge-completada'  :
+                                               cita.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
+                                                                                      ' badge-no-asistio'}">
+                        </span>
+                    </td>
+                    <td>
+                        <!-- Botón cancelar solo para estados no terminales y solo para propietarios -->
+                        <form th:if="${not esVeterinario and
+                                      (cita.estado.name() == 'PROGRAMADA' or
+                                       cita.estado.name() == 'CONFIRMADA' or
+                                       cita.estado.name() == 'EN_CURSO')}"
+                              th:action="@{/citas/{id}/cancelar(id=${cita.idCita})}"
+                              method="post"
+                              onsubmit="return confirm('¿Confirmas la cancelación de esta cita?')">
+                            <button type="submit" class="btn btn-peligro"
+                                    style="padding:0.3rem 0.75rem; font-size:0.8rem;">
+                                Cancelar
+                            </button>
+                        </form>
+                        <span th:if="${cita.estado.name() == 'COMPLETADA' or
+                                       cita.estado.name() == 'CANCELADA' or
+                                       cita.estado.name() == 'NO_ASISTIO'}"
+                              style="color:var(--texto-suave); font-size:0.82rem;">—</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(citas)}">
+            <span class="icono-vacio">📅</span>
+            <span th:text="${esVeterinario ? 'No tienes citas asignadas.' : 'Aún no tienes citas registradas.'}">
+                No hay citas.
+            </span>
+            <br>
+            <a th:if="${not esVeterinario}" th:href="@{/citas/nueva}"
+               style="margin-top:0.75rem; display:inline-block;">
+                Agenda tu primera cita
+            </a>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<header th:fragment="navbar">
+<nav class="navbar">
+    <div class="navbar-inner">
+
+        <!-- Marca (apunta al dashboard del rol activo) -->
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('admin')"       th:href="@{/admin/dashboard}">
+            <span class="logo">🐾</span> SmartVet
+        </a>
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('veterinario')" th:href="@{/vet/dashboard}">
+            <span class="logo">🐾</span> SmartVet
+        </a>
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('cliente')"     th:href="@{/cliente/dashboard}">
+            <span class="logo">🐾</span> SmartVet
+        </a>
+
+        <!-- ── Navegación por rol ─────────────────────────────────────── -->
+        <div class="navbar-nav">
+
+            <!-- Admin -->
+            <span sec:authorize="hasAuthority('admin')">
+                <a class="nav-link" th:href="@{/admin/dashboard}">Inicio</a>
+                <a class="nav-link" th:href="@{/admin/productos}">Inventario</a>
+                <a class="nav-link" th:href="@{/admin/pagos/pendientes}">Pagos</a>
+                <a class="nav-link" th:href="@{/admin/veterinarios/nuevo}">Veterinarios</a>
+            </span>
+
+            <!-- Veterinario -->
+            <span sec:authorize="hasAuthority('veterinario')">
+                <a class="nav-link" th:href="@{/vet/dashboard}">Inicio</a>
+                <a class="nav-link" th:href="@{/vet/agenda}">Mi Agenda</a>
+            </span>
+
+            <!-- Cliente -->
+            <span sec:authorize="hasAuthority('cliente')">
+                <a class="nav-link" th:href="@{/cliente/dashboard}">Inicio</a>
+                <a class="nav-link" th:href="@{/cliente/mascotas}">Mis Mascotas</a>
+                <a class="nav-link" th:href="@{/cliente/citas/nueva}">Agendar Cita</a>
+                <a class="nav-link" th:href="@{/cliente/citas}">Mis Citas</a>
+            </span>
+
+        </div>
+
+        <!-- ── Información del usuario ────────────────────────────────── -->
+        <div class="navbar-usuario">
+            <span class="nombre" sec:authentication="principal.nombreCompleto">Usuario</span>
+            <span class="badge-rol" sec:authentication="principal.rolNombre">rol</span>
+            <form th:action="@{/auth/logout}" method="post" style="margin:0;">
+                <button type="submit" class="btn-logout">Cerrar sesión</button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+</header>
+
+</body>
+</html>
