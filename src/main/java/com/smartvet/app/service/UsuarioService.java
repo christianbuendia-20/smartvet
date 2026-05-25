@@ -23,4 +23,8 @@ public interface UsuarioService {
     Usuario login(LoginDTO dto);
 
     void desactivarUsuario(Integer id);
+
+    List<Usuario> listarTodos();
+
+    Usuario cambiarRol(Integer idUsuario, String nuevoRol);
 }

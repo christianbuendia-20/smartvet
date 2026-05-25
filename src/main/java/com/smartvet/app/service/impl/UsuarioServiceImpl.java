@@ -115,6 +115,27 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.info("Usuario desactivado: id={}", id);
     }
 
+    @Override
+    public List<Usuario> listarTodos() {
+        return usuarioRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Usuario cambiarRol(Integer idUsuario, String nuevoRol) {
+        Usuario usuario = buscarPorId(idUsuario);
+        Rol rol = obtenerRol(nuevoRol);
+        usuario.setRol(rol);
+        if ("veterinario".equals(nuevoRol) && veterinarioRepository.findByUsuario_IdUsuario(idUsuario).isEmpty()) {
+            Veterinario veterinario = new Veterinario();
+            veterinario.setUsuario(usuario);
+            veterinarioRepository.save(veterinario);
+        }
+        Usuario actualizado = usuarioRepository.save(usuario);
+        log.info("Rol de usuario id={} cambiado a '{}'", idUsuario, nuevoRol);
+        return actualizado;
+    }
+
     // ── helpers de mapeo y validación ────────────────────────────────────────
 
     private Usuario construirUsuario(UsuarioRegistroDTO dto, Rol rol) {

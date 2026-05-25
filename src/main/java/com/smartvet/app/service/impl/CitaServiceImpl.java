@@ -16,7 +16,7 @@ import com.smartvet.app.service.CitaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -211,5 +211,26 @@ public class CitaServiceImpl implements CitaService {
                     idVeterinario, fechaHora, conflictos.size());
             throw new CitaNoDisponibleException(idVeterinario, fechaHora);
         }
+    }
+    @Override
+    @Transactional
+    public Cita reasignarVeterinario(Integer idCita, Integer idVeterinario) {
+
+        Cita cita = buscarPorId(idCita);
+
+        Veterinario veterinario = veterinarioRepository.findById(idVeterinario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Veterinario con id=" + idVeterinario + " no encontrado"));
+
+        validarDisponibilidadVeterinario(idVeterinario, cita.getFechaHora());
+
+        cita.setVeterinario(veterinario);
+
+        Cita actualizada = citaRepository.save(cita);
+
+        log.info("Veterinario reasignado en cita id={} → veterinario_id={}",
+                idCita, idVeterinario);
+
+        return actualizada;
     }
 }

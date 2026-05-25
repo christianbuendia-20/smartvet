@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='SmartVet — Editar Cita')}"></head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Editar Cita <span th:text="'#' + ${cita.idCita}" style="color:var(--texto-suave);">#</span></h2>
+            <p>Reasigna el veterinario o cancela esta cita.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Volver al Dashboard</a>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <!-- ── Detalle de la cita ──────────────────────────────────────────────── -->
+    <div class="tabla-card" style="margin-bottom:1.5rem;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Mascota</th>
+                    <th>Propietario</th>
+                    <th>Fecha y hora</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Veterinario actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
+                    <td>
+                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.82rem;"
+                              th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
+                    </td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td th:text="${cita.motivo ?: '—'}">—</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${' badge-' + cita.estado.name().toLowerCase().replace('_', '-')}">
+                        </span>
+                    </td>
+                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ── Formulario de reasignación ─────────────────────────────────────── -->
+    <div class="tabla-card" style="max-width:520px;">
+        <h3 style="margin:0 0 1.25rem; font-size:1rem; color:var(--texto-principal);">Reasignar Veterinario</h3>
+
+        <form th:action="@{/admin/citas/editar/{id}(id=${cita.idCita})}" method="post">
+
+            <div class="campo-grupo" style="margin-bottom:1rem;">
+                <label for="idVeterinario" class="campo-label">Nuevo veterinario</label>
+                <select id="idVeterinario" name="idVeterinario" class="campo-input" required>
+                    <option value="" disabled selected>— Selecciona un veterinario —</option>
+                    <option th:each="vet : ${veterinarios}"
+                            th:value="${vet.idVeterinario}"
+                            th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}"
+                            th:selected="${vet.idVeterinario == cita.veterinario.idVeterinario}">
+                    </option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-verde">Guardar cambio</button>
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Cancelar cita ──────────────────────────────────────────────────── -->
+    <div th:if="${cita.estado.name() != 'CANCELADA' and
+                 cita.estado.name() != 'COMPLETADA' and
+                 cita.estado.name() != 'NO_ASISTIO'}"
+         class="tabla-card" style="max-width:520px; margin-top:1.5rem; border-left:4px solid var(--rojo);">
+        <h3 style="margin:0 0 0.75rem; font-size:1rem; color:var(--rojo);">Zona de peligro</h3>
+        <p style="margin:0 0 1rem; color:var(--texto-suave); font-size:0.88rem;">
+            Esta acción es irreversible. La cita quedará como <strong>CANCELADA</strong>.
+        </p>
+        <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}" method="post"
+              onsubmit="return confirm('¿Seguro que deseas cancelar esta cita? Esta acción no puede deshacerse.')">
+            <button type="submit" class="btn btn-rojo">Cancelar esta cita</button>
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -208,6 +208,78 @@ public class AdminController {
         return "redirect:/admin/productos";
     }
 
+    // ── Reasignación y cancelación de citas ──────────────────────────────────
+
+    @GetMapping("/citas/editar/{id}")
+    public String mostrarFormEditarCita(@PathVariable Integer id,
+                                         Model model,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            Cita cita = citaService.buscarPorId(id);
+            List<Veterinario> veterinarios = citaService.listarVeterinariosParaCita();
+            model.addAttribute("cita", cita);
+            model.addAttribute("veterinarios", veterinarios);
+            return "admin/editar-cita";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/dashboard";
+        }
+    }
+
+    @PostMapping("/citas/editar/{id}")
+    public String reasignarVeterinario(@PathVariable Integer id,
+                                        @RequestParam Integer idVeterinario,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            citaService.reasignarVeterinario(id, idVeterinario);
+            log.info("Admin reasignó cita_id={} a veterinario_id={}", id, idVeterinario);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Cita #" + id + " reasignada correctamente.");
+        } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
+            log.warn("Error al reasignar cita_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/dashboard";
+    }
+
+    @PostMapping("/citas/cancelar/{id}")
+    public String cancelarCitaAdmin(@PathVariable Integer id,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            citaService.cambiarEstado(id, EstadoCita.CANCELADA);
+            log.info("Admin canceló cita_id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Cita #" + id + " cancelada.");
+        } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
+            log.warn("Error al cancelar cita_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/dashboard";
+    }
+
+    // ── Gestión de roles de usuarios ──────────────────────────────────────────
+
+    @GetMapping("/usuarios")
+    public String listarUsuarios(Model model) {
+        model.addAttribute("usuarios", usuarioService.listarTodos());
+        return "admin/usuarios";
+    }
+
+    @PostMapping("/usuarios/{id}/rol")
+    public String cambiarRolUsuario(@PathVariable Integer id,
+                                     @RequestParam String nuevoRol,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            usuarioService.cambiarRol(id, nuevoRol);
+            log.info("Admin cambió rol de usuario_id={} a '{}'", id, nuevoRol);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Rol del usuario actualizado a '" + nuevoRol + "'.");
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al cambiar rol de usuario_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/usuarios";
+    }
+
     // ── Gestión de veterinarios ───────────────────────────────────────────────
 
     @GetMapping("/veterinarios/nuevo")

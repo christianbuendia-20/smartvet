@@ -80,6 +80,7 @@
                     <th>Veterinario</th>
                     <th>Tipo</th>
                     <th>Estado</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,6 +105,31 @@
                                                cita.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
                                                                                       ' badge-no-asistio'}">
                         </span>
+                    </td>
+                    <td>
+                        <div th:if="${cita.estado.name() != 'COMPLETADA' and
+                                     cita.estado.name() != 'CANCELADA'  and
+                                     cita.estado.name() != 'NO_ASISTIO'}"
+                             style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/citas/editar/{id}(id=${cita.idCita})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem;">
+                                ✏️ Editar
+                            </a>
+                            <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Cancelar esta cita?')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer;">
+                                    ✕ Cancelar
+                                </button>
+                            </form>
+                        </div>
+                        <span th:if="${cita.estado.name() == 'COMPLETADA' or
+                                      cita.estado.name() == 'CANCELADA'  or
+                                      cita.estado.name() == 'NO_ASISTIO'}"
+                              style="color:var(--texto-suave); font-size:0.82rem;">—</span>
                     </td>
                 </tr>
             </tbody>
