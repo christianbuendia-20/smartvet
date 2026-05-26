@@ -2,7 +2,10 @@
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head(title=|SmartVet — Historial de ${mascota.nombre}|)}"></head>
+<head>
+    <title th:text="|SmartVet — Historial de ${mascota.nombre}|">Historial Clínico</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <header th:replace="~{fragments/navbar :: navbar}"></header>
@@ -10,7 +13,7 @@
 <main class="main-content">
 
     <!-- ── Encabezado ────────────────────────────────────────────────────────── -->
-    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2 th:text="'Historial Clínico — ' + ${mascota.nombre}">Historial Clínico</h2>
             <p th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '') +
@@ -20,6 +23,9 @@
         </div>
         <a th:href="@{/vet/dashboard}" class="btn btn-outline">← Volver</a>
     </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
 
     <!-- ── Ficha de la mascota ────────────────────────────────────────────────── -->
     <p class="seccion-titulo">🐾 Datos del Paciente</p>
@@ -60,7 +66,14 @@
     </dl>
 
     <!-- ── Historia clínica ──────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">🗂️ Historia Clínica</p>
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.5rem;">
+        <p class="seccion-titulo" style="margin-bottom:0;">🗂️ Historia Clínica</p>
+        <a th:href="@{/mascota/historial/editar/{id}(id=${mascota.idMascota})}"
+           class="btn btn-primario" style="font-size:0.85rem;">
+            <i class="fa-solid fa-pen-to-square"></i>
+            Actualizar Datos Médicos
+        </a>
+    </div>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:2rem;">
 
         <!-- Alergias -->

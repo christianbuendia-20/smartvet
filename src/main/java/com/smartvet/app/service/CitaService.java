@@ -43,5 +43,7 @@ public interface CitaService {
 
     List<Cita> listarAgendaPorVeterinario(Integer idUsuario);
 
+    List<Cita> listarProximasCitasPorVeterinario(Integer idUsuario);
+
     Cita reasignarVeterinario(Integer idCita, Integer idVeterinario);
 }

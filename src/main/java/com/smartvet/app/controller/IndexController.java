@@ -16,7 +16,7 @@ public class IndexController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return "redirect:/auth/login";
+            return "home";
         }
 
         return auth.getAuthorities().stream()

@@ -1,24 +1,54 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><title></title></head>
 <body>
 
 <header th:fragment="navbar">
 <nav class="navbar">
     <div class="navbar-inner">
 
-        <!-- Marca (apunta al dashboard del rol activo) -->
+        <!-- ── Logo / Marca ──────────────────────────────────────────── -->
+
         <a class="navbar-brand"
-           sec:authorize="hasAuthority('admin')"       th:href="@{/admin/dashboard}">
-            <span class="logo">🐾</span> SmartVet
+           sec:authorize="hasAuthority('admin')"
+           th:href="@{/admin/dashboard}">
+            <img th:src="@{/img/logo.jpg}"
+                 class="navbar-logo-img"
+                 alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
         </a>
+
         <a class="navbar-brand"
-           sec:authorize="hasAuthority('veterinario')" th:href="@{/vet/dashboard}">
-            <span class="logo">🐾</span> SmartVet
+           sec:authorize="hasAuthority('veterinario')"
+           th:href="@{/vet/dashboard}">
+            <img th:src="@{/img/logo.jpg}"
+                 class="navbar-logo-img"
+                 alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
         </a>
+
         <a class="navbar-brand"
-           sec:authorize="hasAuthority('cliente')"     th:href="@{/cliente/dashboard}">
-            <span class="logo">🐾</span> SmartVet
+           sec:authorize="hasAuthority('cliente')"
+           th:href="@{/cliente/dashboard}">
+            <img th:src="@{/img/logo.jpg}"
+                 class="navbar-logo-img"
+                 alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
         </a>
 
         <!-- ── Navegación por rol ─────────────────────────────────────── -->
@@ -26,35 +56,63 @@
 
             <!-- Admin -->
             <span sec:authorize="hasAuthority('admin')">
-                <a class="nav-link" th:href="@{/admin/dashboard}">Inicio</a>
-                <a class="nav-link" th:href="@{/admin/productos}">Inventario</a>
-                <a class="nav-link" th:href="@{/admin/pagos/pendientes}">Pagos</a>
-                <a class="nav-link" th:href="@{/admin/veterinarios/nuevo}">Veterinarios</a>
-                <a class="nav-link" th:href="@{/admin/usuarios}">Usuarios</a>
+                <a class="nav-link" th:href="@{/admin/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/admin/productos}">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a class="nav-link" th:href="@{/admin/pagos/pendientes}">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Pagos
+                </a>
+                <a class="nav-link" th:href="@{/admin/veterinarios/nuevo}">
+                    <i class="fa-solid fa-user-doctor"></i> Veterinarios
+                </a>
+                <a class="nav-link" th:href="@{/admin/usuarios}">
+                    <i class="fa-solid fa-users"></i> Usuarios
+                </a>
             </span>
 
             <!-- Veterinario -->
             <span sec:authorize="hasAuthority('veterinario')">
-                <a class="nav-link" th:href="@{/vet/dashboard}">Inicio</a>
-                <a class="nav-link" th:href="@{/vet/agenda}">Mi Agenda</a>
+                <a class="nav-link" th:href="@{/vet/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/vet/agenda}">
+                    <i class="fa-solid fa-calendar-days"></i> Mi Agenda
+                </a>
             </span>
 
             <!-- Cliente -->
             <span sec:authorize="hasAuthority('cliente')">
-                <a class="nav-link" th:href="@{/cliente/dashboard}">Inicio</a>
-                <a class="nav-link" th:href="@{/cliente/mascotas}">Mis Mascotas</a>
-                <a class="nav-link" th:href="@{/cliente/citas/nueva}">Agendar Cita</a>
-                <a class="nav-link" th:href="@{/cliente/citas}">Mis Citas</a>
+                <a class="nav-link" th:href="@{/cliente/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/cliente/mascotas}">
+                    <i class="fa-solid fa-paw"></i> Mis Mascotas
+                </a>
+                <a class="nav-link" th:href="@{/cliente/citas/nueva}">
+                    <i class="fa-regular fa-calendar-plus"></i> Agendar Cita
+                </a>
+                <a class="nav-link" th:href="@{/cliente/citas}">
+                    <i class="fa-solid fa-calendar-check"></i> Mis Citas
+                </a>
             </span>
 
         </div>
 
-        <!-- ── Información del usuario ────────────────────────────────── -->
+        <!-- ── Usuario activo ─────────────────────────────────────────── -->
         <div class="navbar-usuario">
-            <span class="nombre" sec:authentication="principal.nombreCompleto">Usuario</span>
-            <span class="badge-rol" sec:authentication="principal.rolNombre">rol</span>
+            <a th:href="@{/perfil}" class="nombre" style="text-decoration:none; color:inherit;">
+                <i class="fa-regular fa-circle-user" style="font-size:0.9rem; color:var(--primario);"></i>
+                <span sec:authentication="principal.nombreCompleto">Usuario</span>
+            </a>
+            <span class="badge-rol"
+                  sec:authentication="principal.rolNombre">rol</span>
             <form th:action="@{/auth/logout}" method="post" style="margin:0;">
-                <button type="submit" class="btn-logout">Cerrar sesión</button>
+                <button type="submit" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                </button>
             </form>
         </div>
 

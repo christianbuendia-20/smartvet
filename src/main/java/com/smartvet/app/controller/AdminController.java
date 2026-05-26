@@ -280,6 +280,45 @@ public class AdminController {
         return "redirect:/admin/usuarios";
     }
 
+    // ── Creación general de usuarios ──────────────────────────────────────────
+
+    @GetMapping("/usuarios/nuevo")
+    public String mostrarFormNuevoUsuario(Model model) {
+        model.addAttribute("roles", List.of("cliente", "veterinario", "admin"));
+        return "admin/nuevo-usuario";
+    }
+
+    @PostMapping("/usuarios/nuevo")
+    public String crearUsuario(@RequestParam String email,
+                                @RequestParam String password,
+                                @RequestParam String nombres,
+                                @RequestParam String apellidos,
+                                @RequestParam(required = false) String dni,
+                                @RequestParam(required = false) String telefono,
+                                @RequestParam String rol,
+                                RedirectAttributes redirectAttributes,
+                                Model model) {
+        try {
+            UsuarioRegistroDTO dto = new UsuarioRegistroDTO(email, password, nombres, apellidos, dni, telefono);
+            Usuario creado = usuarioService.registrarConRol(dto, rol);
+            log.info("Admin creó usuario con rol '{}': usuario_id={}, email={}", rol, creado.getIdUsuario(), email);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Usuario " + nombres + " " + apellidos + " registrado con rol '" + rol + "'.");
+            return "redirect:/admin/usuarios";
+        } catch (EmailDuplicadoException ex) {
+            log.warn("Admin: email duplicado al crear usuario: {}", email);
+            model.addAttribute("errorForm",     ex.getMessage());
+            model.addAttribute("roles",         List.of("cliente", "veterinario", "admin"));
+            model.addAttribute("emailPrev",     email);
+            model.addAttribute("nombresPrev",   nombres);
+            model.addAttribute("apellidosPrev", apellidos);
+            model.addAttribute("dniPrev",       dni);
+            model.addAttribute("telefonoPrev",  telefono);
+            model.addAttribute("rolPrev",       rol);
+            return "admin/nuevo-usuario";
+        }
+    }
+
     // ── Gestión de veterinarios ───────────────────────────────────────────────
 
     @GetMapping("/veterinarios/nuevo")

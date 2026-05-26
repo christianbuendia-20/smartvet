@@ -1,15 +1,26 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'SmartVet — ' + ${titulo}">SmartVet — Error</title>
+    <title th:text="'Santa Victoria — ' + ${titulo}">Santa Victoria — Error</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+
     <style>
+        :root {
+            --orange:      #FF9800;
+            --orange-dark: #F57C00;
+            --red:         #E53935;
+            --red-light:   #FFEBEE;
+            --gray-bg:     #F5F5F5;
+            --gray-border: #E0E0E0;
+            --text-dark:   #1A1A1A;
+            --text-soft:   #757575;
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #FFF8F0 0%, var(--gray-bg) 55%, var(--red-light) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -18,55 +29,77 @@
         }
 
         .card {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.09);
             max-width: 520px;
             width: 100%;
-            padding: 2.5rem 2rem;
+            padding: 2.75rem 2.25rem 2.25rem;
             text-align: center;
+            border: 1px solid var(--gray-border);
         }
+
+        .error-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .error-brand i { color: var(--orange); }
 
         .badge-codigo {
             display: inline-block;
-            background-color: #fff0f0;
-            color: #c0392b;
-            border: 1px solid #f5c6c6;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
             font-weight: 700;
-            letter-spacing: 0.06em;
-            padding: 0.25rem 0.65rem;
+            letter-spacing: 0.07em;
+            padding: 0.28rem 0.75rem;
             margin-bottom: 1.25rem;
         }
 
-        /* Código 2xx/3xx en azul, 4xx en naranja, 5xx en rojo */
-        .badge-codigo[data-tipo="cliente"]  { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
-        .badge-codigo[data-tipo="servidor"] { background: #fff0f0; color: #c0392b; border-color: #f5c6c6; }
-        .badge-codigo[data-tipo="info"]     { background: #e6f7ff; color: #0958d9; border-color: #91caff; }
+        /* 4xx → naranja (cliente) | 5xx → rojo (servidor) | resto → naranja suave */
+        .badge-codigo[data-tipo="cliente"]  {
+            background: #FFF3E0; color: var(--orange-dark);
+            border: 1px solid #FFCC80;
+        }
+        .badge-codigo[data-tipo="servidor"] {
+            background: var(--red-light); color: var(--red);
+            border: 1px solid #FFCDD2;
+        }
+        .badge-codigo[data-tipo="info"]     {
+            background: #FFF8F0; color: var(--orange-dark);
+            border: 1px solid #FFE0B2;
+        }
 
         h1 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #1a202c;
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--text-dark);
             margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
         }
 
         .mensaje {
             font-size: 0.95rem;
-            color: #4a5568;
-            line-height: 1.6;
-            margin-bottom: 0.5rem;
+            color: var(--text-soft);
+            line-height: 1.65;
+            margin-bottom: 0.75rem;
         }
 
         .sugerencia {
             font-size: 0.875rem;
-            color: #718096;
-            line-height: 1.6;
+            color: var(--text-soft);
+            line-height: 1.65;
             margin-bottom: 1.75rem;
-            padding: 0.75rem 1rem;
-            background: #f7fafc;
-            border-left: 3px solid #48bb78;
+            padding: 0.8rem 1.1rem;
+            background: #FFF3E0;
+            border-left: 3px solid var(--orange);
             border-radius: 4px;
             text-align: left;
         }
@@ -79,41 +112,62 @@
         }
 
         .btn {
-            display: inline-block;
-            padding: 0.6rem 1.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.65rem 1.5rem;
             border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
+            font-family: inherit;
             text-decoration: none;
             cursor: pointer;
-            transition: opacity 0.15s;
+            transition: all 0.18s;
+            border: 2px solid transparent;
         }
-        .btn:hover { opacity: 0.85; }
 
         .btn-primario {
-            background-color: #2b6cb0;
-            color: #ffffff;
+            background: var(--orange);
+            color: #fff;
+            border-color: var(--orange);
+            box-shadow: 0 3px 12px rgba(255,152,0,0.35);
+        }
+        .btn-primario:hover {
+            background: var(--orange-dark);
+            border-color: var(--orange-dark);
+            text-decoration: none;
         }
 
         .btn-secundario {
-            background-color: #edf2f7;
-            color: #2d3748;
+            background: var(--gray-bg);
+            color: var(--text-dark);
+            border-color: var(--gray-border);
+        }
+        .btn-secundario:hover {
+            background: #E8E8E8;
+            text-decoration: none;
         }
 
         .divider {
             border: none;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--gray-border);
             margin: 1.75rem 0 1.25rem;
         }
 
         .footer-texto {
-            font-size: 0.78rem;
-            color: #a0aec0;
+            font-size: 0.75rem;
+            color: #BDBDBD;
         }
     </style>
 </head>
 <body>
 <div class="card">
+
+    <!-- Marca -->
+    <div class="error-brand">
+        <i class="fa-solid fa-paw"></i>
+        Veterinaria Santa Victoria
+    </div>
 
     <!-- Código HTTP -->
     <div class="badge-codigo"
@@ -130,19 +184,25 @@
         Ha ocurrido un error inesperado.
     </p>
 
-    <!-- Sugerencia de acción -->
+    <!-- Sugerencia -->
     <p class="sugerencia" th:if="${sugerencia}" th:text="${sugerencia}">
-        Por favor, inténtelo de nuevo o contacte al administrador.
+        Por favor, inténtalo de nuevo o contacta al administrador.
     </p>
 
-    <!-- Botones de navegación -->
+    <!-- Botones -->
     <div class="acciones">
-        <a class="btn btn-primario" th:href="@{/}">← Ir al inicio</a>
-        <a class="btn btn-secundario" href="javascript:history.back()">Volver atrás</a>
+        <a class="btn btn-primario" th:href="@{/}">
+            <i class="fa-solid fa-house"></i> Ir al inicio
+        </a>
+        <a class="btn btn-secundario" href="javascript:history.back()">
+            <i class="fa-solid fa-arrow-left"></i> Volver atrás
+        </a>
     </div>
 
     <hr class="divider">
-    <p class="footer-texto">SmartVet &mdash; Sistema de Gestión Veterinaria</p>
+    <p class="footer-texto">
+        © 2025 Veterinaria Santa Victoria &mdash; Sistema de Gestión
+    </p>
 
 </div>
 </body>

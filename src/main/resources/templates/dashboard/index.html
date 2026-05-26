@@ -1,34 +1,16 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartVet — Panel de Control</title>
-    <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+    <title>Santa Victoria — Panel de Control</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
 </head>
 <body>
 
-<!-- ═══════════════════════════════ NAVBAR ═══════════════════════════════ -->
-<nav class="navbar">
-    <div class="navbar-inner">
+<header th:replace="~{fragments/navbar :: navbar}"></header>
 
-        <a class="navbar-brand" th:href="@{/dashboard}">
-            <span class="logo">🐾</span>
-            SmartVet
-        </a>
-
-        <div class="navbar-usuario">
-            <span class="nombre" th:text="${nombreUsuario}">Usuario</span>
-            <span class="badge-rol" th:text="${rolUsuario}">rol</span>
-            <form th:action="@{/auth/logout}" method="post" style="margin:0;">
-                <button type="submit" class="btn-logout">Cerrar sesión</button>
-            </form>
-        </div>
-
-    </div>
-</nav>
-
-<!-- ═══════════════════════════ CONTENIDO PRINCIPAL ══════════════════════ -->
 <main class="main-content">
 
     <!-- Encabezado de bienvenida -->
@@ -52,15 +34,13 @@
             <span class="stat-label">Citas programadas</span>
         </div>
 
-        <div class="stat-card"
-             th:classappend="${totalEnCurso > 0 ? ' naranja' : ''}">
+        <div class="stat-card" th:classappend="${totalEnCurso > 0 ? ' naranja' : ''}">
             <span class="stat-icono">⚕️</span>
             <span class="stat-numero" th:text="${totalEnCurso}">0</span>
             <span class="stat-label">Citas en curso</span>
         </div>
 
-        <div class="stat-card"
-             th:classappend="${totalStockBajo > 0 ? ' rojo' : ''}">
+        <div class="stat-card" th:classappend="${totalStockBajo > 0 ? ' rojo' : ''}">
             <span class="stat-icono">⚠️</span>
             <span class="stat-numero" th:text="${totalStockBajo}">0</span>
             <span class="stat-label">Productos stock bajo</span>
@@ -68,52 +48,56 @@
 
     </div>
 
-    <!-- ── Acciones rápidas ──────────────────────────────────────────── -->
-    <p class="seccion-titulo">🚀 Acciones Rápidas</p>
+    <!-- ── Acciones rápidas ─────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-bolt" style="color:var(--primario);"></i>
+        Acciones Rápidas
+    </p>
     <div class="acciones-grid">
 
         <a th:href="@{/citas/nueva}" class="accion-card">
-            <span class="icono">📋</span>
-            <span class="etiqueta">Nueva Cita</span>
+            <span class="accion-icono"><i class="fa-regular fa-calendar-plus"></i></span>
+            <span class="accion-titulo">Nueva Cita</span>
         </a>
 
         <a th:href="@{/mascotas/nueva}" class="accion-card">
-            <span class="icono">🐶</span>
-            <span class="etiqueta">Registrar Mascota</span>
+            <span class="accion-icono"><i class="fa-solid fa-paw"></i></span>
+            <span class="accion-titulo">Registrar Mascota</span>
         </a>
 
         <a th:href="@{/consultas}" class="accion-card">
-            <span class="icono">🩺</span>
-            <span class="etiqueta">Consultas</span>
+            <span class="accion-icono"><i class="fa-solid fa-stethoscope"></i></span>
+            <span class="accion-titulo">Consultas</span>
         </a>
 
         <a th:href="@{/productos}" class="accion-card">
-            <span class="icono">💊</span>
-            <span class="etiqueta">Inventario</span>
+            <span class="accion-icono"><i class="fa-solid fa-boxes-stacked"></i></span>
+            <span class="accion-titulo">Inventario</span>
         </a>
 
         <a th:href="@{/clientes}" class="accion-card">
-            <span class="icono">👥</span>
-            <span class="etiqueta">Clientes</span>
+            <span class="accion-icono"><i class="fa-solid fa-users"></i></span>
+            <span class="accion-titulo">Clientes</span>
         </a>
 
         <a th:href="@{/reportes}" class="accion-card">
-            <span class="icono">📊</span>
-            <span class="etiqueta">Reportes</span>
+            <span class="accion-icono"><i class="fa-solid fa-chart-bar"></i></span>
+            <span class="accion-titulo">Reportes</span>
         </a>
 
     </div>
 
     <!-- ── Alerta de inventario bajo ────────────────────────────────── -->
     <div th:if="${totalStockBajo > 0}">
-        <p class="seccion-titulo">⚠️ Alerta de Inventario</p>
-        <div class="alerta alerta-aviso" style="margin-bottom: 1rem;">
-            <strong th:text="${totalStockBajo} + ' producto(s) tienen stock igual o por debajo del mínimo.'">
-            </strong>
+        <p class="seccion-titulo">
+            <i class="fa-solid fa-triangle-exclamation" style="color:var(--naranja);"></i>
+            Alerta de Inventario
+        </p>
+        <div class="alerta alerta-aviso" style="margin-bottom:1rem;">
+            <strong th:text="${totalStockBajo} + ' producto(s) tienen stock igual o por debajo del mínimo.'"></strong>
             Reponga el inventario para evitar interrupciones en el servicio.
         </div>
-
-        <div class="tabla-card" style="margin-bottom: 2rem;">
+        <div class="tabla-card" style="margin-bottom:2rem;">
             <table>
                 <thead>
                     <tr>
@@ -126,13 +110,11 @@
                 </thead>
                 <tbody>
                     <tr th:each="producto : ${productosStockBajo}">
-                        <td>
-                            <strong th:text="${producto.nombre}">-</strong>
-                        </td>
+                        <td><strong th:text="${producto.nombre}">-</strong></td>
                         <td th:text="${producto.tipoProducto}">-</td>
                         <td>
                             <span th:text="${producto.stockActual}"
-                                  style="color: var(--rojo); font-weight: 700;">0</span>
+                                  style="color:var(--rojo); font-weight:700;">0</span>
                         </td>
                         <td th:text="${producto.stockMinimo}">0</td>
                         <td th:text="${producto.unidadMedida ?: '—'}">—</td>
@@ -143,7 +125,10 @@
     </div>
 
     <!-- ── Citas de hoy ─────────────────────────────────────────────── -->
-    <p class="seccion-titulo">📅 Citas de Hoy</p>
+    <p class="seccion-titulo">
+        <i class="fa-regular fa-calendar-check" style="color:var(--primario);"></i>
+        Citas de Hoy
+    </p>
     <div class="tabla-card">
         <table th:if="${not #lists.isEmpty(citasHoy)}">
             <thead>
@@ -159,7 +144,7 @@
             <tbody>
                 <tr th:each="cita : ${citasHoy}">
                     <td th:text="${cita.idCita}">-</td>
-                    <td th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</td>
+                    <td><strong th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</strong></td>
                     <td>
                         <strong th:text="${cita.mascota.nombre}">-</strong>
                         <span style="color:var(--texto-suave); font-size:0.8rem;"
@@ -181,7 +166,6 @@
                 </tr>
             </tbody>
         </table>
-
         <div class="tabla-vacia" th:if="${#lists.isEmpty(citasHoy)}">
             <span class="icono-vacio">📭</span>
             No hay citas programadas para hoy.
@@ -189,6 +173,8 @@
     </div>
 
 </main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 
 </body>
 </html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="|Santa Victoria — Editar Historial de ${mascota.nombre}|">Editar Historial</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2 th:text="'Editar Historia Clínica — ' + ${mascota.nombre}">Editar Historia Clínica</h2>
+            <p th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '') +
+                          ' · Propietario: ' + mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}">
+                Especie · Propietario
+            </p>
+        </div>
+        <a th:href="${returnUrl}" class="btn btn-outline">← Volver al Historial</a>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorAcceso}"  class="alerta alerta-error"  th:text="${errorAcceso}"></div>
+
+    <!-- Aviso informativo -->
+    <div class="alerta alerta-aviso" style="margin-bottom:1.5rem;">
+        <i class="fa-solid fa-circle-info"></i>
+        Registra aquí los antecedentes médicos permanentes de la mascota.
+        Esta información estará disponible en todas las consultas futuras.
+    </div>
+
+    <form th:action="@{/mascota/historial/editar/{id}(id=${mascota.idMascota})}"
+          method="post" novalidate>
+
+        <div class="tabla-card" style="padding:2rem; max-width:760px;">
+
+            <p class="seccion-titulo" style="margin-top:0;">
+                <i class="fa-solid fa-triangle-exclamation" style="color:var(--naranja);"></i>
+                Alergias conocidas
+            </p>
+
+            <div class="form-grupo">
+                <textarea id="alergias"
+                          name="alergias"
+                          rows="3"
+                          placeholder="Ej: Alérgico a la penicilina, intolerancia al pollo…"
+                          th:text="${historia.alergias}"></textarea>
+                <span class="hint">
+                    Indica cualquier reacción adversa conocida a medicamentos, alimentos u otros agentes.
+                    Deja en blanco si no hay alergias.
+                </span>
+            </div>
+
+            <hr class="divisor">
+
+            <p class="seccion-titulo">
+                <i class="fa-solid fa-heart-pulse" style="color:var(--rojo);"></i>
+                Enfermedades preexistentes
+            </p>
+
+            <div class="form-grupo">
+                <textarea id="enfermedadesCronicas"
+                          name="enfermedadesCronicas"
+                          rows="3"
+                          placeholder="Ej: Diabetes tipo 1, hipotiroidismo, displasia de cadera…"
+                          th:text="${historia.enfermedadesCronicas}"></textarea>
+                <span class="hint">
+                    Diagnósticos crónicos o condiciones permanentes que el equipo médico debe conocer.
+                </span>
+            </div>
+
+            <hr class="divisor">
+
+            <p class="seccion-titulo">
+                <i class="fa-solid fa-note-sticky" style="color:var(--primario);"></i>
+                Notas de cuidados especiales
+            </p>
+
+            <div class="form-grupo">
+                <textarea id="notasGenerales"
+                          name="notasGenerales"
+                          rows="4"
+                          placeholder="Ej: Requiere dieta especial baja en sodio. Muy sensible al estrés. Tomar muestra en ayunas…"
+                          th:text="${historia.notasGenerales}"></textarea>
+                <span class="hint">
+                    Observaciones generales, recomendaciones de manejo, cuidados en el hogar u otros datos relevantes.
+                </span>
+            </div>
+
+            <hr class="divisor">
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                <button type="submit" class="btn btn-primario">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Guardar historia clínica
+                </button>
+                <a th:href="${returnUrl}" class="btn btn-outline">Cancelar</a>
+            </div>
+
+        </div>
+
+    </form>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

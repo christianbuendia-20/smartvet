@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veterinaria Santa Victoria — Amamos a los animalitos</title>
+
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+
+    <style>
+        /* ════════════════════════════════════════════════════════════
+           VARIABLES & RESET
+        ════════════════════════════════════════════════════════════ */
+        :root {
+            --orange:        #FF9800;
+            --orange-dark:   #F57C00;
+            --orange-deeper: #E65100;
+            --orange-light:  #FFF3E0;
+            --orange-xlight: #FFF8F0;
+            --red:           #E53935;
+            --red-dark:      #C62828;
+            --red-light:     #FFEBEE;
+            --white:         #FFFFFF;
+            --gray-light:    #F7F7F7;
+            --gray:          #E8E8E8;
+            --gray-medium:   #9E9E9E;
+            --text-dark:     #1A1A1A;
+            --text-medium:   #3D3D3D;
+            --text-light:    #6B6B6B;
+            --shadow-xs:     0 1px 4px rgba(0,0,0,0.06);
+            --shadow-sm:     0 2px 10px rgba(0,0,0,0.08);
+            --shadow-md:     0 6px 24px rgba(0,0,0,0.11);
+            --shadow-lg:     0 12px 48px rgba(0,0,0,0.14);
+            --shadow-xl:     0 20px 64px rgba(0,0,0,0.18);
+            --radius-xs:     6px;
+            --radius-sm:     10px;
+            --radius-md:     16px;
+            --radius-lg:     24px;
+            --radius-xl:     32px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html                   { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 16px;
+            color: var(--text-dark);
+            background: var(--white);
+            line-height: 1.65;
+            overflow-x: hidden;
+        }
+
+        img  { display: block; max-width: 100%; }
+        a    { text-decoration: none; color: inherit; }
+        ul   { list-style: none; }
+
+        /* ════════════════════════════════════════════════════════════
+           UTILIDADES
+        ════════════════════════════════════════════════════════════ */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.25rem;
+        }
+
+        .section         { padding: 5rem 0; }
+        .section-alt     { background: var(--gray-light); }
+
+        .section-header  { text-align: center; margin-bottom: 3.5rem; }
+
+        .section-tag {
+            display: inline-block;
+            background: var(--orange-light);
+            color: var(--orange-deeper);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 0.35rem 1.1rem;
+            border-radius: 20px;
+            margin-bottom: 0.8rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.65rem, 4vw, 2.4rem);
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.8rem;
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--text-light);
+            max-width: 560px;
+            margin: 0 auto;
+            line-height: 1.75;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           BOTONES
+        ════════════════════════════════════════════════════════════ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.78rem 1.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--orange);
+            color: var(--white);
+            border-color: var(--orange);
+            box-shadow: 0 4px 16px rgba(255,152,0,0.38);
+        }
+        .btn-primary:hover {
+            background: var(--orange-dark);
+            border-color: var(--orange-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255,152,0,0.5);
+            text-decoration: none;
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: var(--white);
+            border-color: var(--red);
+            box-shadow: 0 4px 16px rgba(229,57,53,0.3);
+        }
+        .btn-red:hover {
+            background: var(--red-dark);
+            border-color: var(--red-dark);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--orange-dark);
+            border-color: var(--orange);
+        }
+        .btn-outline:hover {
+            background: var(--orange);
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           HEADER / NAVBAR
+        ════════════════════════════════════════════════════════════ */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--white);
+            border-bottom: 1px solid var(--gray);
+            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+            gap: 1.5rem;
+        }
+
+        /* Logo */
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .header-logo-img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+        }
+        .logo-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-name {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .logo-sub {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--orange-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* Desktop nav */
+        .nav-desktop {
+            display: none;
+            align-items: center;
+            gap: 0.15rem;
+        }
+        .nav-link {
+            padding: 0.45rem 0.9rem;
+            border-radius: var(--radius-xs);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            transition: color 0.15s, background 0.15s;
+        }
+        .nav-link:hover { color: var(--orange-dark); background: var(--orange-light); }
+
+        /* CTA header */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .header-actions .btn { padding: 0.55rem 1.2rem; font-size: 0.855rem; }
+
+        /* Hamburger */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 38px;
+            height: 38px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: var(--radius-xs);
+            transition: background 0.15s;
+        }
+        .hamburger:hover { background: var(--gray-light); }
+        .hamburger span {
+            display: block;
+            height: 2.5px;
+            background: var(--text-dark);
+            border-radius: 2px;
+            transition: all 0.28s ease;
+        }
+        .hamburger.is-active span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+        .hamburger.is-active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.is-active span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+        /* Mobile drawer */
+        .mobile-drawer {
+            display: none;
+            flex-direction: column;
+            gap: 0.2rem;
+            padding: 1rem 1.25rem 1.5rem;
+            border-top: 1px solid var(--gray);
+            background: var(--white);
+        }
+        .mobile-drawer.is-open { display: flex; }
+        .mobile-drawer .nav-link { padding: 0.7rem 0.9rem; font-size: 0.95rem; }
+        .mobile-drawer .btn      { margin-top: 0.5rem; justify-content: center; }
+
+        @media (min-width: 768px) {
+            .nav-desktop { display: flex; }
+            .hamburger   { display: none; }
+            .mobile-drawer { display: none !important; }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           HERO
+        ════════════════════════════════════════════════════════════ */
+        .hero {
+            background: linear-gradient(150deg, var(--orange-xlight) 0%, #FFF3E0 55%, #FFECB3 100%);
+            padding: 4.5rem 0 5.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* decorative circles */
+        .hero::before,
+        .hero::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero::before {
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(255,152,0,0.12) 0%, transparent 70%);
+            top: -100px; right: -80px;
+        }
+        .hero::after {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(229,57,53,0.08) 0%, transparent 70%);
+            bottom: -60px; left: -60px;
+        }
+
+        .hero-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3rem;
+            position: relative;
+        }
+
+        /* Texto */
+        .hero-content { max-width: 600px; text-align: center; }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--white);
+            border: 1.5px solid rgba(255,152,0,0.25);
+            border-radius: 20px;
+            padding: 0.35rem 1.1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--orange-dark);
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .hero-title {
+            font-size: clamp(2.4rem, 7vw, 4rem);
+            font-weight: 900;
+            color: var(--text-dark);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.3rem;
+        }
+        .hero-title .accent-orange { color: var(--orange-dark); }
+        .hero-title .accent-red    { color: var(--red); }
+
+        .hero-subtitle {
+            font-size: 1.08rem;
+            color: var(--text-light);
+            line-height: 1.75;
+            margin-bottom: 2rem;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 0.9rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Imagen */
+        .hero-visual {
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+        }
+
+        .hero-img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Floating cards */
+        .hero-card {
+            position: absolute;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1.2rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .hero-card-tl { top: -1.1rem;  left: -1.1rem; }
+        .hero-card-br { bottom: -1.1rem; right: -1.1rem; }
+
+        .hero-card-icon {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .icon-orange { background: var(--orange-light); color: var(--orange-dark); }
+        .icon-red    { background: var(--red-light);    color: var(--red); }
+
+        .hero-card-lbl { font-size: 0.65rem; color: var(--text-light);  font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .hero-card-val { font-size: 1.05rem; color: var(--text-dark);   font-weight: 800; line-height: 1.1; }
+
+        @media (min-width: 900px) {
+            .hero-inner {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 4rem;
+            }
+            .hero-content         { flex: 1; text-align: left; }
+            .hero-content .hero-subtitle { margin-left: 0; }
+            .hero-actions         { justify-content: flex-start; }
+            .hero-visual          { flex: 1; max-width: 500px; }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           CONÓCENOS
+        ════════════════════════════════════════════════════════════ */
+        .conocenos-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .conocenos-text .section-tag  { margin-bottom: 0.75rem; }
+        .conocenos-text .section-title { text-align: left; margin-bottom: 1rem; }
+
+        .conocenos-text p {
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 0.9rem;
+            font-size: 0.97rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.75rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .feature-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: var(--orange-light);
+            color: var(--orange-dark);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .feature-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .feature-desc {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Imagen conócenos: sin formas fijas */
+        .conocenos-img-wrap { width: 100%; }
+        .conocenos-img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        @media (min-width: 900px) {
+            .conocenos-grid { grid-template-columns: 1fr 1fr; gap: 5rem; }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           VETERINARIOS
+        ════════════════════════════════════════════════════════════ */
+        .vets-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .vet-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .vet-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Imagen vet: aspect-ratio libre, object-fit para no deformar */
+        .vet-img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        .vet-body { padding: 1.4rem 1.5rem; }
+
+        .vet-badge {
+            display: inline-block;
+            background: var(--orange-light);
+            color: var(--orange-deeper);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding: 0.25rem 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 0.8rem;
+        }
+
+        .vet-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.4rem;
+        }
+
+        .vet-bio {
+            font-size: 0.84rem;
+            color: var(--text-light);
+            line-height: 1.65;
+            margin-bottom: 1.1rem;
+        }
+
+        .vet-meta {
+            display: flex;
+            gap: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray);
+        }
+
+        .vet-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .vet-meta-item i { color: var(--orange); }
+
+        @media (min-width: 600px) { .vets-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { .vets-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        /* ════════════════════════════════════════════════════════════
+           SEDES
+        ════════════════════════════════════════════════════════════ */
+        .sedes-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .sede-card {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray);
+        }
+
+        .sede-map {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: none;
+            display: block;
+        }
+
+        .sede-info { padding: 1.5rem; }
+
+        .sede-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.85rem;
+        }
+        .sede-title i { color: var(--orange-dark); }
+
+        .sede-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.55rem;
+            font-size: 0.88rem;
+            color: var(--text-light);
+            line-height: 1.55;
+            margin-bottom: 1.25rem;
+        }
+        .sede-address i { color: var(--red); flex-shrink: 0; margin-top: 0.2rem; }
+
+        @media (min-width: 900px) {
+            .sedes-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           FOOTER
+        ════════════════════════════════════════════════════════════ */
+        .footer {
+            background: #141414;
+            color: rgba(255,255,255,0.55);
+            padding: 4rem 0 0;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            padding-bottom: 3rem;
+        }
+
+        /* Columna marca */
+        .footer-brand-wrap { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 1rem; }
+        .footer-brand-img {
+            width: 42px; height: 42px;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+        }
+        .footer-brand-name {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+
+        .footer-desc {
+            font-size: 0.875rem;
+            line-height: 1.75;
+            max-width: 290px;
+        }
+
+        /* Redes sociales */
+        .social-row {
+            display: flex;
+            gap: 0.7rem;
+            margin-top: 1.4rem;
+        }
+        .social-btn {
+            width: 40px; height: 40px;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.07);
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.65);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        .social-btn:hover { transform: translateY(-2px); }
+        .social-btn.ig:hover  { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); color: #fff; }
+        .social-btn.fb:hover  { background: #1877F2; color: #fff; }
+        .social-btn.tt:hover  { background: #000; color: #fff; box-shadow: 0 0 0 2px #69C9D0; }
+
+        /* Columnas de links */
+        .footer-col h4 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--white);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .footer-links a {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.5);
+            transition: color 0.15s;
+        }
+        .footer-links a:hover { color: var(--orange); }
+
+        /* Contacto */
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.875rem;
+        }
+        .contact-item i { color: var(--orange); width: 16px; flex-shrink: 0; margin-top: 0.22rem; }
+        .contact-item a { color: rgba(255,255,255,0.5); transition: color 0.15s; }
+        .contact-item a:hover { color: var(--orange); }
+
+        /* Footer bottom */
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.07);
+            padding: 1.35rem 0;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .footer-bottom .heart { color: var(--red); }
+
+        @media (min-width: 620px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr;   } }
+
+        /* ════════════════════════════════════════════════════════════
+           WHATSAPP FLOATING
+        ════════════════════════════════════════════════════════════ */
+        .wa-float {
+            position: fixed;
+            bottom: 1.75rem;
+            right: 1.75rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.55rem;
+        }
+
+        .wa-tooltip {
+            background: var(--white);
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(8px);
+            transition: opacity 0.22s, transform 0.22s;
+            pointer-events: none;
+        }
+        .wa-float:hover .wa-tooltip { opacity: 1; transform: translateX(0); }
+
+        .wa-btn {
+            width: 58px; height: 58px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white);
+            font-size: 1.65rem;
+            box-shadow: 0 4px 22px rgba(37,211,102,0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: wa-pulse 2.8s infinite;
+        }
+        .wa-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 32px rgba(37,211,102,0.65);
+        }
+
+        @keyframes wa-pulse {
+            0%, 100% { box-shadow: 0 4px 22px rgba(37,211,102,0.5); }
+            50%       { box-shadow: 0 4px 32px rgba(37,211,102,0.7), 0 0 0 12px rgba(37,211,102,0.1); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════ -->
+<header class="header" id="inicio">
+    <div class="container">
+        <div class="header-inner">
+
+            <!-- Logo -->
+            <a th:href="@{/}" class="header-logo">
+                <img th:src="@{/img/logo.jpg}"
+                     alt="Logo Veterinaria Santa Victoria"
+                     class="header-logo-img">
+                <div class="logo-text-wrap">
+                    <span class="logo-name">Santa Victoria</span>
+                    <span class="logo-sub">Veterinaria</span>
+                </div>
+            </a>
+
+            <!-- Navegación desktop -->
+            <nav class="nav-desktop" aria-label="Menú principal">
+                <a class="nav-link" href="#inicio">Inicio</a>
+                <a class="nav-link" href="#conocenos">Conócenos</a>
+                <a class="nav-link" href="#veterinarios">Veterinarios</a>
+                <a class="nav-link" href="#sedes">Sedes</a>
+            </nav>
+
+            <!-- Acciones -->
+            <div class="header-actions">
+                <a th:href="@{/login}" class="btn btn-primary">
+                    <i class="fa-solid fa-paw"></i>
+                    Portal de Clientes
+                </a>
+            </div>
+
+            <!-- Botón hamburguesa (mobile) -->
+            <button class="hamburger" id="hamburgerBtn"
+                    aria-label="Abrir menú" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+
+        </div>
+    </div>
+
+    <!-- Drawer mobile -->
+    <div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+        <a class="nav-link" href="#inicio">Inicio</a>
+        <a class="nav-link" href="#conocenos">Conócenos</a>
+        <a class="nav-link" href="#veterinarios">Veterinarios</a>
+        <a class="nav-link" href="#sedes">Sedes</a>
+        <a th:href="@{/login}" class="btn btn-primary">
+            <i class="fa-solid fa-paw"></i> Portal de Clientes
+        </a>
+    </div>
+</header>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════════ -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-inner">
+
+            <!-- Contenido textual -->
+            <div class="hero-content">
+                <div class="hero-eyebrow">
+                    <i class="fa-solid fa-heart" style="color:var(--red);"></i>
+                    Veterinaria Santa Victoria
+                </div>
+
+                <h1 class="hero-title">
+                    <span class="accent-orange">Amamos</span><br>
+                    a los<br>
+                    <span class="accent-red">animalitos</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Cuidamos de tu mascota como si fuera nuestra familia.
+                    Atención veterinaria de calidad, con amor y profesionalismo en cada visita.
+                </p>
+
+                <div class="hero-actions">
+                    <a th:href="@{/login}" class="btn btn-primary">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        Reservar cita
+                    </a>
+                    <a href="#conocenos" class="btn btn-outline">
+                        Conócenos
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Imagen hero (perro y gato) -->
+            <div class="hero-visual">
+                <img th:src="@{/img/Vet1.png}"
+                     alt="Mascotas felices en Veterinaria Santa Victoria"
+                     class="hero-img">
+
+                <!-- Badge superior izquierdo -->
+                <div class="hero-card hero-card-tl">
+                    <div class="hero-card-icon icon-orange">
+                        <i class="fa-solid fa-shield-heart"></i>
+                    </div>
+                    <div>
+                        <div class="hero-card-lbl">Atención</div>
+                        <div class="hero-card-val">Personalizada</div>
+                    </div>
+                </div>
+
+                <!-- Badge inferior derecho -->
+                <div class="hero-card hero-card-br">
+                    <div class="hero-card-icon icon-red">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <div class="hero-card-lbl">Familias felices</div>
+                        <div class="hero-card-val">500+ clientes</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     CONÓCENOS
+════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="conocenos">
+    <div class="container">
+        <div class="conocenos-grid">
+
+            <!-- Texto -->
+            <div class="conocenos-text">
+                <div class="section-tag">Nuestra Historia</div>
+                <h2 class="section-title">
+                    Más que una veterinaria,<br>somos tu familia
+                </h2>
+
+                <p>
+                    En <strong>Veterinaria Santa Victoria</strong> creemos que cada mascota merece
+                    el mismo amor y cuidado que un miembro más de la familia. Desde nuestros inicios,
+                    nos hemos dedicado a brindar atención veterinaria de la más alta calidad,
+                    con calidez humana y un trato cercano que nos distingue.
+                </p>
+                <p>
+                    Contamos con dos sedes en Lima equipadas con tecnología moderna y un equipo
+                    de veterinarios especializados, listos para cuidar la salud y el bienestar
+                    de tu compañero, sea perro, gato u otra especie.
+                </p>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fa-solid fa-stethoscope"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Diagnóstico Preciso</div>
+                            <div class="feature-desc">Equipos modernos para resultados rápidos y certeros.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Atención Oportuna</div>
+                            <div class="feature-desc">Horarios flexibles adaptados a tu agenda.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fa-solid fa-syringe"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Vacunación Completa</div>
+                            <div class="feature-desc">Planes para cada etapa de vida de tu mascota.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fa-solid fa-scissors"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Estética & Grooming</div>
+                            <div class="feature-desc">Baño, corte y cuidado estético profesional.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imagen -->
+            <div class="conocenos-img-wrap">
+                <img th:src="@{/img/vet2.png}"
+                     alt="Equipo de Veterinaria Santa Victoria"
+                     class="conocenos-img">
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     VETERINARIOS
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="veterinarios">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag">Nuestro Equipo</div>
+            <h2 class="section-title">Veterinarios que aman lo que hacen</h2>
+            <p class="section-subtitle">
+                Profesionales altamente capacitados, comprometidos con la salud
+                y el bienestar de cada uno de tus mascotas.
+            </p>
+        </div>
+
+        <div class="vets-grid">
+
+            <!-- Veterinario 1 -->
+            <div class="vet-card">
+                <img th:src="@{/img/vet3.png}"
+                     alt="Dr. Carlos Mendoza — Medicina Interna"
+                     class="vet-img">
+                <div class="vet-body">
+                    <span class="vet-badge">Medicina Interna</span>
+                    <h3 class="vet-name">Dra. Elena Ramos</h3>
+                    <p class="vet-bio">
+                        Especialista en medicina interna de pequeños animales.
+                        Apasionado por el diagnóstico clínico y la medicina preventiva.
+                    </p>
+                    <div class="vet-meta">
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-briefcase-medical"></i> 8 años exp.
+                        </span>
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-graduation-cap"></i> UNMSM
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Veterinario 2 -->
+            <div class="vet-card">
+                <img th:src="@{/img/vet4.png}"
+                     alt="Dra. Ana García — Cirugía Veterinaria"
+                     class="vet-img">
+                <div class="vet-body">
+                    <span class="vet-badge">Cirugía Veterinaria</span>
+                    <h3 class="vet-name">Dra. Hossue Osorio</h3>
+                    <p class="vet-bio">
+                        Experta en cirugía de tejidos blandos y ortopedia.
+                        Dedicada a mejorar la calidad de vida de cada paciente quirúrgico.
+                    </p>
+                    <div class="vet-meta">
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-briefcase-medical"></i> 6 años exp.
+                        </span>
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-graduation-cap"></i> UPCH
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Veterinario 3 -->
+            <div class="vet-card">
+                <img th:src="@{/img/vet5.png}"
+                     alt="Dr. Luis Torres — Dermatología y Nutrición"
+                     class="vet-img"
+                     style="object-position: 50% 0%;">
+                <div class="vet-body">
+                    <span class="vet-badge">Dermatología &amp; Nutrición</span>
+                    <h3 class="vet-name">Dr. Christian Buendia</h3>
+                    <p class="vet-bio">
+                        Especialista en dermatología veterinaria y nutrición clínica.
+                        Comprometido con la salud de la piel y el pelaje de cada mascota.
+                    </p>
+                    <div class="vet-meta">
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-briefcase-medical"></i> 5 años exp.
+                        </span>
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-graduation-cap"></i> UNT
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SEDES
+════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="sedes">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag">Nuestras Sedes</div>
+            <h2 class="section-title">Encuéntranos cerca de ti</h2>
+            <p class="section-subtitle">
+                Dos sedes en Lima para brindarte la mejor atención, siempre cerca de tu hogar.
+            </p>
+        </div>
+
+        <div class="sedes-grid">
+
+            <!-- Sede San Martín de Porres -->
+            <div class="sede-card">
+                <iframe
+                    class="sede-map"
+                    src="https://maps.google.com/maps?q=Jir%C3%B3n+Joaquin+Capello+406%2C+Lima+15102%2C+Peru&amp;t=&amp;z=16&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Mapa Sede San Martín de Porres">
+                </iframe>
+                <div class="sede-info">
+                    <div class="sede-title">
+                        <i class="fa-solid fa-location-dot"></i>
+                        Sede San Martín de Porres
+                    </div>
+                    <div class="sede-address">
+                        <i class="fa-regular fa-map"></i>
+                        <span>Jirón Joaquin Capello 406, Lima 15102</span>
+                    </div>
+                    <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Jr.+Joaquin+Capello+406,+Lima+15102,+Peru"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="btn btn-red">
+                        <i class="fa-solid fa-route"></i>
+                        Cómo llegar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sede Rímac -->
+            <div class="sede-card">
+                <iframe
+                    class="sede-map"
+                    src="https://maps.google.com/maps?q=Barreda+y+Aguilar+174%2C+Lima+15094%2C+Peru&amp;t=&amp;z=16&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Mapa Sede Rímac">
+                </iframe>
+                <div class="sede-info">
+                    <div class="sede-title">
+                        <i class="fa-solid fa-location-dot"></i>
+                        Sede Rímac
+                    </div>
+                    <div class="sede-address">
+                        <i class="fa-regular fa-map"></i>
+                        <span>Barreda y Aguilar 174, Lima 15094</span>
+                    </div>
+                    <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Barreda+y+Aguilar+174,+Lima+15094,+Peru"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="btn btn-red">
+                        <i class="fa-solid fa-route"></i>
+                        Cómo llegar
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+
+            <!-- Columna 1: Marca + redes -->
+            <div>
+                <div class="footer-brand-wrap">
+                    <img th:src="@{/img/logo.jpg}"
+                         alt="Veterinaria Santa Victoria"
+                         class="footer-brand-img">
+                    <span class="footer-brand-name">Santa Victoria</span>
+                </div>
+                <p class="footer-desc">
+                    Tu veterinaria de confianza en Lima. Cuidamos a tu mascota
+                    con amor, dedicación y el más alto estándar médico.
+                </p>
+                <div class="social-row">
+                    <a href="https://www.instagram.com/veterinariasantavictoria/"
+                       target="_blank" rel="noopener noreferrer"
+                       class="social-btn ig" aria-label="Instagram">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="https://www.facebook.com/profile.php?id=61580370899923"
+                       target="_blank" rel="noopener noreferrer"
+                       class="social-btn fb" aria-label="Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="https://www.tiktok.com/@veterinariasantavictoria"
+                       target="_blank" rel="noopener noreferrer"
+                       class="social-btn tt" aria-label="TikTok">
+                        <i class="fa-brands fa-tiktok"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Columna 2: Navegación -->
+            <div class="footer-col">
+                <h4>Navegación</h4>
+                <ul class="footer-links">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#conocenos">Conócenos</a></li>
+                    <li><a href="#veterinarios">Veterinarios</a></li>
+                    <li><a href="#sedes">Sedes</a></li>
+                    <li><a th:href="@{/login}">Portal de Clientes</a></li>
+                    <li><a th:href="@{/auth/registro}">Crear cuenta</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Contacto -->
+            <div class="footer-col">
+                <h4>Contacto</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Jr. Joaquin Capello 406,<br>San Martín de Porres</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Barreda y Aguilar 174, Rímac</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-brands fa-instagram"></i>
+                    <a href="https://www.instagram.com/veterinariasantavictoria/"
+                       target="_blank" rel="noopener noreferrer">
+                        @veterinariasantavictoria
+                    </a>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-brands fa-tiktok"></i>
+                    <a href="https://www.tiktok.com/@veterinariasantavictoria"
+                       target="_blank" rel="noopener noreferrer">
+                        @veterinariasantavictoria
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            &copy; 2025 Veterinaria Santa Victoria &mdash; Todos los derechos reservados.
+            Hecho con <i class="fa-solid fa-heart heart"></i> para el bienestar animal.
+        </div>
+    </div>
+</footer>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     WHATSAPP BOTÓN FLOTANTE
+════════════════════════════════════════════════════════════ -->
+<div class="wa-float" aria-label="Contacto por WhatsApp">
+    <span class="wa-tooltip">Escríbenos por WhatsApp</span>
+    <a href="https://wa.me/51XXXXXXXXX"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="wa-btn"
+       aria-label="Abrir chat de WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     JS — Menú hamburguesa
+════════════════════════════════════════════════════════════ -->
+<script>
+    (function () {
+        var btn    = document.getElementById('hamburgerBtn');
+        var drawer = document.getElementById('mobileDrawer');
+        if (!btn || !drawer) return;
+
+        btn.addEventListener('click', function () {
+            var isOpen = drawer.classList.toggle('is-open');
+            btn.classList.toggle('is-active', isOpen);
+            btn.setAttribute('aria-expanded', String(isOpen));
+            drawer.setAttribute('aria-hidden', String(!isOpen));
+        });
+
+        drawer.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                drawer.classList.remove('is-open');
+                btn.classList.remove('is-active');
+                btn.setAttribute('aria-expanded', 'false');
+                drawer.setAttribute('aria-hidden', 'true');
+            });
+        });
+    })();
+</script>
+
+</body>
+</html>

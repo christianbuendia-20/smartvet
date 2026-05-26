@@ -3,13 +3,17 @@ package com.smartvet.app.controller;
 import com.smartvet.app.dto.CitaAgendamientoDTO;
 import com.smartvet.app.dto.MascotaDTO;
 import com.smartvet.app.exception.CitaNoDisponibleException;
+import com.smartvet.app.exception.RecursoNoEncontradoException;
 import com.smartvet.app.model.Cita;
+import com.smartvet.app.model.Consulta;
+import com.smartvet.app.model.HistoriaClinica;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.Sexo;
 import com.smartvet.app.model.TipoCita;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.security.SmartVetUserDetails;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.ConsultaService;
 import com.smartvet.app.service.MascotaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,12 +41,16 @@ import java.util.Objects;
 @RequestMapping("/cliente")
 public class ClienteController {
 
-    private final CitaService    citaService;
-    private final MascotaService mascotaService;
+    private final CitaService     citaService;
+    private final MascotaService  mascotaService;
+    private final ConsultaService consultaService;
 
-    public ClienteController(CitaService citaService, MascotaService mascotaService) {
-        this.citaService    = citaService;
-        this.mascotaService = mascotaService;
+    public ClienteController(CitaService citaService,
+                              MascotaService mascotaService,
+                              ConsultaService consultaService) {
+        this.citaService     = citaService;
+        this.mascotaService  = mascotaService;
+        this.consultaService = consultaService;
     }
 
     private SmartVetUserDetails principal() {
@@ -197,6 +205,35 @@ public class ClienteController {
         log.info("Cita id={} cancelada por cliente usuario_id={}", id, principal().getIdUsuario());
         redirectAttributes.addFlashAttribute("mensajeExito", "Cita cancelada correctamente.");
         return "redirect:/cliente/dashboard";
+    }
+
+    // ── Historial clínico de mascota ──────────────────────────────────────────
+
+    @GetMapping("/mascotas/{idMascota}/historial")
+    public String verHistorial(@PathVariable Integer idMascota,
+                                RedirectAttributes redirectAttributes,
+                                Model model) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            Mascota mascota = mascotaService.buscarPorId(idMascota);
+            if (!mascota.getPropietario().getIdUsuario().equals(idUsuario)) {
+                log.warn("Cliente usuario_id={} intentó acceder al historial de mascota_id={} ajena",
+                        idUsuario, idMascota);
+                redirectAttributes.addFlashAttribute("errorAcceso",
+                        "No tienes permiso para ver el historial de esta mascota.");
+                return "redirect:/cliente/mascotas";
+            }
+            HistoriaClinica historia = mascotaService.verHistorialClinico(idMascota);
+            List<Consulta> consultas = consultaService.listarPorMascota(idMascota);
+            model.addAttribute("mascota",   mascota);
+            model.addAttribute("historia",  historia);
+            model.addAttribute("consultas", consultas);
+            return "cliente/historial";
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Historial no disponible para mascota_id={}: {}", idMascota, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/cliente/mascotas";
+        }
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

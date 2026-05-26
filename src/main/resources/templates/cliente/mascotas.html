@@ -2,7 +2,10 @@
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head(title='SmartVet — Mis Mascotas')}"></head>
+<head>
+    <title>SmartVet — Mis Mascotas</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <header th:replace="~{fragments/navbar :: navbar}"></header>
@@ -32,6 +35,9 @@
         de <strong th:text="${pagina.totalElements}">0</strong> mascota(s).
     </p>
 
+    <!-- Mensajes flash de error (acceso denegado) -->
+    <div th:if="${errorAcceso}" class="alerta alerta-error" th:text="${errorAcceso}"></div>
+
     <!-- ── Grid de mascotas ──────────────────────────────────────────────── -->
     <div class="mascotas-grid" th:if="${not #lists.isEmpty(mascotas)}">
         <div class="mascota-card" th:each="mascota : ${mascotas}">
@@ -52,6 +58,13 @@
                 <dt th:if="${mascota.color != null}">Color</dt>
                 <dd th:if="${mascota.color != null}" th:text="${mascota.color}">-</dd>
             </dl>
+            <div style="margin-top:1rem;">
+                <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
+                   class="btn btn-outline"
+                   style="width:100%; justify-content:center; font-size:0.85rem; padding:0.45rem 1rem;">
+                    <i class="fa-solid fa-clipboard-list"></i> Ver Historial
+                </a>
+            </div>
         </div>
     </div>
 

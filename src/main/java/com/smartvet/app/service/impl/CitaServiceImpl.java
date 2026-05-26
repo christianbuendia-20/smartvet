@@ -197,6 +197,16 @@ public class CitaServiceImpl implements CitaService {
                 .toList();
     }
 
+    @Override
+    public List<Cita> listarProximasCitasPorVeterinario(Integer idUsuario) {
+        LocalDateTime inicioManana = LocalDate.now().plusDays(1).atStartOfDay();
+        Set<EstadoCita> activas = Set.of(EstadoCita.PROGRAMADA, EstadoCita.CONFIRMADA);
+        return listarPorUsuarioVeterinario(idUsuario).stream()
+                .filter(c -> !c.getFechaHora().isBefore(inicioManana) && activas.contains(c.getEstado()))
+                .sorted(java.util.Comparator.comparing(Cita::getFechaHora))
+                .toList();
+    }
+
     // ── lógica de disponibilidad ──────────────────────────────────────────────
 
     private void validarDisponibilidadVeterinario(Integer idVeterinario, LocalDateTime fechaHora) {

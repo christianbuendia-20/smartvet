@@ -112,6 +112,31 @@ CSS, JS, imágenes y archivos estáticos.
 
 ---
 
+# ⚠️ REGLA MAESTRA DE BASE DE DATOS (OBLIGATORIA — NO SALTARSE)
+
+> **ANTES de modificar cualquier Entidad Java (`@Entity`) o sugerir cualquier cambio en la estructura de datos, DEBES revisar obligatoriamente el esquema de base de datos documentado en la sección "Esquema de la Base de Datos" de este archivo o en los scripts SQL del proyecto.**
+
+**Prohibiciones absolutas:**
+- NUNCA asumas que un campo de negocio (p. ej. `direccion`, `referencia`, `foto`) debe ir como columna nueva en una tabla principal como `usuario` o `mascota`.
+- NUNCA generes un `ALTER TABLE` ni una migración que añada columnas sin haber verificado primero si ya existe una **tabla relacional específica** para esos datos.
+- NUNCA uses `spring.jpa.hibernate.ddl-auto=update` o `create` en producción. El valor siempre debe ser `none`. Hibernate solo lee y escribe datos; la estructura de la BD se gestiona exclusivamente con scripts SQL manuales.
+
+**Tablas relacionales que YA EXISTEN — consulta el esquema antes de crear columnas nuevas:**
+| Tabla relacional         | Propósito                                          | FK a         |
+|--------------------------|----------------------------------------------------|--------------|
+| `direccion_usuario`      | Dirección y referencia de domicilio del usuario    | `usuario`    |
+| `veterinario`            | Datos extra del veterinario (horario, etc.)        | `usuario`    |
+| `historia_clinica`       | Historia clínica de la mascota                     | `mascota`    |
+| `consulta`               | Registro de consultas veterinarias                 | `cita`       |
+| `detalle_receta`         | Ítems de una receta médica                         | `receta`     |
+
+**Flujo correcto ante un nuevo atributo de datos:**
+1. Leer el esquema completo en este CLAUDE.md.
+2. Si ya existe tabla relacional → usar la entidad y repositorio JPA correspondientes.
+3. Si no existe → crear primero el script SQL y la entidad JPA, luego el repositorio. Nunca al revés.
+
+---
+
 # Reglas Avanzadas de Calidad (No negociables)
 
 1. Transaccionalidad: Toda operación de escritura, actualización o eliminación en la base de datos debe estar protegida con la anotación `@Transactional` en la capa de `service`.

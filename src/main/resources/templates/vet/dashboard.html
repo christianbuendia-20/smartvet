@@ -2,7 +2,10 @@
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head(title='SmartVet — Agenda del Día')}"></head>
+<head>
+    <title>SmartVet — Agenda del Día</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <header th:replace="~{fragments/navbar :: navbar}"></header>
@@ -121,6 +124,62 @@
         <div class="tabla-vacia" th:if="${#lists.isEmpty(citasHoy)}">
             <span class="icono-vacio">📭</span>
             No tienes citas programadas para hoy.
+        </div>
+    </div>
+
+    <!-- ── Próximas citas (a partir de mañana) ──────────────────────────── -->
+    <p class="seccion-titulo" style="margin-top:2rem;">
+        <i class="fa-regular fa-calendar-days" style="color:var(--primario);"></i>
+        Próximas Citas de la Semana
+        <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
+              th:text="'(' + ${#lists.size(proximasCitas)} + ' pendiente(s))'"></span>
+    </p>
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(proximasCitas)}">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Mascota</th>
+                    <th>Propietario</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Historial</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${proximasCitas}">
+                    <td>
+                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                    </td>
+                    <td th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
+                    <td th:text="${cita.tipoCita}">-</td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA' ? ' badge-programada' : ' badge-confirmada'}">
+                        </span>
+                    </td>
+                    <td>
+                        <a th:href="@{/vet/historial/{id}(id=${cita.mascota.idMascota})}"
+                           class="btn btn-outline"
+                           style="padding:0.25rem 0.75rem; font-size:0.75rem;">
+                            <i class="fa-solid fa-clipboard-list"></i> Historial
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(proximasCitas)}">
+            <span class="icono-vacio">📅</span>
+            No tienes citas próximas programadas.
         </div>
     </div>
 

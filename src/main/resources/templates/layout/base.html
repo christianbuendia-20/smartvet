@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!--
+    ════════════════════════════════════════════════════════════
+    LAYOUT MAESTRO — Veterinaria Santa Victoria
+    ════════════════════════════════════════════════════════════
+    Uso desde cualquier plantilla:
+
+        <head th:replace="~{layout/base :: head('Título de la página')}"></head>
+        <header th:replace="~{layout/base :: navbar}"></header>
+        <main class="main-content">
+            ... contenido específico ...
+        </main>
+        <div th:replace="~{layout/base :: footer}"></div>
+
+    ════════════════════════════════════════════════════════════
+-->
+
+<!-- ══ FRAGMENTO: HEAD ════════════════════════════════════════ -->
+<head>
+    <th:block th:fragment="head_content">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Google Fonts: Poppins -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+              rel="stylesheet">
+
+        <!-- FontAwesome 6 -->
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+              crossorigin="anonymous" referrerpolicy="no-referrer">
+
+        <!-- Estilos del sistema -->
+        <link rel="stylesheet" th:href="@{/css/smartvet.css}">
+    </th:block>
+</head>
+
+<body>
+
+<!-- ══ FRAGMENTO: NAVBAR ══════════════════════════════════════ -->
+<header th:fragment="navbar">
+<nav class="navbar">
+    <div class="navbar-inner">
+
+        <!-- Marca — apunta al dashboard del rol activo -->
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('admin')"
+           th:href="@{/admin/dashboard}">
+            <img th:src="@{/img/logo.jpg}" class="navbar-logo-img" alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
+        </a>
+
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('veterinario')"
+           th:href="@{/vet/dashboard}">
+            <img th:src="@{/img/logo.jpg}" class="navbar-logo-img" alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
+        </a>
+
+        <a class="navbar-brand"
+           sec:authorize="hasAuthority('cliente')"
+           th:href="@{/cliente/dashboard}">
+            <img th:src="@{/img/logo.jpg}" class="navbar-logo-img" alt="Santa Victoria"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <div class="navbar-brand-text">
+                <span class="navbar-brand-name">Santa Victoria</span>
+                <span class="navbar-brand-sub">Veterinaria</span>
+            </div>
+        </a>
+
+        <!-- Navegación por rol -->
+        <div class="navbar-nav">
+
+            <span sec:authorize="hasAuthority('admin')">
+                <a class="nav-link" th:href="@{/admin/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/admin/productos}">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a class="nav-link" th:href="@{/admin/pagos/pendientes}">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Pagos
+                </a>
+                <a class="nav-link" th:href="@{/admin/veterinarios/nuevo}">
+                    <i class="fa-solid fa-user-doctor"></i> Veterinarios
+                </a>
+                <a class="nav-link" th:href="@{/admin/usuarios}">
+                    <i class="fa-solid fa-users"></i> Usuarios
+                </a>
+            </span>
+
+            <span sec:authorize="hasAuthority('veterinario')">
+                <a class="nav-link" th:href="@{/vet/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/vet/agenda}">
+                    <i class="fa-solid fa-calendar-days"></i> Mi Agenda
+                </a>
+            </span>
+
+            <span sec:authorize="hasAuthority('cliente')">
+                <a class="nav-link" th:href="@{/cliente/dashboard}">
+                    <i class="fa-solid fa-gauge-high"></i> Inicio
+                </a>
+                <a class="nav-link" th:href="@{/cliente/mascotas}">
+                    <i class="fa-solid fa-paw"></i> Mis Mascotas
+                </a>
+                <a class="nav-link" th:href="@{/cliente/citas/nueva}">
+                    <i class="fa-regular fa-calendar-plus"></i> Agendar Cita
+                </a>
+                <a class="nav-link" th:href="@{/cliente/citas}">
+                    <i class="fa-solid fa-calendar-check"></i> Mis Citas
+                </a>
+            </span>
+
+        </div>
+
+        <!-- Info del usuario -->
+        <div class="navbar-usuario">
+            <span class="nombre" sec:authentication="principal.nombreCompleto">Usuario</span>
+            <span class="badge-rol"  sec:authentication="principal.rolNombre">rol</span>
+            <form th:action="@{/auth/logout}" method="post" style="margin:0;">
+                <button type="submit" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                </button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+</header>
+
+
+<!-- ══ FRAGMENTO: FOOTER ══════════════════════════════════════ -->
+<footer th:fragment="footer" class="site-footer">
+
+    <div class="site-footer-body">
+
+        <a th:href="@{/}" class="site-footer-brand" style="text-decoration:none;">
+            <img th:src="@{/img/logo.jpg}" class="site-footer-brand-img" alt="Santa Victoria"
+                 onerror="this.style.display='none';">
+            <div>
+                <div class="site-footer-brand-name">Santa Victoria</div>
+                <div class="site-footer-brand-sub">Veterinaria</div>
+            </div>
+        </a>
+
+        <div class="site-footer-addresses">
+            <span>
+                <i class="fa-solid fa-location-dot"></i>
+                Jr. Joaquin Capello 406, San Martín de Porres
+            </span>
+            <span>
+                <i class="fa-solid fa-location-dot"></i>
+                Barreda y Aguilar 174, Rímac
+            </span>
+        </div>
+
+        <div class="site-footer-social">
+            <a href="https://www.instagram.com/veterinariasantavictoria/"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn ig" aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61580370899923"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn fb" aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@veterinariasantavictoria"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn tt" aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="site-footer-bottom">
+        <div class="site-footer-inner">
+            <span>© 2025 Veterinaria Santa Victoria</span>
+            <span class="site-footer-sep">·</span>
+            <span>Sistema de Gestión</span>
+            <span class="site-footer-sep">·</span>
+            <span>
+                <i class="fa-solid fa-heart" style="color:var(--primario); font-size:0.7rem;"></i>
+                Lima, Perú
+            </span>
+        </div>
+    </div>
+
+</footer>
+
+
+<!-- ══ EJEMPLO DE USO (página de referencia) ══════════════════
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout/base :: head('Nombre de la Página')}"></head>
+<body>
+
+<header th:replace="~{layout/base :: navbar}"></header>
+
+<main class="main-content">
+    <div class="page-header">
+        <h2>Título de la Página</h2>
+        <p>Subtítulo descriptivo</p>
+    </div>
+
+    ...contenido...
+</main>
+
+<div th:replace="~{layout/base :: footer}"></div>
+
+</body>
+</html>
+══════════════════════════════════════════════════════════════ -->
+
+</body>
+</html>

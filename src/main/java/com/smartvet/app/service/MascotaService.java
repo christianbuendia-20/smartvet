@@ -1,5 +1,6 @@
 package com.smartvet.app.service;
 
+import com.smartvet.app.dto.HistoriaClinicaUpdateDTO;
 import com.smartvet.app.dto.MascotaDTO;
 import com.smartvet.app.model.HistoriaClinica;
 import com.smartvet.app.model.Mascota;
@@ -21,6 +22,8 @@ public interface MascotaService {
     Page<Mascota> listarPorPropietarioPaginado(Integer idPropietario, Pageable pageable);
 
     HistoriaClinica verHistorialClinico(Integer idMascota);
+
+    HistoriaClinica actualizarHistoriaClinica(Integer idMascota, HistoriaClinicaUpdateDTO dto);
 
     void darDeBaja(Integer idMascota);
 }

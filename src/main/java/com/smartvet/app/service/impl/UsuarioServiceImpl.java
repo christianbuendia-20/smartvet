@@ -1,13 +1,16 @@
 package com.smartvet.app.service.impl;
 
 import com.smartvet.app.dto.LoginDTO;
+import com.smartvet.app.dto.PerfilUpdateDTO;
 import com.smartvet.app.dto.UsuarioRegistroDTO;
 import com.smartvet.app.exception.CredencialesInvalidasException;
 import com.smartvet.app.exception.EmailDuplicadoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
+import com.smartvet.app.model.DireccionUsuario;
 import com.smartvet.app.model.Rol;
 import com.smartvet.app.model.Usuario;
 import com.smartvet.app.model.Veterinario;
+import com.smartvet.app.repository.DireccionUsuarioRepository;
 import com.smartvet.app.repository.RolRepository;
 import com.smartvet.app.repository.UsuarioRepository;
 import com.smartvet.app.repository.VeterinarioRepository;
@@ -18,24 +21,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
-    private final RolRepository rolRepository;
-    private final VeterinarioRepository veterinarioRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UsuarioRepository          usuarioRepository;
+    private final RolRepository              rolRepository;
+    private final VeterinarioRepository      veterinarioRepository;
+    private final DireccionUsuarioRepository direccionRepository;
+    private final PasswordEncoder            passwordEncoder;
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository,
                                RolRepository rolRepository,
                                VeterinarioRepository veterinarioRepository,
+                               DireccionUsuarioRepository direccionRepository,
                                PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
-        this.rolRepository = rolRepository;
+        this.usuarioRepository  = usuarioRepository;
+        this.rolRepository      = rolRepository;
         this.veterinarioRepository = veterinarioRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.direccionRepository   = direccionRepository;
+        this.passwordEncoder       = passwordEncoder;
     }
 
     @Override
@@ -134,6 +141,58 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario actualizado = usuarioRepository.save(usuario);
         log.info("Rol de usuario id={} cambiado a '{}'", idUsuario, nuevoRol);
         return actualizado;
+    }
+
+    @Override
+    @Transactional
+    public Usuario registrarConRol(UsuarioRegistroDTO dto, String rolNombre) {
+        validarEmailUnico(dto.email());
+        Rol rol = obtenerRol(rolNombre);
+        Usuario guardado = usuarioRepository.save(construirUsuario(dto, rol));
+        if ("veterinario".equals(rolNombre)) {
+            Veterinario veterinario = new Veterinario();
+            veterinario.setUsuario(guardado);
+            veterinarioRepository.save(veterinario);
+        }
+        log.info("Usuario registrado con rol '{}': id={}, email={}", rolNombre, guardado.getIdUsuario(), guardado.getEmail());
+        return guardado;
+    }
+
+    @Override
+    @Transactional
+    public Usuario actualizarPerfil(Integer idUsuario, PerfilUpdateDTO dto) {
+        Usuario usuario = buscarPorId(idUsuario);
+        if (!usuario.getEmail().equalsIgnoreCase(dto.email())) {
+            if (usuarioRepository.existsByEmail(dto.email())) {
+                throw new EmailDuplicadoException(dto.email());
+            }
+            usuario.setEmail(dto.email());
+        }
+        usuario.setNombres(dto.nombres());
+        usuario.setApellidos(dto.apellidos());
+        usuario.setTelefono(dto.telefono());
+        usuario.setDni(dto.dni());
+        Usuario actualizado = usuarioRepository.save(usuario);
+
+        // Guardar o actualizar la dirección relacional
+        if (dto.direccion() != null && !dto.direccion().isBlank()) {
+            DireccionUsuario dir = direccionRepository
+                    .findFirstByUsuario_IdUsuario(idUsuario)
+                    .orElseGet(DireccionUsuario::new);
+            dir.setUsuario(actualizado);
+            dir.setDireccion(dto.direccion());
+            dir.setReferencia(dto.referencia());
+            direccionRepository.save(dir);
+            log.info("Dirección actualizada para usuario_id={}", idUsuario);
+        }
+
+        log.info("Perfil actualizado: id={}", idUsuario);
+        return actualizado;
+    }
+
+    @Override
+    public Optional<DireccionUsuario> buscarDireccion(Integer idUsuario) {
+        return direccionRepository.findFirstByUsuario_IdUsuario(idUsuario);
     }
 
     // ── helpers de mapeo y validación ────────────────────────────────────────

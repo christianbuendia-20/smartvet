@@ -1,12 +1,76 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><title></title></head>
 <body>
+
 <footer th:fragment="footer" class="site-footer">
-    <div class="site-footer-inner">
-        <span>© 2025 SmartVet</span>
-        <span class="site-footer-sep">·</span>
-        <span>Sistema de Gestión Veterinaria</span>
+
+    <!-- Cuerpo del footer -->
+    <div class="site-footer-body">
+
+        <!-- Marca -->
+        <a th:href="@{/}" class="site-footer-brand" style="text-decoration:none;">
+            <img th:src="@{/img/logo.jpg}"
+                 class="site-footer-brand-img"
+                 alt="Santa Victoria"
+                 onerror="this.style.display='none';">
+            <div>
+                <div class="site-footer-brand-name">Santa Victoria</div>
+                <div class="site-footer-brand-sub">Veterinaria</div>
+            </div>
+        </a>
+
+        <!-- Sedes -->
+        <div class="site-footer-addresses">
+            <span>
+                <i class="fa-solid fa-location-dot"></i>
+                Jr. Joaquin Capello 406, San Martín de Porres
+            </span>
+            <span>
+                <i class="fa-solid fa-location-dot"></i>
+                Barreda y Aguilar 174, Rímac
+            </span>
+        </div>
+
+        <!-- Redes sociales -->
+        <div class="site-footer-social">
+            <a href="https://www.instagram.com/veterinariasantavictoria/"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn ig"
+               aria-label="Instagram">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61580370899923"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn fb"
+               aria-label="Facebook">
+                <i class="fa-brands fa-facebook-f"></i>
+            </a>
+            <a href="https://www.tiktok.com/@veterinariasantavictoria"
+               target="_blank" rel="noopener noreferrer"
+               class="footer-social-btn tt"
+               aria-label="TikTok">
+                <i class="fa-brands fa-tiktok"></i>
+            </a>
+        </div>
+
     </div>
+
+    <!-- Línea de copyright -->
+    <div class="site-footer-bottom">
+        <div class="site-footer-inner">
+            <span>© 2025 Veterinaria Santa Victoria</span>
+            <span class="site-footer-sep">·</span>
+            <span>Sistema de Gestión</span>
+            <span class="site-footer-sep">·</span>
+            <span>
+                <i class="fa-solid fa-heart" style="color: var(--primario); font-size:0.7rem;"></i>
+                Lima, Perú
+            </span>
+        </div>
+    </div>
+
 </footer>
+
 </body>
 </html>

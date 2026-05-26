@@ -64,13 +64,15 @@ public class VeterinarioController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         SmartVetUserDetails details = principal();
-        List<Cita> citasHoy = citaService.listarCitasDeHoyPorVeterinario(details.getIdUsuario());
+        List<Cita> citasHoy      = citaService.listarCitasDeHoyPorVeterinario(details.getIdUsuario());
+        List<Cita> proximasCitas = citaService.listarProximasCitasPorVeterinario(details.getIdUsuario());
 
         model.addAttribute("citasHoy",         citasHoy);
         model.addAttribute("totalCitasHoy",    citasHoy.size());
         model.addAttribute("totalPendientes",  citaService.contarPendientes(citasHoy));
         model.addAttribute("totalEnCurso",     citaService.contarPorEstado(citasHoy, EstadoCita.EN_CURSO));
         model.addAttribute("totalCompletadas", citaService.contarPorEstado(citasHoy, EstadoCita.COMPLETADA));
+        model.addAttribute("proximasCitas",    proximasCitas);
         return "vet/dashboard";
     }
 

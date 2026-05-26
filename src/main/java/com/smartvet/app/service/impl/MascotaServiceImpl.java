@@ -1,5 +1,6 @@
 package com.smartvet.app.service.impl;
 
+import com.smartvet.app.dto.HistoriaClinicaUpdateDTO;
 import com.smartvet.app.dto.MascotaDTO;
 import com.smartvet.app.exception.MascotaNoEncontradaException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
@@ -100,6 +101,29 @@ public class MascotaServiceImpl implements MascotaService {
         return historiaClinicaRepository.findByMascota_IdMascota(idMascota)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Historia clínica no encontrada para mascota id=" + idMascota));
+    }
+
+    @Override
+    @Transactional
+    public HistoriaClinica actualizarHistoriaClinica(Integer idMascota, HistoriaClinicaUpdateDTO dto) {
+        Mascota mascota = mascotaRepository.findById(idMascota)
+                .orElseThrow(() -> new MascotaNoEncontradaException(idMascota));
+        securityUtils.verificarPropiedadMascota(mascota);
+
+        HistoriaClinica historia = historiaClinicaRepository.findByMascota_IdMascota(idMascota)
+                .orElseGet(() -> {
+                    HistoriaClinica nueva = new HistoriaClinica();
+                    nueva.setMascota(mascota);
+                    return nueva;
+                });
+
+        historia.setAlergias(dto.alergias());
+        historia.setEnfermedadesCronicas(dto.enfermedadesCronicas());
+        historia.setNotasGenerales(dto.notasGenerales());
+
+        HistoriaClinica actualizada = historiaClinicaRepository.save(historia);
+        log.info("Historia clínica actualizada: mascota_id={}", idMascota);
+        return actualizada;
     }
 
     @Override

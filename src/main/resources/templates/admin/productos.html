@@ -2,7 +2,10 @@
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head(title='SmartVet — Inventario')}"></head>
+<head>
+    <title>SmartVet — Inventario</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <header th:replace="~{fragments/navbar :: navbar}"></header>

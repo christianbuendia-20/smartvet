@@ -2,7 +2,10 @@
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head(title='SmartVet — Gestión de Usuarios')}"></head>
+<head>
+    <title>SmartVet — Gestión de Usuarios</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <header th:replace="~{fragments/navbar :: navbar}"></header>
@@ -14,7 +17,12 @@
             <h2>Gestión de Usuarios</h2>
             <p>Consulta y cambia el rol de cada usuario registrado en el sistema.</p>
         </div>
-        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Volver al Dashboard</a>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primario">
+                <i class="fa-solid fa-user-plus"></i> Crear usuario
+            </a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Volver al Dashboard</a>
+        </div>
     </div>
 
     <!-- Mensajes flash -->

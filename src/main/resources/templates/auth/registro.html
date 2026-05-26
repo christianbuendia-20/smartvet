@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='SmartVet — Crear cuenta')}"></head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Santa Victoria — Crear cuenta</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
 <body>
 
 <div class="auth-page">
@@ -8,12 +11,17 @@
 
         <!-- Marca -->
         <div class="auth-brand">
-            <div class="logo">🐾</div>
-            <h1>SmartVet</h1>
-            <p>Crear una cuenta de cliente</p>
+            <img th:src="@{/img/logo.jpg}"
+                 class="auth-logo-img"
+                 alt="Veterinaria Santa Victoria"
+                 onerror="this.style.display='none'; document.getElementById('authLogoFallback').style.display='flex';">
+            <div id="authLogoFallback" class="auth-logo-fallback" style="display:none;">🐾</div>
+            <h1>Santa Victoria</h1>
+            <span class="auth-brand-sub">Veterinaria</span>
+            <p>Crea tu cuenta de cliente</p>
         </div>
 
-        <!-- Error de registro (email duplicado, etc.) -->
+        <!-- Error de registro -->
         <div class="alerta alerta-error"
              th:if="${errorRegistro}"
              th:text="${errorRegistro}">
@@ -25,7 +33,9 @@
 
             <div class="form-fila">
                 <div class="form-grupo">
-                    <label for="nombres">Nombres <span style="color:var(--rojo)">*</span></label>
+                    <label for="nombres">
+                        Nombres <span style="color:var(--rojo)">*</span>
+                    </label>
                     <input type="text"
                            id="nombres"
                            name="nombres"
@@ -34,7 +44,9 @@
                            required>
                 </div>
                 <div class="form-grupo">
-                    <label for="apellidos">Apellidos <span style="color:var(--rojo)">*</span></label>
+                    <label for="apellidos">
+                        Apellidos <span style="color:var(--rojo)">*</span>
+                    </label>
                     <input type="text"
                            id="apellidos"
                            name="apellidos"
@@ -45,7 +57,9 @@
             </div>
 
             <div class="form-grupo">
-                <label for="email">Correo electrónico <span style="color:var(--rojo)">*</span></label>
+                <label for="email">
+                    Correo electrónico <span style="color:var(--rojo)">*</span>
+                </label>
                 <input type="email"
                        id="email"
                        name="email"
@@ -78,7 +92,9 @@
             </div>
 
             <div class="form-grupo">
-                <label for="password">Contraseña <span style="color:var(--rojo)">*</span></label>
+                <label for="password">
+                    Contraseña <span style="color:var(--rojo)">*</span>
+                </label>
                 <input type="password"
                        id="password"
                        name="password"
@@ -86,17 +102,23 @@
                        autocomplete="new-password"
                        minlength="8"
                        required>
-                <span class="hint">Mínimo 8 caracteres</span>
+                <span class="hint">
+                    <i class="fa-solid fa-circle-info" style="color:var(--primario);"></i>
+                    Mínimo 8 caracteres
+                </span>
             </div>
 
-            <button type="submit" class="btn btn-primario">Crear cuenta</button>
+            <button type="submit" class="btn btn-primario">
+                <i class="fa-solid fa-user-plus"></i>
+                Crear cuenta
+            </button>
         </form>
 
         <hr class="divisor">
 
         <p class="auth-footer">
-            ¿Ya tiene cuenta?
-            <a th:href="@{/auth/login}">Inicie sesión aquí</a>
+            ¿Ya tienes cuenta?
+            <a th:href="@{/auth/login}">Inicia sesión aquí</a>
         </p>
 
     </div>
