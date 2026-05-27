@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Nueva Mascota</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Nueva Mascota</h2>
+            <p>Registra una mascota y asígnala a un cliente existente.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
+    </div>
+
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <div style="max-width:720px; margin:0 auto;">
+        <form th:action="@{/admin/mascotas/nueva}" method="post" novalidate>
+
+            <!-- ── Propietario ── -->
+            <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-user" style="color:var(--primario);"></i>
+                    Propietario
+                </p>
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="idPropietario">
+                        Cliente <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <select id="idPropietario" name="idPropietario" required>
+                        <option value="" disabled selected>— Selecciona un cliente —</option>
+                        <option th:each="c : ${clientes}"
+                                th:value="${c.idUsuario}"
+                                th:text="${c.nombres + ' ' + c.apellidos + ' · ' + c.email}"
+                                th:selected="${c.idUsuario == idPropietarioPrev}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ── Datos de la mascota ── -->
+            <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-paw" style="color:var(--primario);"></i>
+                    Datos de la Mascota
+                </p>
+
+                <div class="form-fila" style="gap:1.25rem;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="nombre">Nombre <span style="color:var(--rojo);">*</span></label>
+                        <input type="text" id="nombre" name="nombre"
+                               th:value="${nombrePrev}"
+                               placeholder="Ej: Max" required>
+                    </div>
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="especie">Especie <span style="color:var(--rojo);">*</span></label>
+                        <input type="text" id="especie" name="especie"
+                               th:value="${especiePrev}"
+                               placeholder="Ej: Perro, Gato" required>
+                    </div>
+                </div>
+
+                <div class="form-fila" style="gap:1.25rem;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="raza">Raza</label>
+                        <input type="text" id="raza" name="raza"
+                               th:value="${razaPrev}"
+                               placeholder="Ej: Labrador">
+                    </div>
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="color">Color</label>
+                        <input type="text" id="color" name="color"
+                               th:value="${colorPrev}"
+                               placeholder="Ej: Marrón">
+                    </div>
+                </div>
+
+                <div class="form-fila" style="gap:1.25rem;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="sexo">Sexo <span style="color:var(--rojo);">*</span></label>
+                        <select id="sexo" name="sexo" required>
+                            <option value="" disabled selected>— Selecciona —</option>
+                            <option th:each="s : ${sexos}"
+                                    th:value="${s}"
+                                    th:text="${s}"
+                                    th:selected="${s == sexoPrev}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="peso">Peso (kg)</label>
+                        <input type="number" id="peso" name="peso"
+                               th:value="${pesoPrev}"
+                               step="0.01" min="0.01" placeholder="Ej: 12.5">
+                    </div>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="fechaNacimiento">Fecha de nacimiento</label>
+                    <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+                           th:value="${fechaNacimientoPrev}">
+                </div>
+            </div>
+
+            <!-- ── Historia Clínica Inicial ── -->
+            <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:0.4rem;">
+                    <i class="fa-solid fa-notes-medical" style="color:var(--primario);"></i>
+                    Historia Clínica Inicial
+                    <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave); margin-left:0.4rem;">(Opcional)</span>
+                </p>
+                <p style="font-size:0.83rem; color:var(--texto-suave); margin:0 0 1.25rem; line-height:1.5;">
+                    Estos datos pueden completarse ahora o editarse más adelante desde el historial.
+                </p>
+
+                <div class="form-grupo" style="margin-bottom:1.25rem;">
+                    <label for="alergias">Alergias conocidas</label>
+                    <textarea id="alergias" name="alergias" rows="3" maxlength="1000"
+                              placeholder="Ej: Alergia al polvo, al pollo, a ciertos medicamentos..."
+                              th:text="${alergiaPrev}"></textarea>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:1.25rem;">
+                    <label for="enfermedadesCronicas">Enfermedades crónicas</label>
+                    <textarea id="enfermedadesCronicas" name="enfermedadesCronicas" rows="3" maxlength="1000"
+                              placeholder="Ej: Diabetes, hipotiroidismo, epilepsia..."
+                              th:text="${enfermedadesPrev}"></textarea>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="notasGenerales">Notas generales</label>
+                    <textarea id="notasGenerales" name="notasGenerales" rows="3" maxlength="2000"
+                              placeholder="Ej: Nervioso con extraños, vacunas al día, castrado..."
+                              th:text="${notasPrev}"></textarea>
+                </div>
+            </div>
+
+            <!-- ── Acciones ── -->
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/mascotas}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px; font-size:0.875rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Registrar Mascota
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

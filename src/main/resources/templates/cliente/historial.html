@@ -19,7 +19,8 @@
                 Especie
             </p>
         </div>
-        <a th:href="@{/cliente/mascotas}" class="btn btn-outline">← Mis Mascotas</a>
+        <a th:href="@{/cliente/mascotas}" class="btn btn-outline"
+           style="white-space:nowrap;">← Mis Mascotas</a>
     </div>
 
     <!-- Mensajes flash -->
@@ -63,6 +64,14 @@
         </div>
     </dl>
 
+    <div style="display:flex; justify-content:flex-end; margin-top:0.75rem; margin-bottom:1.75rem;">
+        <a th:href="@{/cliente/mascotas/{id}/editar(id=${mascota.idMascota})}"
+           class="btn btn-primario">
+            <i class="fa-solid fa-pen-to-square"></i>
+            Editar Datos
+        </a>
+    </div>
+
     <!-- ── Historia clínica ───────────────────────────────────────────────── -->
     <p class="seccion-titulo">
         <i class="fa-solid fa-folder-open" style="color:var(--primario);"></i>
@@ -94,6 +103,14 @@
                  class="hc-campo-vacio">Sin notas generales registradas</div>
         </div>
 
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:0.75rem; margin-bottom:1.75rem;">
+        <a th:href="@{/mascota/historial/editar/{id}(id=${mascota.idMascota})}"
+           class="btn btn-primario">
+            <i class="fa-solid fa-pen-to-square"></i>
+            Actualizar Datos Médicos
+        </a>
     </div>
 
     <!-- ── Consultas previas ──────────────────────────────────────────────── -->

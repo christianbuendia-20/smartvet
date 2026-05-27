@@ -59,6 +59,25 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional
+    public Usuario registrarClientePendiente(UsuarioRegistroDTO dto) {
+        validarEmailUnico(dto.email());
+        Rol rol = obtenerRol("cliente");
+        Usuario usuario = construirUsuario(dto, rol);
+        usuario.setActivo(false);
+        Usuario guardado = usuarioRepository.save(usuario);
+        log.info("Cliente pendiente de verificación: id={}, email={}", guardado.getIdUsuario(), guardado.getEmail());
+        return guardado;
+    }
+
+    @Override
+    @Transactional
+    public void eliminarUsuarioPendiente(Integer id) {
+        usuarioRepository.deleteById(id);
+        log.info("Usuario pendiente eliminado por fallo en verificación: id={}", id);
+    }
+
+    @Override
+    @Transactional
     public Usuario registrarVeterinario(UsuarioRegistroDTO dto, String horarioAtencion) {
         validarEmailUnico(dto.email());
 
@@ -120,6 +139,15 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setActivo(false);
         usuarioRepository.save(usuario);
         log.info("Usuario desactivado: id={}", id);
+    }
+
+    @Override
+    @Transactional
+    public void activarUsuario(Integer id) {
+        Usuario usuario = buscarPorId(id);
+        usuario.setActivo(true);
+        usuarioRepository.save(usuario);
+        log.info("Usuario activado: id={}", id);
     }
 
     @Override

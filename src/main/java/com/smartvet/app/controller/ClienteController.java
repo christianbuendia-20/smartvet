@@ -1,6 +1,7 @@
 package com.smartvet.app.controller;
 
 import com.smartvet.app.dto.CitaAgendamientoDTO;
+import com.smartvet.app.dto.HistoriaClinicaUpdateDTO;
 import com.smartvet.app.dto.MascotaDTO;
 import com.smartvet.app.exception.CitaNoDisponibleException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
@@ -122,6 +123,9 @@ public class ClienteController {
                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaNacimiento,
                                     @RequestParam Sexo sexo,
                                     @RequestParam(required = false) BigDecimal peso,
+                                    @RequestParam(required = false) String alergias,
+                                    @RequestParam(required = false) String enfermedadesCronicas,
+                                    @RequestParam(required = false) String notasGenerales,
                                     RedirectAttributes redirectAttributes,
                                     Model model) {
 
@@ -129,6 +133,15 @@ public class ClienteController {
         try {
             MascotaDTO dto = new MascotaDTO(nombre, especie, raza, color, fechaNacimiento, sexo, peso);
             Mascota mascota = mascotaService.registrarMascota(dto, idUsuario);
+
+            boolean tieneHistoria = (alergias != null && !alergias.isBlank())
+                    || (enfermedadesCronicas != null && !enfermedadesCronicas.isBlank())
+                    || (notasGenerales != null && !notasGenerales.isBlank());
+            if (tieneHistoria) {
+                mascotaService.actualizarHistoriaClinica(mascota.getIdMascota(),
+                        new HistoriaClinicaUpdateDTO(alergias, enfermedadesCronicas, notasGenerales));
+            }
+
             log.info("Mascota registrada por cliente usuario_id={}: mascota_id={}, nombre='{}'",
                     idUsuario, mascota.getIdMascota(), nombre);
             redirectAttributes.addFlashAttribute("mensajeExito",
@@ -138,14 +151,71 @@ public class ClienteController {
             log.error("Error al registrar mascota para cliente usuario_id={}: {}", idUsuario, ex.getMessage());
             model.addAttribute("sexos", Sexo.values());
             model.addAttribute("errorForm", "No se pudo registrar la mascota: " + ex.getMessage());
-            model.addAttribute("nombrePrev",        nombre);
-            model.addAttribute("especiePrev",       especie);
-            model.addAttribute("razaPrev",          raza);
-            model.addAttribute("colorPrev",         color);
+            model.addAttribute("nombrePrev",          nombre);
+            model.addAttribute("especiePrev",         especie);
+            model.addAttribute("razaPrev",            raza);
+            model.addAttribute("colorPrev",           color);
             model.addAttribute("fechaNacimientoPrev", fechaNacimiento);
-            model.addAttribute("sexoPrev",          sexo);
-            model.addAttribute("pesoPrev",          peso);
+            model.addAttribute("sexoPrev",            sexo);
+            model.addAttribute("pesoPrev",            peso);
+            model.addAttribute("alergiaPrev",         alergias);
+            model.addAttribute("enfermedadesPrev",    enfermedadesCronicas);
+            model.addAttribute("notasPrev",           notasGenerales);
             return "cliente/nueva-mascota";
+        }
+    }
+
+    // ── Editar datos básicos de mascota ───────────────────────────────────────
+
+    @GetMapping("/mascotas/{id}/editar")
+    public String mostrarFormEditarMascota(@PathVariable Integer id,
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            Mascota mascota = mascotaService.buscarPorId(id);
+            if (!mascota.getPropietario().getIdUsuario().equals(idUsuario)) {
+                redirectAttributes.addFlashAttribute("errorAcceso",
+                        "No tienes permiso para editar esta mascota.");
+                return "redirect:/cliente/mascotas";
+            }
+            model.addAttribute("mascota", mascota);
+            model.addAttribute("sexos",   Sexo.values());
+            return "cliente/editar-mascota";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/cliente/mascotas";
+        }
+    }
+
+    @PostMapping("/mascotas/{id}/editar")
+    public String editarMascota(@PathVariable Integer id,
+                                 @RequestParam String nombre,
+                                 @RequestParam String especie,
+                                 @RequestParam(required = false) String raza,
+                                 @RequestParam(required = false) String color,
+                                 @RequestParam(required = false)
+                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaNacimiento,
+                                 @RequestParam Sexo sexo,
+                                 @RequestParam(required = false) BigDecimal peso,
+                                 RedirectAttributes redirectAttributes,
+                                 Model model) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            MascotaDTO dto = new MascotaDTO(nombre, especie, raza, color, fechaNacimiento, sexo, peso);
+            mascotaService.actualizarMascota(id, dto);
+            log.info("Mascota id={} actualizada por cliente usuario_id={}", id, idUsuario);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Datos de \"" + nombre + "\" actualizados correctamente.");
+            return "redirect:/cliente/mascotas/" + id + "/historial";
+        } catch (Exception ex) {
+            log.error("Error al actualizar mascota id={} por cliente usuario_id={}: {}",
+                    id, idUsuario, ex.getMessage());
+            model.addAttribute("errorForm", "No se pudo actualizar: " + ex.getMessage());
+            try { model.addAttribute("mascota", mascotaService.buscarPorId(id)); }
+            catch (Exception ignored) {}
+            model.addAttribute("sexos", Sexo.values());
+            return "cliente/editar-mascota";
         }
     }
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>SmartVet — Registrar Mascota</title>
+    <title th:text="|SmartVet — Editar ${mascota.nombre}|">Editar Mascota</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
 </head>
 <body>
@@ -10,27 +10,33 @@
 
 <main class="main-content">
 
-    <div class="page-header">
-        <h2>Registrar Mascota</h2>
-        <p>Completa los datos de tu mascota. Los campos marcados con * son obligatorios.</p>
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2 th:text="'Editar — ' + ${mascota.nombre}">Editar Mascota</h2>
+            <p>Modifica los datos básicos de tu mascota. Los campos marcados con * son obligatorios.</p>
+        </div>
+        <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
+           class="btn btn-outline" style="white-space:nowrap;">
+            ← Volver al Historial
+        </a>
     </div>
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
     <div class="tabla-card" style="padding: 2rem;">
-        <form th:action="@{/cliente/mascotas/nueva}" method="post">
+        <form th:action="@{/cliente/mascotas/{id}/editar(id=${mascota.idMascota})}" method="post">
 
             <div class="form-fila">
                 <div class="form-grupo">
                     <label for="nombre">Nombre *</label>
                     <input type="text" id="nombre" name="nombre" required maxlength="100"
-                           th:value="${nombrePrev}" placeholder="Ej: Firulais">
+                           th:value="${mascota.nombre}" placeholder="Ej: Firulais">
                 </div>
 
                 <div class="form-grupo">
                     <label for="especie">Especie *</label>
                     <input type="text" id="especie" name="especie" required maxlength="50"
-                           list="especies-lista" th:value="${especiePrev}" placeholder="Ej: Perro">
+                           list="especies-lista" th:value="${mascota.especie}" placeholder="Ej: Perro">
                     <datalist id="especies-lista">
                         <option value="Perro">
                         <option value="Gato">
@@ -47,13 +53,13 @@
                 <div class="form-grupo">
                     <label for="raza">Raza <span class="hint" style="font-weight:400;">(opcional)</span></label>
                     <input type="text" id="raza" name="raza" maxlength="80"
-                           th:value="${razaPrev}" placeholder="Ej: Labrador">
+                           th:value="${mascota.raza}" placeholder="Ej: Labrador">
                 </div>
 
                 <div class="form-grupo">
                     <label for="color">Color <span class="hint" style="font-weight:400;">(opcional)</span></label>
                     <input type="text" id="color" name="color" maxlength="50"
-                           th:value="${colorPrev}" placeholder="Ej: Dorado">
+                           th:value="${mascota.color}" placeholder="Ej: Dorado">
                 </div>
             </div>
 
@@ -61,17 +67,17 @@
                 <div class="form-grupo">
                     <label for="fechaNacimiento">Fecha de nacimiento <span class="hint" style="font-weight:400;">(opcional)</span></label>
                     <input type="date" id="fechaNacimiento" name="fechaNacimiento"
-                           th:value="${fechaNacimientoPrev}" max="9999-12-31">
+                           th:value="${mascota.fechaNacimiento}" max="9999-12-31">
                 </div>
 
                 <div class="form-grupo">
                     <label for="sexo">Sexo *</label>
                     <select id="sexo" name="sexo" required>
-                        <option value="" disabled th:selected="${sexoPrev == null}">— Selecciona —</option>
+                        <option value="" disabled>— Selecciona —</option>
                         <option th:each="s : ${sexos}"
                                 th:value="${s.name()}"
                                 th:text="${s.name()}"
-                                th:selected="${sexoPrev != null and sexoPrev.name() == s.name()}">
+                                th:selected="${mascota.sexo != null and mascota.sexo.name() == s.name()}">
                         </option>
                     </select>
                 </div>
@@ -80,50 +86,18 @@
             <div class="form-grupo" style="max-width: 280px;">
                 <label for="peso">Peso (kg) <span class="hint" style="font-weight:400;">(opcional)</span></label>
                 <input type="number" id="peso" name="peso" step="0.01" min="0" max="999.99"
-                       th:value="${pesoPrev}" placeholder="Ej: 12.5">
+                       th:value="${mascota.peso}" placeholder="Ej: 12.5">
                 <span class="hint">Ingresa el peso en kilogramos con hasta 2 decimales.</span>
-            </div>
-
-            <hr class="divisor">
-
-            <!-- Historia Clínica Inicial -->
-            <p style="font-size:1rem; font-weight:700; color:var(--texto); margin:0 0 1.25rem;">
-                <i class="fa-solid fa-notes-medical" style="color:var(--primario);"></i>
-                Historia Clínica Inicial
-                <span class="hint" style="font-weight:400; margin-left:0.4rem;">(Opcional)</span>
-            </p>
-            <p style="font-size:0.85rem; color:var(--texto-suave); margin:-0.75rem 0 1.25rem; line-height:1.5;">
-                Puedes completar esta información ahora o más adelante desde el historial de tu mascota.
-            </p>
-
-            <div class="form-grupo">
-                <label for="alergias">Alergias conocidas</label>
-                <textarea id="alergias" name="alergias" rows="3" maxlength="1000"
-                          placeholder="Ej: Alergia al polvo, al pollo, a ciertos medicamentos..."
-                          th:text="${alergiaPrev}"></textarea>
-            </div>
-
-            <div class="form-grupo">
-                <label for="enfermedadesCronicas">Enfermedades crónicas</label>
-                <textarea id="enfermedadesCronicas" name="enfermedadesCronicas" rows="3" maxlength="1000"
-                          placeholder="Ej: Diabetes, hipotiroidismo, epilepsia..."
-                          th:text="${enfermedadesPrev}"></textarea>
-            </div>
-
-            <div class="form-grupo">
-                <label for="notasGenerales">Notas generales</label>
-                <textarea id="notasGenerales" name="notasGenerales" rows="3" maxlength="2000"
-                          placeholder="Ej: Nervioso con extraños, vacunas al día, castrado..."
-                          th:text="${notasPrev}"></textarea>
             </div>
 
             <hr class="divisor">
 
             <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                 <button type="submit" class="btn btn-primario" style="flex:1; min-width:130px;">
-                    <i class="fa-solid fa-paw"></i> Registrar mascota
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
                 </button>
-                <a th:href="@{/cliente/dashboard}" class="btn btn-outline" style="flex:1; min-width:130px;">
+                <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
+                   class="btn btn-outline" style="flex:1; min-width:130px;">
                     Cancelar
                 </a>
             </div>

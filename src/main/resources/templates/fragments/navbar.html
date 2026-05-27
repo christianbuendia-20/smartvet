@@ -4,6 +4,35 @@
 <body>
 
 <header th:fragment="navbar">
+<style>
+  .sv-pdrop { position: relative; }
+  .sv-pdrop-btn {
+    display: flex; align-items: center; gap: 0.45rem;
+    background: none; border: 1px solid transparent; border-radius: 8px;
+    cursor: pointer; padding: 0.28rem 0.55rem;
+    font-family: inherit; transition: border-color 0.15s, background 0.15s;
+  }
+  .sv-pdrop-btn:hover { border-color: rgba(255,152,0,0.35); background: rgba(255,152,0,0.07); }
+  .sv-pdrop-chevron { font-size: 0.58rem; color: var(--texto-suave); transition: transform 0.2s; }
+  .sv-pdrop.open .sv-pdrop-chevron { transform: rotate(180deg); }
+  .sv-pdrop-menu {
+    position: absolute; right: 0; top: calc(100% + 6px);
+    background: #fff; border: 1px solid #E5E7EB;
+    border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.11);
+    min-width: 164px; padding: 0.35rem; z-index: 1000;
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity 0.16s, transform 0.16s, visibility 0.16s;
+  }
+  .sv-pdrop.open .sv-pdrop-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+  .sv-pdrop-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 0.9rem; border-radius: 7px;
+    color: #1a1a1a; text-decoration: none; font-size: 0.875rem; font-weight: 500;
+    transition: background 0.12s, color 0.12s;
+  }
+  .sv-pdrop-item:hover { background: rgba(255,152,0,0.1); color: var(--primario); text-decoration: none; }
+  .sv-pdrop-item i { color: var(--primario); font-size: 0.82rem; width: 1rem; text-align: center; }
+</style>
 <nav class="navbar">
     <div class="navbar-inner">
 
@@ -65,8 +94,8 @@
                 <a class="nav-link" th:href="@{/admin/pagos/pendientes}">
                     <i class="fa-solid fa-file-invoice-dollar"></i> Pagos
                 </a>
-                <a class="nav-link" th:href="@{/admin/veterinarios/nuevo}">
-                    <i class="fa-solid fa-user-doctor"></i> Veterinarios
+                <a class="nav-link" th:href="@{/admin/mascotas}">
+                    <i class="fa-solid fa-paw"></i> Mascotas
                 </a>
                 <a class="nav-link" th:href="@{/admin/usuarios}">
                     <i class="fa-solid fa-users"></i> Usuarios
@@ -103,21 +132,44 @@
 
         <!-- ── Usuario activo ─────────────────────────────────────────── -->
         <div class="navbar-usuario">
-            <a th:href="@{/perfil}" class="nombre" style="text-decoration:none; color:inherit;">
-                <i class="fa-regular fa-circle-user" style="font-size:0.9rem; color:var(--primario);"></i>
-                <span sec:authentication="principal.nombreCompleto">Usuario</span>
-            </a>
-            <span class="badge-rol"
-                  sec:authentication="principal.rolNombre">rol</span>
+
+            <div class="sv-pdrop" id="svPdrop">
+                <button type="button" class="sv-pdrop-btn" aria-haspopup="true">
+                    <i class="fa-regular fa-circle-user" style="font-size:1.05rem; color:var(--primario);"></i>
+                    <div style="display:flex; flex-direction:column; align-items:flex-start; line-height:1.25;">
+                        <span class="nombre" sec:authentication="principal.nombreCompleto">Usuario</span>
+                        <span class="badge-rol" sec:authentication="principal.rolNombre">rol</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down sv-pdrop-chevron"></i>
+                </button>
+                <div class="sv-pdrop-menu">
+                    <a th:href="@{/perfil}" class="sv-pdrop-item">
+                        <i class="fa-solid fa-user-pen"></i>
+                        Mi Perfil
+                    </a>
+                </div>
+            </div>
+
             <form th:action="@{/auth/logout}" method="post" style="margin:0;">
                 <button type="submit" class="btn-logout">
                     <i class="fa-solid fa-right-from-bracket"></i> Salir
                 </button>
             </form>
+
         </div>
 
     </div>
 </nav>
+<script>
+!function(){
+  var d=document.getElementById('svPdrop');
+  if(!d) return;
+  d.querySelector('.sv-pdrop-btn').addEventListener('click',function(e){
+    e.stopPropagation(); d.classList.toggle('open');
+  });
+  document.addEventListener('click',function(){ d.classList.remove('open'); });
+}();
+</script>
 </header>
 
 </body>

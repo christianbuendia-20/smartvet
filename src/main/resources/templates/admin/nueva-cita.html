@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Nueva Cita</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Nueva Cita</h2>
+            <p>Agenda una cita en nombre de un cliente.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
+    </div>
+
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <!--
+        Fuente de datos: un <option> por mascota activa, con data-propietario.
+        Están dentro de un select oculto; JS los copia al select visible cuando cambia el cliente.
+    -->
+    <select id="mascotaFuente" style="display:none;" aria-hidden="true">
+        <th:block th:each="m : ${mascotas}">
+            <option th:if="${m.activo}"
+                    th:value="${m.idMascota}"
+                    th:text="${m.nombre + ' (' + m.especie + ')'}"
+                    th:attr="data-propietario=${m.propietario.idUsuario}">
+            </option>
+        </th:block>
+    </select>
+
+    <div style="max-width:720px; margin:0 auto;">
+        <form th:action="@{/admin/citas/nueva}" method="post" novalidate>
+
+            <!-- ── Paciente y Propietario ── -->
+            <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-user" style="color:var(--primario);"></i>
+                    Paciente y Propietario
+                </p>
+
+                <div class="form-grupo" style="margin-bottom:1.4rem;">
+                    <label for="idCliente">
+                        Cliente <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <select id="idCliente" name="_clienteSelector">
+                        <option value="" disabled th:selected="${idMascotaPrev == null}">
+                            — Selecciona un cliente —
+                        </option>
+                        <option th:each="c : ${clientes}"
+                                th:value="${c.idUsuario}"
+                                th:text="${c.nombres + ' ' + c.apellidos + ' · ' + c.email}">
+                        </option>
+                    </select>
+                    <span class="hint">Selecciona primero el cliente para ver sus mascotas activas.</span>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="idMascota">
+                        Mascota <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <select id="idMascota" name="idMascota" required>
+                        <option value="" disabled selected>— Selecciona una mascota —</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ── Detalles de la Cita ── -->
+            <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-calendar-check" style="color:var(--primario);"></i>
+                    Detalles de la Cita
+                </p>
+
+                <div class="form-fila" style="gap:1.25rem;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="idVeterinario">
+                            Veterinario <span style="color:var(--rojo);">*</span>
+                        </label>
+                        <select id="idVeterinario" name="idVeterinario" required>
+                            <option value="" disabled selected>— Selecciona un veterinario —</option>
+                            <option th:each="v : ${veterinarios}"
+                                    th:value="${v.idVeterinario}"
+                                    th:text="${v.usuario.nombres + ' ' + v.usuario.apellidos}"
+                                    th:selected="${v.idVeterinario == idVeterinarioPrev}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
+                        <label for="tipoCita">
+                            Tipo de cita <span style="color:var(--rojo);">*</span>
+                        </label>
+                        <select id="tipoCita" name="tipoCita" required>
+                            <option value="" disabled selected>— Selecciona —</option>
+                            <option th:each="t : ${tipos}"
+                                    th:value="${t}"
+                                    th:text="${t}"
+                                    th:selected="${t == tipoPrev}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:1.4rem;">
+                    <label for="fechaHora">
+                        Fecha y hora <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <input type="datetime-local" id="fechaHora" name="fechaHora"
+                           th:value="${fechaHoraPrev}" required>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="motivo">
+                        Motivo de la cita <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <textarea id="motivo" name="motivo" rows="3"
+                              placeholder="Descripción breve del motivo de consulta"
+                              th:text="${motivoPrev}" required></textarea>
+                </div>
+            </div>
+
+            <!-- ── Acciones ── -->
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/citas}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px; font-size:0.875rem;">
+                    <i class="fa-regular fa-calendar-plus"></i> Agendar Cita
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<script>
+(function () {
+    var selCliente  = document.getElementById('idCliente');
+    var selMascota  = document.getElementById('idMascota');
+    var fuente      = document.getElementById('mascotaFuente');
+
+    function poblarMascotas() {
+        var idCliente = parseInt(selCliente.value, 10);
+        selMascota.innerHTML = '<option value="" disabled selected>— Selecciona una mascota —</option>';
+        if (!idCliente) return;
+        Array.from(fuente.options).forEach(function (opt) {
+            if (parseInt(opt.dataset.propietario, 10) === idCliente) {
+                var clon = opt.cloneNode(true);
+                selMascota.appendChild(clon);
+            }
+        });
+    }
+
+    selCliente.addEventListener('change', poblarMascotas);
+})();
+</script>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

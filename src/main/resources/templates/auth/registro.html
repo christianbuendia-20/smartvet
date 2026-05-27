@@ -21,7 +21,7 @@
             <p>Crea tu cuenta de cliente</p>
         </div>
 
-        <!-- Error de registro -->
+        <!-- Error de registro (email duplicado o fallo de envío) -->
         <div class="alerta alerta-error"
              th:if="${errorRegistro}"
              th:text="${errorRegistro}">
@@ -29,7 +29,8 @@
 
         <p class="auth-titulo">Datos personales</p>
 
-        <form th:action="@{/auth/registro}" method="post" novalidate>
+        <form th:action="@{/auth/registro}" method="post" novalidate
+              th:object="${registroForm}">
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -39,9 +40,12 @@
                     <input type="text"
                            id="nombres"
                            name="nombres"
-                           th:value="${nombresPrevio}"
+                           th:value="*{nombres}"
                            placeholder="Ana María"
                            required>
+                    <span class="hint" style="color:var(--rojo);"
+                          th:if="${#fields.hasErrors('nombres')}"
+                          th:errors="*{nombres}"></span>
                 </div>
                 <div class="form-grupo">
                     <label for="apellidos">
@@ -50,9 +54,12 @@
                     <input type="text"
                            id="apellidos"
                            name="apellidos"
-                           th:value="${apellidosPrevio}"
+                           th:value="*{apellidos}"
                            placeholder="García López"
                            required>
+                    <span class="hint" style="color:var(--rojo);"
+                          th:if="${#fields.hasErrors('apellidos')}"
+                          th:errors="*{apellidos}"></span>
                 </div>
             </div>
 
@@ -63,10 +70,13 @@
                 <input type="email"
                        id="email"
                        name="email"
-                       th:value="${emailPrevio}"
+                       th:value="*{email}"
                        placeholder="tucorreo@ejemplo.com"
                        autocomplete="email"
                        required>
+                <span class="hint" style="color:var(--rojo);"
+                      th:if="${#fields.hasErrors('email')}"
+                      th:errors="*{email}"></span>
             </div>
 
             <div class="form-fila">
@@ -75,7 +85,7 @@
                     <input type="text"
                            id="dni"
                            name="dni"
-                           th:value="${dniPrevio}"
+                           th:value="*{dni}"
                            placeholder="12345678"
                            maxlength="20">
                     <span class="hint">Opcional</span>
@@ -85,7 +95,7 @@
                     <input type="tel"
                            id="telefono"
                            name="telefono"
-                           th:value="${telefonoPrevio}"
+                           th:value="*{telefono}"
                            placeholder="999 888 777">
                     <span class="hint">Opcional</span>
                 </div>
@@ -102,7 +112,11 @@
                        autocomplete="new-password"
                        minlength="8"
                        required>
-                <span class="hint">
+                <span class="hint" style="color:var(--rojo);"
+                      th:if="${#fields.hasErrors('password')}"
+                      th:errors="*{password}"></span>
+                <span class="hint"
+                      th:unless="${#fields.hasErrors('password')}">
                     <i class="fa-solid fa-circle-info" style="color:var(--primario);"></i>
                     Mínimo 8 caracteres
                 </span>

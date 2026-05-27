@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="|SmartVet — ${usuario.nombres} ${usuario.apellidos}|">Ver Usuario</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2 th:text="${usuario.nombres + ' ' + usuario.apellidos}">Usuario</h2>
+            <p th:text="${usuario.rol.nombre + ' · ' + (usuario.activo ? 'Activo' : 'Inactivo')}">Rol</p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:nowrap; align-items:center;">
+            <a th:href="@{/admin/usuarios/{id}/editar(id=${usuario.idUsuario})}"
+               class="btn btn-outline" style="white-space:nowrap;">
+                <i class="fa-solid fa-pen-to-square"></i> Editar
+            </a>
+            <a th:href="@{/admin/usuarios}" class="btn btn-outline" style="white-space:nowrap;">
+                ← Usuarios
+            </a>
+        </div>
+    </div>
+
+    <div style="max-width:720px; margin:0 auto;">
+
+        <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
+            <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                <i class="fa-solid fa-user" style="color:var(--primario);"></i>
+                Datos Personales
+            </p>
+            <dl class="ficha-grid">
+                <div>
+                    <dt>Nombres</dt>
+                    <dd th:text="${usuario.nombres}">-</dd>
+                </div>
+                <div>
+                    <dt>Apellidos</dt>
+                    <dd th:text="${usuario.apellidos}">-</dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd th:text="${usuario.email}">-</dd>
+                </div>
+                <div>
+                    <dt>DNI</dt>
+                    <dd th:text="${usuario.dni ?: '—'}">—</dd>
+                </div>
+                <div>
+                    <dt>Teléfono</dt>
+                    <dd th:text="${usuario.telefono ?: '—'}">—</dd>
+                </div>
+                <div>
+                    <dt>Rol</dt>
+                    <dd>
+                        <span class="badge"
+                              th:text="${usuario.rol.nombre}"
+                              th:classappend="${usuario.rol.nombre == 'admin'       ? ' badge-confirmada' :
+                                               usuario.rol.nombre == 'veterinario' ? ' badge-en-curso'   :
+                                                                                     ' badge-programada'}">
+                        </span>
+                    </dd>
+                </div>
+                <div>
+                    <dt>Estado</dt>
+                    <dd>
+                        <span th:if="${usuario.activo}"  style="color:var(--verde); font-weight:600;">Activo</span>
+                        <span th:unless="${usuario.activo}" style="color:var(--rojo); font-weight:600;">Inactivo</span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="tabla-card" style="padding:1.75rem 2rem;" th:if="${direccion != null}">
+            <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                <i class="fa-solid fa-location-dot" style="color:var(--primario);"></i>
+                Dirección
+            </p>
+            <dl class="ficha-grid">
+                <div>
+                    <dt>Dirección</dt>
+                    <dd th:text="${direccion.direccion ?: '—'}">—</dd>
+                </div>
+                <div>
+                    <dt>Referencia</dt>
+                    <dd th:text="${direccion.referencia ?: '—'}">—</dd>
+                </div>
+            </dl>
+        </div>
+
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

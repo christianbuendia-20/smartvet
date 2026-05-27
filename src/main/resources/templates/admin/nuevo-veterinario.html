@@ -12,9 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header">
-        <h2>Registrar Nuevo Veterinario</h2>
-        <p>Crea la cuenta de acceso y el perfil del veterinario. Los campos con * son obligatorios.</p>
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Registrar Nuevo Veterinario</h2>
+            <p>Crea la cuenta de acceso y el perfil del veterinario. Los campos con * son obligatorios.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
     <!-- Error de validación / email duplicado -->
@@ -88,9 +91,11 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-                <button type="submit" class="btn btn-verde">Registrar veterinario</button>
-                <a th:href="@{/admin/dashboard}" class="btn btn-outline">Volver al panel</a>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-verde"
+                        style="flex:1; min-width:130px;">Registrar veterinario</button>
             </div>
 
         </form>

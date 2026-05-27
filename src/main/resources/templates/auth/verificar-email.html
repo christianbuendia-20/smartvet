@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Santa Victoria — Verificar cuenta</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-card" style="max-width: 460px;">
+
+        <!-- Marca -->
+        <div class="auth-brand">
+            <img th:src="@{/img/logo.jpg}"
+                 class="auth-logo-img"
+                 alt="Veterinaria Santa Victoria"
+                 onerror="this.style.display='none'; document.getElementById('authLogoFallback').style.display='flex';">
+            <div id="authLogoFallback" class="auth-logo-fallback" style="display:none;">🐾</div>
+            <h1>Santa Victoria</h1>
+            <span class="auth-brand-sub">Veterinaria</span>
+        </div>
+
+        <!-- Instrucciones -->
+        <div style="text-align:center; margin-bottom:1.5rem;">
+            <div style="font-size:2.75rem; margin-bottom:0.75rem; color:var(--primario);">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+            </div>
+            <p class="auth-titulo" style="margin-bottom:0.5rem;">Verifica tu correo</p>
+            <p style="font-size:0.9rem; color:#6B6B6B; line-height:1.65; margin:0;">
+                Te enviamos un código de <strong>6 dígitos</strong> a tu email.<br>
+                Ingrésalo a continuación para activar tu cuenta.
+            </p>
+        </div>
+
+        <!-- Error OTP -->
+        <div class="alerta alerta-error"
+             th:if="${errorOtp}"
+             th:text="${errorOtp}">
+        </div>
+
+        <form th:action="@{/auth/verificar}" method="post">
+
+            <div class="form-grupo" style="text-align:center;">
+                <label for="codigo" style="font-size:0.85rem; color:#555; display:block; margin-bottom:0.5rem;">
+                    Código de verificación
+                </label>
+                <input type="text"
+                       id="codigo"
+                       name="codigo"
+                       placeholder="000000"
+                       maxlength="6"
+                       pattern="[0-9]{6}"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       autofocus
+                       required
+                       style="text-align:center; font-size:2.25rem; font-weight:700;
+                              letter-spacing:0.4em; padding:0.75rem 1rem; width:100%;
+                              border:2px solid #E0E0E0; border-radius:10px;
+                              color:var(--primario); font-family:monospace;
+                              transition:border-color 0.2s;"
+                       onfocus="this.style.borderColor='var(--primario)'"
+                       onblur="this.style.borderColor='#E0E0E0'">
+                <span class="hint">
+                    <i class="fa-solid fa-circle-info" style="color:var(--primario);"></i>
+                    Solo dígitos numéricos · Válido para una sola verificación
+                </span>
+            </div>
+
+            <button type="submit" class="btn btn-primario" style="margin-top:0.5rem;">
+                <i class="fa-solid fa-circle-check"></i>
+                Verificar cuenta
+            </button>
+
+        </form>
+
+        <hr class="divisor">
+
+        <p class="auth-footer">
+            ¿Ingresaste un email incorrecto?
+            <a th:href="@{/auth/registro}">Volver al registro</a>
+        </p>
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -21,7 +21,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/img/**").permitAll()
-                        .requestMatchers("/", "/auth/login", "/auth/registro").permitAll()
+                        .requestMatchers("/", "/auth/login", "/auth/registro", "/auth/verificar").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("admin")
                         .requestMatchers("/vet/**").hasAuthority("veterinario")
                         .requestMatchers("/cliente/**").hasAuthority("cliente")

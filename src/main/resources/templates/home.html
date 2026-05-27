@@ -775,6 +775,119 @@
             0%, 100% { box-shadow: 0 4px 22px rgba(37,211,102,0.5); }
             50%       { box-shadow: 0 4px 32px rgba(37,211,102,0.7), 0 0 0 12px rgba(37,211,102,0.1); }
         }
+
+        /* ════════════════════════════════════════════════════════════
+           SERVICIOS
+        ════════════════════════════════════════════════════════════ */
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .service-card {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            border: 1px solid var(--gray);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .service-card-img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+        }
+
+        .service-card-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(20,20,20,0.82) 0%, rgba(20,20,20,0.25) 60%, transparent 100%);
+            padding: 2.25rem 1.5rem 1.5rem;
+            color: var(--white);
+        }
+
+        .service-icon {
+            width: 42px; height: 42px;
+            background: var(--orange);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem;
+            color: var(--white);
+            margin-bottom: 0.7rem;
+            box-shadow: 0 2px 12px rgba(255,152,0,0.45);
+        }
+
+        .service-card-overlay h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            line-height: 1.25;
+        }
+
+        .service-card-overlay p {
+            font-size: 0.82rem;
+            opacity: 0.88;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        @media (min-width: 600px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { .services-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        /* ════════════════════════════════════════════════════════════
+           BANNER MARCAS
+        ════════════════════════════════════════════════════════════ */
+        .brands-banner {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .brands-img {
+            width: 100%;
+            aspect-ratio: 21 / 6;
+            object-fit: cover;
+            display: block;
+        }
+
+        .brands-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255,152,0,0.82) 0%, rgba(229,57,53,0.72) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            color: var(--white);
+        }
+
+        .brands-overlay h2 {
+            font-size: clamp(1.3rem, 3.5vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.55rem;
+            line-height: 1.2;
+        }
+
+        .brands-overlay p {
+            font-size: clamp(0.85rem, 1.5vw, 0.97rem);
+            opacity: 0.93;
+            max-width: 540px;
+            line-height: 1.65;
+        }
+
+        /* 4 vets grid en pantallas grandes */
+        @media (min-width: 1100px) { .vets-grid { grid-template-columns: repeat(4, 1fr); } }
     </style>
 </head>
 <body>
@@ -801,6 +914,7 @@
             <nav class="nav-desktop" aria-label="Menú principal">
                 <a class="nav-link" href="#inicio">Inicio</a>
                 <a class="nav-link" href="#conocenos">Conócenos</a>
+                <a class="nav-link" href="#servicios">Servicios</a>
                 <a class="nav-link" href="#veterinarios">Veterinarios</a>
                 <a class="nav-link" href="#sedes">Sedes</a>
             </nav>
@@ -826,6 +940,7 @@
     <div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
         <a class="nav-link" href="#inicio">Inicio</a>
         <a class="nav-link" href="#conocenos">Conócenos</a>
+        <a class="nav-link" href="#servicios">Servicios</a>
         <a class="nav-link" href="#veterinarios">Veterinarios</a>
         <a class="nav-link" href="#sedes">Sedes</a>
         <a th:href="@{/login}" class="btn btn-primary">
@@ -985,6 +1100,90 @@
 
 
 <!-- ════════════════════════════════════════════════════════════
+     SERVICIOS
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="servicios">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag">Lo que ofrecemos</div>
+            <h2 class="section-title">Servicios para tu mascota</h2>
+            <p class="section-subtitle">
+                Atención integral de salud, estética y productos de primera calidad,
+                todo en un solo lugar.
+            </p>
+        </div>
+
+        <div class="services-grid">
+
+            <!-- Baños & Spa -->
+            <div class="service-card">
+                <img th:src="@{/img/baños.png}"
+                     alt="Servicio de baños y spa para mascotas"
+                     class="service-card-img">
+                <div class="service-card-overlay">
+                    <div class="service-icon">
+                        <i class="fa-solid fa-shower"></i>
+                    </div>
+                    <h3>Baños &amp; Spa</h3>
+                    <p>Baño medicado, desparasitación externa y cuidado profundo del pelaje.</p>
+                </div>
+            </div>
+
+            <!-- Grooming Profesional -->
+            <div class="service-card">
+                <img th:src="@{/img/gromer.jpg}"
+                     alt="Grooming y estética profesional para mascotas"
+                     class="service-card-img">
+                <div class="service-card-overlay">
+                    <div class="service-icon">
+                        <i class="fa-solid fa-scissors"></i>
+                    </div>
+                    <h3>Grooming Profesional</h3>
+                    <p>Corte, peinado y estética para que tu mascota luzca espectacular.</p>
+                </div>
+            </div>
+
+            <!-- Pet Shop -->
+            <div class="service-card">
+                <img th:src="@{/img/petshop_1.jpg}"
+                     alt="Pet Shop Veterinaria Santa Victoria"
+                     class="service-card-img">
+                <div class="service-card-overlay">
+                    <div class="service-icon">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <h3>Pet Shop</h3>
+                    <p>Alimentos, accesorios y medicamentos de las mejores marcas del mercado.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     BANNER MARCAS
+════════════════════════════════════════════════════════════ -->
+<section class="section section-alt">
+    <div class="container">
+        <div class="brands-banner">
+            <img th:src="@{/img/marcas_de_productos.jpg}"
+                 alt="Marcas de productos disponibles en Veterinaria Santa Victoria"
+                 class="brands-img">
+            <div class="brands-overlay">
+                <h2>Las mejores marcas, al alcance de tu mascota</h2>
+                <p>
+                    Trabajamos con marcas líderes del mercado para garantizar
+                    la nutrición, salud y bienestar de cada compañero.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
      VETERINARIOS
 ════════════════════════════════════════════════════════════ -->
 <section class="section" id="veterinarios">
@@ -1049,7 +1248,7 @@
             <!-- Veterinario 3 -->
             <div class="vet-card">
                 <img th:src="@{/img/vet5.png}"
-                     alt="Dr. Luis Torres — Dermatología y Nutrición"
+                     alt="Dr. Christian Buendia — Dermatología y Nutrición"
                      class="vet-img"
                      style="object-position: 50% 0%;">
                 <div class="vet-body">
@@ -1065,6 +1264,30 @@
                         </span>
                         <span class="vet-meta-item">
                             <i class="fa-solid fa-graduation-cap"></i> UNT
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Veterinario 4 -->
+            <div class="vet-card">
+                <img th:src="@{/img/vet6.png}"
+                     alt="Dra. Valeria Soto — Odontología Veterinaria"
+                     class="vet-img"
+                     style="object-position: top center;">
+                <div class="vet-body">
+                    <span class="vet-badge">Odontología Veterinaria</span>
+                    <h3 class="vet-name">Dra. Cynthia Calderon </h3>
+                    <p class="vet-bio">
+                        Especialista en salud oral y odontología de pequeños animales.
+                        Prevención y tratamiento de enfermedades bucales.
+                    </p>
+                    <div class="vet-meta">
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-briefcase-medical"></i> 4 años exp.
+                        </span>
+                        <span class="vet-meta-item">
+                            <i class="fa-solid fa-graduation-cap"></i> UPC
                         </span>
                     </div>
                 </div>
@@ -1197,6 +1420,7 @@
                 <ul class="footer-links">
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#conocenos">Conócenos</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
                     <li><a href="#veterinarios">Veterinarios</a></li>
                     <li><a href="#sedes">Sedes</a></li>
                     <li><a th:href="@{/login}">Portal de Clientes</a></li>

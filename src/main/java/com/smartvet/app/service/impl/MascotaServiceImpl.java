@@ -135,6 +135,22 @@ public class MascotaServiceImpl implements MascotaService {
         log.info("Mascota dada de baja: id={}, nombre='{}'", idMascota, mascota.getNombre());
     }
 
+    @Override
+    @Transactional
+    public void activarMascota(Integer idMascota) {
+        Mascota mascota = mascotaRepository.findById(idMascota)
+                .orElseThrow(() -> new MascotaNoEncontradaException(idMascota));
+        mascota.setActivo(true);
+        mascotaRepository.save(mascota);
+        log.info("Mascota reactivada: id={}, nombre='{}'", idMascota, mascota.getNombre());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Mascota> listarTodas() {
+        return mascotaRepository.findAll();
+    }
+
     // ── helpers de mapeo ─────────────────────────────────────────────────────
 
     private Mascota construirMascota(MascotaDTO dto, Usuario propietario) {

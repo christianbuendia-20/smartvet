@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Gestión de Mascotas</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Gestión de Mascotas</h2>
+            <p>Administra las mascotas registradas en el sistema.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+            <a th:href="@{/admin/mascotas/nueva}" class="btn btn-primario"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                <i class="fa-solid fa-plus"></i> Nueva Mascota
+            </a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                ← Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
+
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(mascotas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Especie / Raza</th>
+                    <th>Sexo</th>
+                    <th>Peso</th>
+                    <th>Propietario</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="m : ${mascotas}">
+                    <td th:text="${m.idMascota}">-</td>
+                    <td>
+                        <strong th:text="${m.nombre}">-</strong>
+                        <div th:if="${m.color != null}"
+                             style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${m.color}"></div>
+                    </td>
+                    <td>
+                        <span th:text="${m.especie}">-</span>
+                        <span th:if="${m.raza != null}"
+                              style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' · ' + ${m.raza}"></span>
+                    </td>
+                    <td th:text="${m.sexo}">-</td>
+                    <td th:text="${m.peso != null ? m.peso + ' kg' : '—'}">—</td>
+                    <td>
+                        <span th:text="${m.propietario.nombres + ' ' + m.propietario.apellidos}">-</span>
+                        <div style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${m.propietario.email}">-</div>
+                    </td>
+                    <td>
+                        <span th:if="${m.activo}"
+                              style="color:var(--verde); font-weight:600; font-size:0.82rem;">Activa</span>
+                        <span th:unless="${m.activo}"
+                              style="color:var(--rojo); font-size:0.82rem;">Baja</span>
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/mascotas/{id}/historial(id=${m.idMascota})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-eye"></i> Ver
+                            </a>
+                            <a th:href="@{/admin/mascotas/editar/{id}(id=${m.idMascota})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <form th:if="${m.activo}"
+                                  th:action="@{/admin/mascotas/{id}/baja(id=${m.idMascota})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Dar de baja a esta mascota? Dejará de aparecer en el sistema activo.')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-ban"></i> Dar de baja
+                                </button>
+                            </form>
+                            <form th:unless="${m.activo}"
+                                  th:action="@{/admin/mascotas/{id}/activar(id=${m.idMascota})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Reactivar esta mascota? Volverá a aparecer en el sistema.')">
+                                <button type="submit"
+                                        class="btn btn-verde"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-rotate-left"></i> Activar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(mascotas)}">
+            <span class="icono-vacio">🐾</span>
+            No hay mascotas registradas en el sistema.
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

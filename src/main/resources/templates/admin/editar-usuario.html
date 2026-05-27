@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Santa Victoria — Mi Perfil</title>
+    <title th:text="|SmartVet — Editar ${usuario.nombres}|">SmartVet — Editar Usuario</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
 </head>
 <body>
@@ -12,21 +12,21 @@
 
 <main class="main-content">
 
-    <div class="page-header">
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h2>Mi Perfil</h2>
-            <p>Administra tu información personal</p>
+            <h2 th:text="'Editar — ' + ${usuario.nombres + ' ' + usuario.apellidos}">Editar Usuario</h2>
+            <p th:text="'Rol: ' + ${usuario.rol.nombre} + ' · ' + ${usuario.email}">Email</p>
         </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
-    <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
     <div style="max-width:760px; margin:0 auto;">
-        <form th:action="@{/perfil/actualizar}" method="post" novalidate>
+        <form th:action="@{/admin/usuarios/{id}/editar(id=${usuario.idUsuario})}" method="post" novalidate>
 
-            <!-- ── Tarjeta 1: Datos Personales ───────────────────────────── -->
+            <!-- ── Datos Personales ── -->
             <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.75rem 2rem;">
                 <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
                     <i class="fa-solid fa-user" style="color:var(--primario);"></i>
@@ -35,47 +35,38 @@
 
                 <div class="form-fila" style="gap:1.25rem;">
                     <div class="form-grupo" style="margin-bottom:1.4rem;">
-                        <label for="nombres">
-                            Nombres <span style="color:var(--rojo);">*</span>
-                        </label>
+                        <label for="nombres">Nombres <span style="color:var(--rojo);">*</span></label>
                         <input type="text" id="nombres" name="nombres"
-                               th:value="${nombresPrev ?: usuario.nombres}" required>
+                               th:value="${usuario.nombres}" required>
                     </div>
                     <div class="form-grupo" style="margin-bottom:1.4rem;">
-                        <label for="apellidos">
-                            Apellidos <span style="color:var(--rojo);">*</span>
-                        </label>
+                        <label for="apellidos">Apellidos <span style="color:var(--rojo);">*</span></label>
                         <input type="text" id="apellidos" name="apellidos"
-                               th:value="${apellidosPrev ?: usuario.apellidos}" required>
+                               th:value="${usuario.apellidos}" required>
                     </div>
                 </div>
 
                 <div class="form-grupo" style="margin-bottom:1.4rem;">
-                    <label for="email">
-                        Correo electrónico <span style="color:var(--rojo);">*</span>
-                    </label>
+                    <label for="email">Correo electrónico <span style="color:var(--rojo);">*</span></label>
                     <input type="email" id="email" name="email"
-                           th:value="${emailPrev ?: usuario.email}"
-                           autocomplete="email" required>
+                           th:value="${usuario.email}" autocomplete="off" required>
                 </div>
 
                 <div class="form-fila" style="gap:1.25rem;">
                     <div class="form-grupo" style="margin-bottom:0;">
                         <label for="telefono">Teléfono</label>
                         <input type="tel" id="telefono" name="telefono"
-                               th:value="${telefonoPrev ?: usuario.telefono}"
-                               placeholder="999 888 777">
+                               th:value="${usuario.telefono}" placeholder="999 888 777">
                     </div>
                     <div class="form-grupo" style="margin-bottom:0;">
                         <label for="dni">DNI</label>
                         <input type="text" id="dni" name="dni"
-                               th:value="${dniPrev ?: usuario.dni}"
-                               maxlength="20">
+                               th:value="${usuario.dni}" maxlength="20">
                     </div>
                 </div>
             </div>
 
-            <!-- ── Tarjeta 2: Dirección ───────────────────────────────────── -->
+            <!-- ── Dirección ── -->
             <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
                 <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
                     <i class="fa-solid fa-location-dot" style="color:var(--primario);"></i>
@@ -85,27 +76,27 @@
                 <div class="form-grupo" style="margin-bottom:1.4rem;">
                     <label for="direccion">Dirección</label>
                     <input type="text" id="direccion" name="direccion"
-                           th:value="${direccionPrev ?: direccionActual?.direccion}"
+                           th:value="${direccionActual?.direccion}"
                            placeholder="Ej: Av. Los Olivos 123, San Martín de Porres">
-                    <span class="hint">Opcional. Tu dirección de domicilio.</span>
+                    <span class="hint">Opcional. Dirección de domicilio del cliente.</span>
                 </div>
 
                 <div class="form-grupo" style="margin-bottom:0;">
                     <label for="referencia">Referencia</label>
                     <textarea id="referencia" name="referencia" rows="2"
                               placeholder="Ej: Frente al parque, casa color azul"
-                              th:text="${referenciaPrev ?: direccionActual?.referencia}"></textarea>
-                    <span class="hint">Opcional. Puntos de referencia para llegar.</span>
+                              th:text="${direccionActual?.referencia}"></textarea>
+                    <span class="hint">Opcional. Puntos de referencia.</span>
                 </div>
             </div>
 
-            <!-- ── Acciones ───────────────────────────────────────────────── -->
-            <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-                <a th:href="@{/}" class="btn btn-outline">Cancelar</a>
+            <!-- ── Acciones ── -->
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/usuarios}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
                 <button type="submit" class="btn btn-primario"
-                        style="width:auto; font-size:0.875rem; padding:0.55rem 1.4rem; justify-content:center;">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar cambios
+                        style="flex:1; min-width:130px; font-size:0.875rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
                 </button>
             </div>
 

@@ -13,6 +13,12 @@ public interface UsuarioService {
 
     Usuario registrarCliente(UsuarioRegistroDTO dto);
 
+    /** Registra el cliente con activo=false, pendiente de verificación por email. */
+    Usuario registrarClientePendiente(UsuarioRegistroDTO dto);
+
+    /** Elimina un usuario que quedó en estado pendiente por fallo en el envío. */
+    void eliminarUsuarioPendiente(Integer id);
+
     Usuario registrarVeterinario(UsuarioRegistroDTO dto, String horarioAtencion);
 
     Usuario registrarConRol(UsuarioRegistroDTO dto, String rolNombre);
@@ -32,6 +38,8 @@ public interface UsuarioService {
     Usuario login(LoginDTO dto);
 
     void desactivarUsuario(Integer id);
+
+    void activarUsuario(Integer id);
 
     List<Usuario> listarTodos();
 

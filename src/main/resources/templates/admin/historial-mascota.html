@@ -12,23 +12,32 @@
 
 <main class="main-content">
 
-    <!-- ── Encabezado ────────────────────────────────────────────────────────── -->
     <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2 th:text="'Historial Clínico — ' + ${mascota.nombre}">Historial Clínico</h2>
-            <p th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '') +
-                          ' · Propietario: ' + mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}">
+            <p th:text="${mascota.especie + (mascota.raza != null ? ' · ' + mascota.raza : '')
+                          + ' · Propietario: ' + mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}">
                 Especie · Propietario
             </p>
         </div>
-        <a th:href="@{/vet/dashboard}" class="btn btn-outline">← Volver</a>
+        <div style="display:flex; gap:0.75rem; flex-wrap:nowrap; align-items:center;">
+            <a th:href="@{/admin/mascotas/editar/{id}(id=${mascota.idMascota})}"
+               class="btn btn-outline" style="white-space:nowrap;">
+                <i class="fa-solid fa-pen-to-square"></i> Editar Datos
+            </a>
+            <a th:href="@{/admin/mascotas}" class="btn btn-outline" style="white-space:nowrap;">
+                ← Mascotas
+            </a>
+        </div>
     </div>
 
-    <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
 
-    <!-- ── Ficha de la mascota ────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">🐾 Datos del Paciente</p>
+    <!-- ── Ficha de la mascota ─────────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-paw" style="color:var(--primario);"></i>
+        Datos del Paciente
+    </p>
     <dl class="ficha-grid">
         <div>
             <dt>Especie</dt>
@@ -63,13 +72,22 @@
             <dd th:text="${historia.fechaApertura != null ?
                            #temporals.format(historia.fechaApertura, 'dd/MM/yyyy') : '—'}">—</dd>
         </div>
+        <div>
+            <dt>Estado</dt>
+            <dd>
+                <span th:if="${mascota.activo}" style="color:var(--verde); font-weight:600;">Activa</span>
+                <span th:unless="${mascota.activo}" style="color:var(--rojo); font-weight:600;">Baja</span>
+            </dd>
+        </div>
     </dl>
 
-    <!-- ── Historia clínica ──────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">🗂️ Historia Clínica</p>
+    <!-- ── Historia clínica ───────────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-folder-open" style="color:var(--primario);"></i>
+        Historia Clínica
+    </p>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:2rem;">
 
-        <!-- Alergias -->
         <div class="hc-campo" th:classappend="${historia.alergias != null and !historia.alergias.isBlank() ? ' alerta-campo' : ''}">
             <div class="hc-campo-titulo">⚠ Alergias</div>
             <div th:if="${historia.alergias != null and !historia.alergias.isBlank()}"
@@ -78,7 +96,6 @@
                  class="hc-campo-vacio">Sin alergias registradas</div>
         </div>
 
-        <!-- Enfermedades crónicas -->
         <div class="hc-campo" th:classappend="${historia.enfermedadesCronicas != null and !historia.enfermedadesCronicas.isBlank() ? ' alerta-campo' : ''}">
             <div class="hc-campo-titulo">🩺 Enfermedades crónicas</div>
             <div th:if="${historia.enfermedadesCronicas != null and !historia.enfermedadesCronicas.isBlank()}"
@@ -87,7 +104,6 @@
                  class="hc-campo-vacio">Sin enfermedades crónicas registradas</div>
         </div>
 
-        <!-- Notas generales -->
         <div class="hc-campo" style="grid-column: 1 / -1;">
             <div class="hc-campo-titulo">📝 Notas generales</div>
             <div th:if="${historia.notasGenerales != null and !historia.notasGenerales.isBlank()}"
@@ -106,8 +122,10 @@
         </a>
     </div>
 
-    <!-- ── Consultas previas ──────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">📋 Consultas Previas
+    <!-- ── Consultas previas ──────────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-clipboard-list" style="color:var(--primario);"></i>
+        Consultas Realizadas
         <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
               th:text="'(' + ${#lists.size(consultas)} + ' registros)'"></span>
     </p>

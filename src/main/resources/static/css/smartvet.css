@@ -45,6 +45,9 @@ body {
     color: var(--texto);
     background: var(--bg);
     line-height: 1.65;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 a { color: var(--primario); text-decoration: none; }
@@ -404,6 +407,8 @@ a:hover { text-decoration: underline; }
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1.5rem;
+    flex: 1;
+    width: 100%;
 }
 
 .page-header { margin-bottom: 1.75rem; }

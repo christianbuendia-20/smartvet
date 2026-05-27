@@ -207,6 +207,12 @@ public class CitaServiceImpl implements CitaService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarTodas() {
+        return citaRepository.findAllWithDetalle();
+    }
+
     // ── lógica de disponibilidad ──────────────────────────────────────────────
 
     private void validarDisponibilidadVeterinario(Integer idVeterinario, LocalDateTime fechaHora) {

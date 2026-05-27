@@ -1,6 +1,8 @@
 package com.smartvet.app.controller;
 
+import com.smartvet.app.dto.CitaAgendamientoDTO;
 import com.smartvet.app.dto.PagoRegistroDTO;
+import com.smartvet.app.dto.PerfilUpdateDTO;
 import com.smartvet.app.dto.ProductoRegistroDTO;
 import com.smartvet.app.dto.UsuarioRegistroDTO;
 import com.smartvet.app.exception.EmailDuplicadoException;
@@ -8,16 +10,21 @@ import com.smartvet.app.exception.EstadoInvalidoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
 import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.EstadoCita;
+import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.MetodoPago;
 import com.smartvet.app.model.PagoCita;
 import com.smartvet.app.model.Producto;
+import com.smartvet.app.model.TipoCita;
 import com.smartvet.app.model.TipoProducto;
 import com.smartvet.app.model.Usuario;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.MascotaService;
 import com.smartvet.app.service.PagoService;
 import com.smartvet.app.service.ProductoService;
 import com.smartvet.app.service.UsuarioService;
+
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,16 +46,19 @@ import java.util.List;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final CitaService    citaService;
-    private final PagoService    pagoService;
+    private final CitaService     citaService;
+    private final MascotaService  mascotaService;
+    private final PagoService     pagoService;
     private final ProductoService productoService;
     private final UsuarioService  usuarioService;
 
     public AdminController(CitaService citaService,
+                           MascotaService mascotaService,
                            PagoService pagoService,
                            ProductoService productoService,
                            UsuarioService usuarioService) {
         this.citaService     = citaService;
+        this.mascotaService  = mascotaService;
         this.pagoService     = pagoService;
         this.productoService = productoService;
         this.usuarioService  = usuarioService;
@@ -59,14 +69,16 @@ public class AdminController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         List<Cita>        citasHoy        = citaService.listarCitasDeHoy();
+        List<Cita>        todasCitas      = citaService.listarTodas();
         List<Producto>    stockBajo       = productoService.listarConStockBajo();
         List<Veterinario> veterinarios    = citaService.listarVeterinariosParaCita();
         int               pagosPendientes = pagoService.listarCitasCompletadasSinPago().size();
 
-        model.addAttribute("citasHoy",         citasHoy);
-        model.addAttribute("totalCitasHoy",    citasHoy.size());
-        model.addAttribute("totalProgramadas", citaService.contarPorEstado(citasHoy, EstadoCita.PROGRAMADA));
-        model.addAttribute("totalEnCurso",     citaService.contarPorEstado(citasHoy, EstadoCita.EN_CURSO));
+        model.addAttribute("citasHoy",            citasHoy);
+        model.addAttribute("todasCitas",          todasCitas);
+        model.addAttribute("totalCitasHoy",       citasHoy.size());
+        model.addAttribute("totalProgramadas",    citaService.contarPorEstado(citasHoy, EstadoCita.PROGRAMADA));
+        model.addAttribute("totalEnCurso",        citaService.contarPorEstado(citasHoy, EstadoCita.EN_CURSO));
         model.addAttribute("productosStockBajo",  stockBajo);
         model.addAttribute("totalStockBajo",      stockBajo.size());
         model.addAttribute("veterinarios",        veterinarios);
@@ -148,6 +160,19 @@ public class AdminController {
         model.addAttribute("busqueda",        busqueda != null ? busqueda : "");
         model.addAttribute("countStockBajo",  countStockBajo);
         return "admin/productos";
+    }
+
+    @GetMapping("/productos/{id}")
+    public String verProducto(@PathVariable Integer id,
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("producto", productoService.buscarPorId(id));
+            return "admin/ver-producto";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/productos";
+        }
     }
 
     @GetMapping("/productos/nuevo")
@@ -264,6 +289,20 @@ public class AdminController {
         return "admin/usuarios";
     }
 
+    @GetMapping("/usuarios/{id}")
+    public String verUsuario(@PathVariable Integer id,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("usuario",   usuarioService.buscarPorId(id));
+            model.addAttribute("direccion", usuarioService.buscarDireccion(id).orElse(null));
+            return "admin/ver-usuario";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/usuarios";
+        }
+    }
+
     @PostMapping("/usuarios/{id}/rol")
     public String cambiarRolUsuario(@PathVariable Integer id,
                                      @RequestParam String nuevoRol,
@@ -317,6 +356,157 @@ public class AdminController {
             model.addAttribute("rolPrev",       rol);
             return "admin/nuevo-usuario";
         }
+    }
+
+    // ── Gestión de veterinarios ───────────────────────────────────────────────
+
+    // ── Listado completo de citas ─────────────────────────────────────────────
+
+    @GetMapping("/citas")
+    public String listarTodasCitas(Model model) {
+        List<Cita> citas = citaService.listarTodas();
+        model.addAttribute("citas",   citas);
+        model.addAttribute("estados", EstadoCita.values());
+        return "admin/citas";
+    }
+
+    @GetMapping("/citas/{id}")
+    public String verCita(@PathVariable Integer id,
+                           Model model,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("cita", citaService.buscarPorId(id));
+            return "admin/ver-cita";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/citas";
+        }
+    }
+
+    // ── Agendar nueva cita (en nombre de un cliente) ──────────────────────────
+
+    @GetMapping("/citas/nueva")
+    public String mostrarFormNuevaCita(Model model) {
+        List<Usuario>    clientes     = usuarioService.listarClientes();
+        List<Mascota>    mascotas     = mascotaService.listarTodas();
+        List<Veterinario> veterinarios = citaService.listarVeterinariosParaCita();
+        model.addAttribute("clientes",     clientes);
+        model.addAttribute("mascotas",     mascotas);
+        model.addAttribute("veterinarios", veterinarios);
+        model.addAttribute("tipos",        TipoCita.values());
+        return "admin/nueva-cita";
+    }
+
+    @PostMapping("/citas/nueva")
+    public String agendarCitaAdmin(@RequestParam Integer idMascota,
+                                    @RequestParam Integer idVeterinario,
+                                    @RequestParam TipoCita tipoCita,
+                                    @RequestParam String fechaHora,
+                                    @RequestParam String motivo,
+                                    RedirectAttributes redirectAttributes,
+                                    Model model) {
+        try {
+            LocalDateTime fechaHoraDT = LocalDateTime.parse(
+                    fechaHora.length() == 16 ? fechaHora + ":00" : fechaHora);
+            CitaAgendamientoDTO dto = new CitaAgendamientoDTO(idMascota, idVeterinario, tipoCita, fechaHoraDT, motivo);
+            Cita guardada = citaService.programarCita(dto);
+            log.info("Admin agendó cita: id={}, mascota_id={}, veterinario_id={}",
+                    guardada.getIdCita(), idMascota, idVeterinario);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Cita #" + guardada.getIdCita() + " agendada correctamente.");
+            return "redirect:/admin/citas";
+        } catch (Exception ex) {
+            log.warn("Error al agendar cita: {}", ex.getMessage());
+            model.addAttribute("errorForm",    ex.getMessage());
+            model.addAttribute("clientes",     usuarioService.listarClientes());
+            model.addAttribute("mascotas",     mascotaService.listarTodas());
+            model.addAttribute("veterinarios", citaService.listarVeterinariosParaCita());
+            model.addAttribute("tipos",        TipoCita.values());
+            model.addAttribute("idMascotaPrev",     idMascota);
+            model.addAttribute("idVeterinarioPrev", idVeterinario);
+            model.addAttribute("tipoPrev",          tipoCita);
+            model.addAttribute("fechaHoraPrev",     fechaHora);
+            model.addAttribute("motivoPrev",        motivo);
+            return "admin/nueva-cita";
+        }
+    }
+
+    // ── Editar datos personales de un usuario ─────────────────────────────────
+
+    @GetMapping("/usuarios/{id}/editar")
+    public String mostrarFormEditarUsuario(@PathVariable Integer id,
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            Usuario usuario = usuarioService.buscarPorId(id);
+            model.addAttribute("usuario",        usuario);
+            model.addAttribute("direccionActual", usuarioService.buscarDireccion(id).orElse(null));
+            return "admin/editar-usuario";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/usuarios";
+        }
+    }
+
+    @PostMapping("/usuarios/{id}/editar")
+    public String editarUsuario(@PathVariable Integer id,
+                                 @RequestParam String nombres,
+                                 @RequestParam String apellidos,
+                                 @RequestParam String email,
+                                 @RequestParam(required = false) String telefono,
+                                 @RequestParam(required = false) String dni,
+                                 @RequestParam(required = false) String direccion,
+                                 @RequestParam(required = false) String referencia,
+                                 RedirectAttributes redirectAttributes,
+                                 Model model) {
+        try {
+            PerfilUpdateDTO dto = new PerfilUpdateDTO(nombres, apellidos, email, telefono, dni, direccion, referencia);
+            usuarioService.actualizarPerfil(id, dto);
+            log.info("Admin editó usuario: id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Datos de " + nombres + " " + apellidos + " actualizados.");
+            return "redirect:/admin/usuarios";
+        } catch (EmailDuplicadoException ex) {
+            log.warn("Admin: email duplicado al editar usuario_id={}: {}", id, ex.getMessage());
+            model.addAttribute("errorForm",      ex.getMessage());
+            model.addAttribute("direccionActual", usuarioService.buscarDireccion(id).orElse(null));
+            try {
+                model.addAttribute("usuario", usuarioService.buscarPorId(id));
+            } catch (Exception ignored) { /* no encontrado */ }
+            return "admin/editar-usuario";
+        }
+    }
+
+    // ── Desactivar / Activar usuario ─────────────────────────────────────────
+
+    @PostMapping("/usuarios/{id}/desactivar")
+    public String desactivarUsuario(@PathVariable Integer id,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            usuarioService.desactivarUsuario(id);
+            log.info("Admin desactivó usuario: id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Usuario #" + id + " desactivado. Ya no podrá iniciar sesión.");
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al desactivar usuario_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/usuarios";
+    }
+
+    @PostMapping("/usuarios/{id}/activar")
+    public String activarUsuario(@PathVariable Integer id,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            usuarioService.activarUsuario(id);
+            log.info("Admin activó usuario: id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Usuario #" + id + " reactivado. Ya puede iniciar sesión.");
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al activar usuario_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/usuarios";
     }
 
     // ── Gestión de veterinarios ───────────────────────────────────────────────

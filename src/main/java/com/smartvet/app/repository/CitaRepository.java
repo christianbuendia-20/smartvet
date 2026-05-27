@@ -81,6 +81,14 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
            "JOIN FETCH m.propietario " +
            "JOIN FETCH c.veterinario v " +
            "JOIN FETCH v.usuario " +
+           "ORDER BY c.fechaHora DESC")
+    List<Cita> findAllWithDetalle();
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
            "WHERE c.estado = :estadoCita " +
            "AND NOT EXISTS (" +
            "    SELECT p FROM PagoCita p WHERE p.cita = c AND p.estado = :estadoPago" +

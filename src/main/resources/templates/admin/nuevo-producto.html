@@ -12,9 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header">
-        <h2>Registrar Producto</h2>
-        <p>Agrega un nuevo producto o medicamento al inventario. Los campos marcados con * son obligatorios.</p>
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Registrar Producto</h2>
+            <p>Agrega un nuevo producto o medicamento al inventario. Los campos marcados con * son obligatorios.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
@@ -124,9 +127,11 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                <button type="submit" class="btn btn-verde">Registrar producto</button>
-                <a th:href="@{/admin/productos}" class="btn btn-outline">Cancelar</a>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/productos}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-verde"
+                        style="flex:1; min-width:130px;">Registrar producto</button>
             </div>
 
         </form>

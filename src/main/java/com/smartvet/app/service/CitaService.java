@@ -46,4 +46,6 @@ public interface CitaService {
     List<Cita> listarProximasCitasPorVeterinario(Integer idUsuario);
 
     Cita reasignarVeterinario(Integer idCita, Integer idVeterinario);
+
+    List<Cita> listarTodas();
 }

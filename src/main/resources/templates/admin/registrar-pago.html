@@ -17,7 +17,7 @@
             <h2>Registrar Pago</h2>
             <p>Cita #<span th:text="${cita.idCita}">0</span></p>
         </div>
-        <a th:href="@{/admin/pagos/pendientes}" class="btn btn-outline">← Volver a Pagos Pendientes</a>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
     <!-- Error -->
@@ -107,8 +107,10 @@
 
             <!-- Botones (full width) -->
             <div style="grid-column: 1 / -1; display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
-                <button type="submit" class="btn btn-verde">✅ Confirmar Pago</button>
-                <a th:href="@{/admin/pagos/pendientes}" class="btn btn-outline">Cancelar</a>
+                <a th:href="@{/admin/pagos/pendientes}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-verde"
+                        style="flex:1; min-width:130px;">✅ Confirmar Pago</button>
             </div>
 
         </form>

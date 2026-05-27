@@ -12,12 +12,21 @@
 
 <main class="main-content">
 
-    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2>Inventario</h2>
             <p>Gestión de productos, medicamentos y stock disponible.</p>
         </div>
-        <a th:href="@{/admin/productos/nuevo}" class="btn btn-verde">+ Nuevo Producto</a>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+            <a th:href="@{/admin/productos/nuevo}" class="btn btn-primario"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                <i class="fa-solid fa-plus"></i> Nuevo Producto
+            </a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                ← Dashboard
+            </a>
+        </div>
     </div>
 
     <!-- Mensajes flash -->
@@ -61,6 +70,7 @@
                     <th>Unidad</th>
                     <th>Receta</th>
                     <th>Reponer pedido</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,6 +114,13 @@
                                 + Reponer
                             </button>
                         </form>
+                    </td>
+                    <td>
+                        <a th:href="@{/admin/productos/{id}(id=${producto.idProducto})}"
+                           class="btn btn-gris"
+                           style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </a>
                     </td>
 
                 </tr>

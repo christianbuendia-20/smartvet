@@ -17,7 +17,7 @@
             <h2>Crear Nuevo Usuario</h2>
             <p>Registra un usuario con cualquier rol del sistema. Los campos con * son obligatorios.</p>
         </div>
-        <a th:href="@{/admin/usuarios}" class="btn btn-outline">← Volver</a>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
@@ -104,12 +104,13 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                <button type="submit" class="btn btn-primario">
-                    <i class="fa-solid fa-user-plus"></i>
-                    Crear usuario
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/usuarios}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-user-plus"></i> Crear usuario
                 </button>
-                <a th:href="@{/admin/usuarios}" class="btn btn-outline">Cancelar</a>
             </div>
 
         </form>

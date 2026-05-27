@@ -12,16 +12,20 @@
 
 <main class="main-content">
 
-    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2>Gestión de Usuarios</h2>
             <p>Consulta y cambia el rol de cada usuario registrado en el sistema.</p>
         </div>
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primario">
-                <i class="fa-solid fa-user-plus"></i> Crear usuario
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+            <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primario"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
             </a>
-            <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Volver al Dashboard</a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                ← Dashboard
+            </a>
         </div>
     </div>
 
@@ -41,6 +45,7 @@
                     <th>Estado</th>
                     <th>Rol actual</th>
                     <th>Cambiar rol</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,6 +87,40 @@
                                 Guardar
                             </button>
                         </form>
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/usuarios/{id}(id=${usuario.idUsuario})}"
+                               class="btn btn-gris"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-eye"></i> Ver
+                            </a>
+                            <a th:href="@{/admin/usuarios/{id}/editar(id=${usuario.idUsuario})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <form th:if="${usuario.activo}"
+                                  th:action="@{/admin/usuarios/{id}/desactivar(id=${usuario.idUsuario})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Desactivar a este usuario? Ya no podrá iniciar sesión.')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-user-xmark"></i> Desactivar
+                                </button>
+                            </form>
+                            <form th:unless="${usuario.activo}"
+                                  th:action="@{/admin/usuarios/{id}/activar(id=${usuario.idUsuario})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Reactivar a este usuario? Podrá volver a iniciar sesión.')">
+                                <button type="submit"
+                                        class="btn btn-verde"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-user-check"></i> Activar
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             </tbody>

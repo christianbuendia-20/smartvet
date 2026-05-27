@@ -26,4 +26,8 @@ public interface MascotaService {
     HistoriaClinica actualizarHistoriaClinica(Integer idMascota, HistoriaClinicaUpdateDTO dto);
 
     void darDeBaja(Integer idMascota);
+
+    void activarMascota(Integer idMascota);
+
+    List<Mascota> listarTodas();
 }

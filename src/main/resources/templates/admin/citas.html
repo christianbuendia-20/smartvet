@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Gestión de Citas</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Gestión de Citas</h2>
+            <p>Todas las citas registradas en el sistema.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+            <a th:href="@{/admin/citas/nueva}" class="btn btn-primario"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                <i class="fa-regular fa-calendar-plus"></i> Nueva Cita
+            </a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+               style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+                ← Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
+
+    <div class="tabla-card">
+        <table th:if="${not #lists.isEmpty(citas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Mascota</th>
+                    <th>Propietario</th>
+                    <th>Veterinario</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${citas}">
+                    <td th:text="${c.idCita}">-</td>
+                    <td>
+                        <strong th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <div style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${#temporals.format(c.fechaHora, 'HH:mm')}">-</div>
+                    </td>
+                    <td>
+                        <strong th:text="${c.mascota.nombre}">-</strong>
+                        <div style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${c.mascota.especie}">-</div>
+                    </td>
+                    <td th:text="${c.mascota.propietario.nombres + ' ' + c.mascota.propietario.apellidos}">-</td>
+                    <td th:text="${c.veterinario.usuario.nombres + ' ' + c.veterinario.usuario.apellidos}">-</td>
+                    <td>
+                        <span style="font-size:0.82rem;" th:text="${c.tipoCita}">-</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:text="${c.estado}"
+                              th:classappend="${c.estado.name() == 'PROGRAMADA'  ? ' badge-programada'  :
+                                               c.estado.name() == 'CONFIRMADA'  ? ' badge-confirmada'  :
+                                               c.estado.name() == 'EN_CURSO'    ? ' badge-en-curso'    :
+                                               c.estado.name() == 'COMPLETADA'  ? ' badge-completada'  :
+                                               c.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
+                                                                                   ' badge-no-asistio'}">
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/citas/{id}(id=${c.idCita})}"
+                               class="btn btn-gris"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-eye"></i> Ver
+                            </a>
+                            <a th:if="${c.estado.name() != 'COMPLETADA' and
+                                       c.estado.name() != 'CANCELADA'  and
+                                       c.estado.name() != 'NO_ASISTIO'}"
+                               th:href="@{/admin/citas/editar/{id}(id=${c.idCita})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <form th:if="${c.estado.name() != 'COMPLETADA' and
+                                          c.estado.name() != 'CANCELADA'  and
+                                          c.estado.name() != 'NO_ASISTIO'}"
+                                  th:action="@{/admin/citas/cancelar/{id}(id=${c.idCita})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Cancelar esta cita?')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-ban"></i> Cancelar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(citas)}">
+            <span class="icono-vacio">📭</span>
+            No hay citas registradas en el sistema.
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

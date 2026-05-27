@@ -12,19 +12,14 @@
 
 <main class="main-content">
 
-    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
-            <h2>Panel de Administración</h2>
-            <p>Estadísticas globales del sistema SmartVet</p>
-        </div>
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <a th:href="@{/admin/productos/nuevo}" class="btn btn-outline">+ Nuevo Producto</a>
-            <a th:href="@{/admin/veterinarios/nuevo}" class="btn btn-verde">+ Nuevo Veterinario</a>
-        </div>
+    <div class="page-header">
+        <h2>Panel de Administración</h2>
+        <p>Estadísticas globales del sistema SmartVet</p>
     </div>
 
     <!-- Mensaje flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
     <!-- ── Tarjetas de estadísticas ───────────────────────────────────────── -->
     <div class="stats-grid">
@@ -38,7 +33,7 @@
         <div class="stat-card verde">
             <span class="stat-icono">🕐</span>
             <span class="stat-numero" th:text="${totalProgramadas}">0</span>
-            <span class="stat-label">Programadas</span>
+            <span class="stat-label">Programadas hoy</span>
         </div>
 
         <div class="stat-card" th:classappend="${totalEnCurso > 0 ? ' naranja' : ''}">
@@ -70,8 +65,85 @@
 
     </div>
 
-    <!-- ── Citas de hoy ───────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">📅 Citas de Hoy</p>
+    <!-- ── Módulo de Ingreso Directo ──────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-bolt" style="color:var(--primario);"></i>
+        Módulo de Ingreso Directo
+    </p>
+    <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:2rem;">
+        <a th:href="@{/admin/mascotas/nueva}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.6rem 1.25rem;">
+            <i class="fa-solid fa-paw"></i> Nueva Mascota
+        </a>
+        <a th:href="@{/admin/citas/nueva}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.6rem 1.25rem;">
+            <i class="fa-regular fa-calendar-plus"></i> Nueva Cita
+        </a>
+        <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.6rem 1.25rem;">
+            <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
+        </a>
+        <a th:href="@{/admin/productos/nuevo}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.6rem 1.25rem;">
+            <i class="fa-solid fa-box"></i> Nuevo Producto
+        </a>
+        <a th:href="@{/admin/veterinarios/nuevo}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.6rem 1.25rem;">
+            <i class="fa-solid fa-user-doctor"></i> Nuevo Veterinario
+        </a>
+    </div>
+
+    <!-- ── Gestión Completa ───────────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-sliders" style="color:var(--primario);"></i>
+        Gestión Completa
+    </p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
+        <a th:href="@{/admin/mascotas}" style="text-decoration:none;">
+            <div class="accion-card">
+                <span class="accion-icono">🐾</span>
+                <div>
+                    <div class="accion-titulo">Mascotas</div>
+                    <div class="accion-desc">Registrar, editar y dar de baja mascotas</div>
+                </div>
+            </div>
+        </a>
+        <a th:href="@{/admin/citas}" style="text-decoration:none;">
+            <div class="accion-card">
+                <span class="accion-icono">📅</span>
+                <div>
+                    <div class="accion-titulo">Citas</div>
+                    <div class="accion-desc">Ver todas las citas, agendar y cancelar</div>
+                </div>
+            </div>
+        </a>
+        <a th:href="@{/admin/usuarios}" style="text-decoration:none;">
+            <div class="accion-card">
+                <span class="accion-icono">👥</span>
+                <div>
+                    <div class="accion-titulo">Clientes</div>
+                    <div class="accion-desc">Editar datos personales y gestionar cuentas</div>
+                </div>
+            </div>
+        </a>
+        <a th:href="@{/admin/productos}" style="text-decoration:none;">
+            <div class="accion-card">
+                <span class="accion-icono">📦</span>
+                <div>
+                    <div class="accion-titulo">Inventario</div>
+                    <div class="accion-desc">Productos, stock y reposición</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- ── Citas de Hoy ───────────────────────────────────────────────────── -->
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-calendar-day" style="color:var(--primario);"></i>
+        Citas de Hoy
+        <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
+              th:text="'(' + ${totalCitasHoy} + ' registros)'"></span>
+    </p>
     <div class="tabla-card">
         <table th:if="${not #lists.isEmpty(citasHoy)}">
             <thead>
@@ -117,7 +189,7 @@
                             <a th:href="@{/admin/citas/editar/{id}(id=${cita.idCita})}"
                                class="btn btn-outline"
                                style="padding:0.25rem 0.75rem; font-size:0.78rem;">
-                                ✏️ Editar
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
                             </a>
                             <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}"
                                   method="post"
@@ -125,7 +197,7 @@
                                 <button type="submit"
                                         class="btn btn-rojo"
                                         style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer;">
-                                    ✕ Cancelar
+                                    <i class="fa-solid fa-ban"></i> Cancelar
                                 </button>
                             </form>
                         </div>
@@ -143,8 +215,92 @@
         </div>
     </div>
 
+    <!-- ── Todas las Citas Programadas ───────────────────────────────────── -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+        <p class="seccion-titulo" style="margin-bottom:0;">
+            <i class="fa-solid fa-calendar-check" style="color:var(--primario);"></i>
+            Citas Programadas y Confirmadas
+            <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
+                  th:text="'(' + ${#lists.size(todasCitas.?[estado.name() == 'PROGRAMADA' or estado.name() == 'CONFIRMADA'])} + ' activas)'"></span>
+        </p>
+        <a th:href="@{/admin/citas}" class="btn btn-outline"
+           style="font-size:0.82rem; width:auto; padding:0.4rem 1rem;">
+            Ver todas las citas →
+        </a>
+    </div>
+    <div class="tabla-card">
+        <table th:with="citasActivas=${todasCitas.?[estado.name() == 'PROGRAMADA' or estado.name() == 'CONFIRMADA']}"
+               th:if="${not #lists.isEmpty(citasActivas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Mascota</th>
+                    <th>Propietario</th>
+                    <th>Veterinario</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cita : ${todasCitas}"
+                    th:if="${cita.estado.name() == 'PROGRAMADA' or cita.estado.name() == 'CONFIRMADA'}">
+                    <td th:text="${cita.idCita}">-</td>
+                    <td>
+                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                        <div style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">-</div>
+                    </td>
+                    <td>
+                        <strong th:text="${cita.mascota.nombre}">-</strong>
+                        <span style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                    </td>
+                    <td th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
+                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+                    <td>
+                        <span style="font-size:0.82rem;" th:text="${cita.tipoCita}">-</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:text="${cita.estado}"
+                              th:classappend="${cita.estado.name() == 'PROGRAMADA' ? ' badge-programada' : ' badge-confirmada'}">
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/citas/editar/{id}(id=${cita.idCita})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Cancelar esta cita?')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-ban"></i> Cancelar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="tabla-vacia"
+             th:if="${#lists.isEmpty(todasCitas.?[estado.name() == 'PROGRAMADA' or estado.name() == 'CONFIRMADA'])}">
+            <span class="icono-vacio">✅</span>
+            No hay citas programadas o confirmadas pendientes.
+        </div>
+    </div>
+
     <!-- ── Veterinarios registrados ──────────────────────────────────────── -->
-    <p class="seccion-titulo">👨‍⚕️ Veterinarios Registrados</p>
+    <p class="seccion-titulo">
+        <i class="fa-solid fa-user-doctor" style="color:var(--primario);"></i>
+        Veterinarios Registrados
+    </p>
     <div class="tabla-card">
         <table th:if="${not #lists.isEmpty(veterinarios)}">
             <thead>
@@ -179,8 +335,12 @@
     <!-- ── Alerta de inventario bajo ─────────────────────────────────────── -->
     <div th:if="${totalStockBajo > 0}">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
-            <p class="seccion-titulo" style="margin-bottom:0;">⚠️ Alerta de Inventario</p>
-            <a th:href="@{/admin/productos}" class="btn btn-outline" style="font-size:0.82rem;">
+            <p class="seccion-titulo" style="margin-bottom:0;">
+                <i class="fa-solid fa-triangle-exclamation" style="color:var(--primario);"></i>
+                Alerta de Inventario
+            </p>
+            <a th:href="@{/admin/productos}" class="btn btn-outline"
+               style="font-size:0.82rem; width:auto; padding:0.4rem 1rem;">
                 Ver inventario completo
             </a>
         </div>
