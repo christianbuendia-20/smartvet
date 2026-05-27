@@ -12,11 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header">
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2>Mi Perfil</h2>
             <p>Administra tu información personal</p>
         </div>
+        <a th:href="@{/}" class="btn btn-outline">← Volver</a>
     </div>
 
     <!-- Mensajes flash -->
@@ -100,12 +101,12 @@
             </div>
 
             <!-- ── Acciones ───────────────────────────────────────────────── -->
-            <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-                <a th:href="@{/}" class="btn btn-outline">Cancelar</a>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
                 <button type="submit" class="btn btn-primario"
-                        style="width:auto; font-size:0.875rem; padding:0.55rem 1.4rem; justify-content:center;">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar cambios
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
                 </button>
             </div>
 

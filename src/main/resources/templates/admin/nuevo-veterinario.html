@@ -27,7 +27,10 @@
         <form th:action="@{/admin/veterinarios/nuevo}" method="post">
 
             <!-- Datos de acceso -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">🔑 Credenciales de acceso</p>
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-lock" style="color:var(--primario);"></i>
+                Credenciales de acceso
+            </p>
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -48,7 +51,10 @@
             <hr class="divisor">
 
             <!-- Datos personales -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">👤 Datos personales</p>
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-user" style="color:var(--primario);"></i>
+                Datos personales
+            </p>
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -79,7 +85,10 @@
             <hr class="divisor">
 
             <!-- Perfil veterinario -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">🩺 Perfil veterinario</p>
+            <p class="seccion-titulo" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-stethoscope" style="color:var(--primario);"></i>
+                Perfil veterinario
+            </p>
 
             <div class="form-grupo">
                 <label for="horarioAtencion">Horario de atención <span class="hint" style="font-weight:400;">(opcional)</span></label>
@@ -94,8 +103,10 @@
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
                 <a th:href="@{/admin/dashboard}" class="btn btn-outline"
                    style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
-                <button type="submit" class="btn btn-verde"
-                        style="flex:1; min-width:130px;">Registrar veterinario</button>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-user-doctor"></i> Registrar veterinario
+                </button>
             </div>
 
         </form>

@@ -21,6 +21,15 @@
             <p>Crea tu cuenta de cliente</p>
         </div>
 
+        <!-- Volver al login -->
+        <div style="margin-bottom:1.25rem;">
+            <a th:href="@{/auth/login}" class="btn btn-outline"
+               style="width:100%; justify-content:center; gap:0.6rem;">
+                <i class="fa-solid fa-arrow-left"></i>
+                Volver a iniciar sesión
+            </a>
+        </div>
+
         <!-- Error de registro (email duplicado o fallo de envío) -->
         <div class="alerta alerta-error"
              th:if="${errorRegistro}"

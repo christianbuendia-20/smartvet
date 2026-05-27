@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/img/**").permitAll()
                         .requestMatchers("/", "/auth/login", "/auth/registro", "/auth/verificar").permitAll()
+                        .requestMatchers("/recuperar-password", "/verificar-recuperacion", "/restablecer-password").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("admin")
                         .requestMatchers("/vet/**").hasAuthority("veterinario")
                         .requestMatchers("/cliente/**").hasAuthority("cliente")

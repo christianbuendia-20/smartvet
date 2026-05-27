@@ -45,6 +45,26 @@ public class VerificacionOtpServiceImpl implements VerificacionOtpService {
     }
 
     @Override
+    @Transactional
+    public void crearYEnviarRecuperacion(Usuario usuario) {
+        otpRepository.deleteByUsuario_IdUsuario(usuario.getIdUsuario());
+
+        String codigo = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+
+        VerificacionOtp otp = new VerificacionOtp();
+        otp.setUsuario(usuario);
+        otp.setCodigo(codigo);
+        otpRepository.save(otp);
+
+        emailService.enviarRecuperacionContrasena(
+                usuario.getEmail(),
+                usuario.getNombres() + " " + usuario.getApellidos(),
+                codigo);
+
+        log.info("OTP de recuperación creado y correo enviado para usuario_id={}", usuario.getIdUsuario());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean verificar(Integer idUsuario, String codigoIngresado) {
         return otpRepository.findByUsuario_IdUsuario(idUsuario)

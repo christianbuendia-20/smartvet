@@ -40,7 +40,7 @@
         <div class="tabla-card" style="padding:2rem; max-width:760px;">
 
             <p class="seccion-titulo" style="margin-top:0;">
-                <i class="fa-solid fa-triangle-exclamation" style="color:var(--naranja);"></i>
+                <i class="fa-solid fa-triangle-exclamation" style="color:var(--primario);"></i>
                 Alergias conocidas
             </p>
 
@@ -94,12 +94,13 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                <button type="submit" class="btn btn-primario">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar historia clínica
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="${returnUrl}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar historia clínica
                 </button>
-                <a th:href="${returnUrl}" class="btn btn-outline">Cancelar</a>
             </div>
 
         </div>

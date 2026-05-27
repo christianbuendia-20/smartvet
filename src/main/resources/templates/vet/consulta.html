@@ -18,7 +18,7 @@
             <p>Completa el diagnóstico y, opcionalmente, genera una receta con medicamentos.</p>
         </div>
         <a th:href="@{/vet/historial/{id}(id=${cita.mascota.idMascota})}" class="btn btn-outline">
-            📋 Ver Historial Clínico
+            <i class="fa-solid fa-clipboard-list"></i> Ver Historial Clínico
         </a>
     </div>
 
@@ -29,7 +29,10 @@
 
         <!-- ── Resumen de la cita ─────────────────────────────────────── -->
         <div class="seccion-card">
-            <p class="seccion-titulo">📋 Datos de la Cita</p>
+            <p class="seccion-titulo">
+                <i class="fa-regular fa-calendar-check" style="color:var(--primario);"></i>
+                Datos de la Cita
+            </p>
             <dl class="info-cita">
                 <div>
                     <dt>Cita N°</dt>
@@ -60,7 +63,10 @@
 
         <!-- ── Signos vitales ────────────────────────────────────────── -->
         <div class="seccion-card">
-            <p class="seccion-titulo">🌡️ Signos Vitales <span class="hint" style="font-weight:400;">(opcionales)</span></p>
+            <p class="seccion-titulo">
+                <i class="fa-solid fa-heart-pulse" style="color:var(--primario);"></i>
+                Signos Vitales <span class="hint" style="font-weight:400;">(opcionales)</span>
+            </p>
             <div class="form-fila">
                 <div class="form-grupo">
                     <label for="temperatura">Temperatura (°C)</label>
@@ -82,7 +88,10 @@
 
         <!-- ── Diagnóstico y tratamiento ─────────────────────────────── -->
         <div class="seccion-card">
-            <p class="seccion-titulo">🩺 Diagnóstico y Tratamiento</p>
+            <p class="seccion-titulo">
+                <i class="fa-solid fa-stethoscope" style="color:var(--primario);"></i>
+                Diagnóstico y Tratamiento
+            </p>
 
             <div class="form-grupo">
                 <label for="diagnostico">Diagnóstico *</label>
@@ -108,7 +117,10 @@
 
         <!-- ── Receta médica ──────────────────────────────────────────── -->
         <div class="seccion-card">
-            <p class="seccion-titulo">💊 Receta Médica</p>
+            <p class="seccion-titulo">
+                <i class="fa-solid fa-prescription-bottle-medical" style="color:var(--primario);"></i>
+                Receta Médica
+            </p>
 
             <div class="form-grupo" style="display:flex; align-items:center; gap:0.75rem;">
                 <input type="checkbox" id="incluirReceta" name="incluirReceta"
@@ -184,9 +196,13 @@
         </div>
 
         <!-- ── Acciones ───────────────────────────────────────────────── -->
-        <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; padding-bottom:2rem;">
-            <button type="submit" class="btn btn-verde">Guardar consulta</button>
-            <a th:href="@{/vet/dashboard}" class="btn btn-outline">Cancelar</a>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap; padding-bottom:2rem;">
+            <a th:href="@{/vet/dashboard}" class="btn btn-outline"
+               style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+            <button type="submit" class="btn btn-primario"
+                    style="flex:1; min-width:130px;">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar consulta
+            </button>
         </div>
 
     </form>

@@ -44,4 +44,6 @@ public interface UsuarioService {
     List<Usuario> listarTodos();
 
     Usuario cambiarRol(Integer idUsuario, String nuevoRol);
+
+    void restablecerContrasena(Integer idUsuario, String nuevaContrasena);
 }

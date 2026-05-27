@@ -11,12 +11,18 @@ import com.smartvet.app.model.EstadoCita;
 import com.smartvet.app.model.HistoriaClinica;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.Producto;
+import com.smartvet.app.model.Usuario;
 import com.smartvet.app.security.SmartVetUserDetails;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.ConsultaPdfService;
 import com.smartvet.app.service.ConsultaService;
+import com.smartvet.app.service.EmailService;
 import com.smartvet.app.service.MascotaService;
 import com.smartvet.app.service.ProductoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,19 +43,25 @@ import java.util.List;
 @RequestMapping("/vet")
 public class VeterinarioController {
 
-    private final CitaService     citaService;
-    private final ConsultaService consultaService;
-    private final MascotaService  mascotaService;
-    private final ProductoService productoService;
+    private final CitaService       citaService;
+    private final ConsultaService   consultaService;
+    private final MascotaService    mascotaService;
+    private final ProductoService   productoService;
+    private final ConsultaPdfService consultaPdfService;
+    private final EmailService      emailService;
 
     public VeterinarioController(CitaService citaService,
                                   ConsultaService consultaService,
                                   MascotaService mascotaService,
-                                  ProductoService productoService) {
-        this.citaService     = citaService;
-        this.consultaService = consultaService;
-        this.mascotaService  = mascotaService;
-        this.productoService = productoService;
+                                  ProductoService productoService,
+                                  ConsultaPdfService consultaPdfService,
+                                  EmailService emailService) {
+        this.citaService        = citaService;
+        this.consultaService    = consultaService;
+        this.mascotaService     = mascotaService;
+        this.productoService    = productoService;
+        this.consultaPdfService = consultaPdfService;
+        this.emailService       = emailService;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -173,12 +185,12 @@ public class VeterinarioController {
                     diagnostico, tratamiento, observaciones,
                     receta);
 
-            consultaService.registrarConsulta(dto);
-            log.info("Consulta registrada: vet_usuario_id={}, cita_id={}, receta={}",
-                    details.getIdUsuario(), idCita, receta != null);
+            Consulta nueva = consultaService.registrarConsulta(dto);
+            log.info("Consulta registrada: vet_usuario_id={}, cita_id={}, consulta_id={}, receta={}",
+                    details.getIdUsuario(), idCita, nueva.getIdConsulta(), receta != null);
             redirectAttributes.addFlashAttribute("mensajeExito",
-                    "Consulta registrada exitosamente. Cita marcada como completada.");
-            return "redirect:/vet/dashboard";
+                    "Consulta guardada correctamente. Puedes descargar o enviar el informe PDF desde esta vista.");
+            return "redirect:/vet/consultas/" + nueva.getIdConsulta();
 
         } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
             log.warn("Error al registrar consulta para cita_id={}: {}", idCita, ex.getMessage());
@@ -191,6 +203,102 @@ public class VeterinarioController {
             return "vet/consulta";
         }
         // StockInsuficienteException propagates to @ControllerAdvice → error/error (HTTP 409)
+    }
+
+    // ── Detalle, edición y exportación de consulta ───────────────────────────
+
+    @GetMapping("/consultas/{id}")
+    public String verConsulta(@PathVariable Integer id,
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            model.addAttribute("consulta", consulta);
+            model.addAttribute("editable", consultaService.estaEnVentanaEdicion(consulta));
+            return "vet/ver-consulta";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/vet/dashboard";
+        }
+    }
+
+    @GetMapping("/consultas/{id}/editar")
+    public String mostrarEdicionConsulta(@PathVariable Integer id,
+                                          Model model,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            if (!consultaService.estaEnVentanaEdicion(consulta)) {
+                redirectAttributes.addFlashAttribute("errorForm",
+                        "No es posible editar esta consulta: han transcurrido más de 60 minutos.");
+                return "redirect:/vet/consultas/" + id;
+            }
+            model.addAttribute("consulta", consulta);
+            return "vet/editar-consulta";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/vet/dashboard";
+        }
+    }
+
+    @PostMapping("/consultas/{id}/editar")
+    public String editarConsulta(@PathVariable Integer id,
+                                  @RequestParam String diagnostico,
+                                  @RequestParam(required = false) String tratamiento,
+                                  @RequestParam(required = false) String observaciones,
+                                  @RequestParam(required = false) BigDecimal temperatura,
+                                  @RequestParam(required = false) BigDecimal peso,
+                                  @RequestParam(required = false) Integer frecuenciaCardiaca,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            consultaService.actualizarConsulta(id, diagnostico, tratamiento,
+                    observaciones, temperatura, peso, frecuenciaCardiaca);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Consulta actualizada correctamente.");
+        } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
+            log.warn("Error al editar consulta_id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/vet/consultas/" + id;
+    }
+
+    @GetMapping("/consultas/{id}/pdf/descargar")
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable Integer id) {
+        try {
+            byte[] pdf = consultaPdfService.generarPdf(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"Consulta_" + id + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException ex) {
+            log.error("Error al generar PDF consulta_id={}", id, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/consultas/{id}/pdf/enviar")
+    public String enviarPdfPorCorreo(@PathVariable Integer id,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            byte[] pdf = consultaPdfService.generarPdf(id);
+            Usuario propietario = consulta.getMascota().getPropietario();
+            emailService.enviarConsultaPdf(
+                    propietario.getEmail(),
+                    propietario.getNombres() + " " + propietario.getApellidos(),
+                    pdf, id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Informe enviado al correo: " + propietario.getEmail());
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", "Consulta no encontrada.");
+        } catch (RuntimeException ex) {
+            log.error("Error al enviar PDF consulta_id={}", id, ex);
+            redirectAttributes.addFlashAttribute("errorForm",
+                    "No se pudo enviar el correo. Verifique la configuración SMTP.");
+        }
+        return "redirect:/vet/consultas/" + id;
     }
 
     // ── Helper privado ────────────────────────────────────────────────────────

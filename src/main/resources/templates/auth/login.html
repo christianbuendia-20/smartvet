@@ -86,6 +86,13 @@
                 </div>
             </div>
 
+            <div style="text-align:right; margin-top:0.4rem; margin-bottom:1.1rem;">
+                <a th:href="@{/recuperar-password}"
+                   style="font-size:0.8rem; color:var(--texto-suave); text-decoration:none;">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+
             <button type="submit" class="btn btn-primario">
                 <i class="fa-solid fa-right-to-bracket"></i>
                 Iniciar sesión
@@ -98,6 +105,21 @@
             ¿No tienes cuenta?
             <a th:href="@{/auth/registro}">Regístrate aquí</a>
         </p>
+
+        <hr class="divisor">
+
+        <div style="text-align:center; margin-top:0.25rem;">
+            <p style="font-size:0.82rem; color:var(--texto-suave); margin-bottom:0.6rem;">
+                ¿Problemas para ingresar?
+            </p>
+            <a href="https://wa.me/51999999999" target="_blank" rel="noopener noreferrer"
+               style="display:inline-flex; align-items:center; gap:0.45rem;
+                      font-size:0.85rem; font-weight:600; text-decoration:none;
+                      color:#25D366;">
+                <i class="fa-brands fa-whatsapp" style="font-size:1.25rem; color:#25D366;"></i>
+                Contáctanos por WhatsApp
+            </a>
+        </div>
 
     </div>
 </div>

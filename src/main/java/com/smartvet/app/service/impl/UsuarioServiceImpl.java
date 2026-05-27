@@ -223,6 +223,15 @@ public class UsuarioServiceImpl implements UsuarioService {
         return direccionRepository.findFirstByUsuario_IdUsuario(idUsuario);
     }
 
+    @Override
+    @Transactional
+    public void restablecerContrasena(Integer idUsuario, String nuevaContrasena) {
+        Usuario usuario = buscarPorId(idUsuario);
+        usuario.setPasswordHash(passwordEncoder.encode(nuevaContrasena));
+        usuarioRepository.save(usuario);
+        log.info("Contraseña restablecida para usuario_id={}", idUsuario);
+    }
+
     // ── helpers de mapeo y validación ────────────────────────────────────────
 
     private Usuario construirUsuario(UsuarioRegistroDTO dto, Rol rol) {

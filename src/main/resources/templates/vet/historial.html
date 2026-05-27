@@ -120,6 +120,7 @@
                     <th>Tratamiento</th>
                     <th>Signos vitales</th>
                     <th>Veterinario</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -130,14 +131,14 @@
                              th:text="${#temporals.format(c.fechaHora, 'HH:mm')}">-</div>
                     </td>
                     <td>
-                        <span th:text="${c.diagnostico}">-</span>
+                        <span th:text="${#strings.abbreviate(c.diagnostico, 80)}">-</span>
                         <div th:if="${c.observaciones != null and !c.observaciones.isBlank()}"
                              style="font-size:0.78rem; color:var(--texto-suave); margin-top:0.2rem;"
-                             th:text="${'Obs: ' + #strings.abbreviate(c.observaciones, 80)}">-</div>
+                             th:text="${'Obs: ' + #strings.abbreviate(c.observaciones, 60)}">-</div>
                     </td>
                     <td>
                         <span th:if="${c.tratamiento != null and !c.tratamiento.isBlank()}"
-                              th:text="${c.tratamiento}">-</span>
+                              th:text="${#strings.abbreviate(c.tratamiento, 60)}">-</span>
                         <span th:unless="${c.tratamiento != null and !c.tratamiento.isBlank()}"
                               style="color:var(--texto-suave);">—</span>
                     </td>
@@ -158,6 +159,13 @@
                     </td>
                     <td>
                         <span th:text="${c.veterinario.usuario.nombres + ' ' + c.veterinario.usuario.apellidos}">-</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/vet/consultas/{id}(id=${c.idConsulta})}"
+                           class="btn btn-gris"
+                           style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </a>
                     </td>
                 </tr>
             </tbody>

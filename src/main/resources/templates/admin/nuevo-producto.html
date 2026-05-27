@@ -26,7 +26,10 @@
         <form th:action="@{/admin/productos/nuevo}" method="post">
 
             <!-- ── Sección 1: Información básica ─────────────────────── -->
-            <p class="seccion-titulo" style="margin-bottom:1.25rem;">📦 Información del Producto</p>
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-box-open" style="color:var(--primario);"></i>
+                Información del Producto
+            </p>
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -87,7 +90,10 @@
             <hr class="divisor">
 
             <!-- ── Sección 2: Precios ─────────────────────────────────── -->
-            <p class="seccion-titulo" style="margin-bottom:1.25rem;">💰 Precios</p>
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-tag" style="color:var(--primario);"></i>
+                Precios
+            </p>
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -107,7 +113,10 @@
             <hr class="divisor">
 
             <!-- ── Sección 3: Inventario inicial ─────────────────────── -->
-            <p class="seccion-titulo" style="margin-bottom:1.25rem;">📊 Inventario Inicial</p>
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-warehouse" style="color:var(--primario);"></i>
+                Inventario Inicial
+            </p>
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -130,8 +139,10 @@
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
                 <a th:href="@{/admin/productos}" class="btn btn-outline"
                    style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
-                <button type="submit" class="btn btn-verde"
-                        style="flex:1; min-width:130px;">Registrar producto</button>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Registrar producto
+                </button>
             </div>
 
         </form>

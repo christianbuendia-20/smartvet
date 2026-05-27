@@ -21,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -91,6 +94,36 @@ public class ConsultaServiceImpl implements ConsultaService {
     @Override
     public List<Consulta> listarPorMascota(Integer idMascota) {
         return consultaRepository.findByMascotaConDetalle(idMascota);
+    }
+
+    @Override
+    @Transactional
+    public Consulta actualizarConsulta(Integer idConsulta,
+                                       String diagnostico,
+                                       String tratamiento,
+                                       String observaciones,
+                                       BigDecimal temperatura,
+                                       BigDecimal peso,
+                                       Integer frecuenciaCardiaca) {
+        Consulta consulta = buscarPorId(idConsulta);
+        if (!estaEnVentanaEdicion(consulta)) {
+            throw new EstadoInvalidoException(
+                    "La consulta ya no puede editarse: han transcurrido más de 60 minutos desde su registro.");
+        }
+        consulta.setDiagnostico(diagnostico);
+        consulta.setTratamiento(tratamiento);
+        consulta.setObservaciones(observaciones);
+        consulta.setTemperatura(temperatura);
+        consulta.setPeso(peso);
+        consulta.setFrecuenciaCardiaca(frecuenciaCardiaca);
+        Consulta guardada = consultaRepository.save(consulta);
+        log.info("Consulta actualizada: id={}", guardada.getIdConsulta());
+        return guardada;
+    }
+
+    @Override
+    public boolean estaEnVentanaEdicion(Consulta consulta) {
+        return Duration.between(consulta.getFechaHora(), LocalDateTime.now()).toMinutes() <= 60L;
     }
 
     // ── lógica de negocio interna ─────────────────────────────────────────────

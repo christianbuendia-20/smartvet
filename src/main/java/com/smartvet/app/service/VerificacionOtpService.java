@@ -4,8 +4,11 @@ import com.smartvet.app.model.Usuario;
 
 public interface VerificacionOtpService {
 
-    /** Genera un OTP, lo persiste y envía el correo de verificación al usuario. */
+    /** Genera un OTP, lo persiste y envía el correo de verificación de cuenta. */
     void crearYEnviar(Usuario usuario);
+
+    /** Genera un OTP, lo persiste y envía el correo de recuperación de contraseña. */
+    void crearYEnviarRecuperacion(Usuario usuario);
 
     /** Retorna true si el código ingresado coincide con el OTP almacenado. */
     boolean verificar(Integer idUsuario, String codigoIngresado);

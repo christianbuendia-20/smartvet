@@ -10,9 +10,12 @@
 
 <main class="main-content">
 
-    <div class="page-header">
-        <h2>Registrar Mascota</h2>
-        <p>Completa los datos de tu mascota. Los campos marcados con * son obligatorios.</p>
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Registrar Mascota</h2>
+            <p>Completa los datos de tu mascota. Los campos marcados con * son obligatorios.</p>
+        </div>
+        <a th:href="@{/cliente/mascotas}" class="btn btn-outline">← Mis Mascotas</a>
     </div>
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
@@ -87,10 +90,10 @@
             <hr class="divisor">
 
             <!-- Historia Clínica Inicial -->
-            <p style="font-size:1rem; font-weight:700; color:var(--texto); margin:0 0 1.25rem;">
+            <p class="seccion-titulo" style="margin:0 0 1.25rem;">
                 <i class="fa-solid fa-notes-medical" style="color:var(--primario);"></i>
                 Historia Clínica Inicial
-                <span class="hint" style="font-weight:400; margin-left:0.4rem;">(Opcional)</span>
+                <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave); margin-left:0.4rem;">(Opcional)</span>
             </p>
             <p style="font-size:0.85rem; color:var(--texto-suave); margin:-0.75rem 0 1.25rem; line-height:1.5;">
                 Puedes completar esta información ahora o más adelante desde el historial de tu mascota.
@@ -119,13 +122,13 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                <button type="submit" class="btn btn-primario" style="flex:1; min-width:130px;">
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/cliente/mascotas}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
                     <i class="fa-solid fa-paw"></i> Registrar mascota
                 </button>
-                <a th:href="@{/cliente/dashboard}" class="btn btn-outline" style="flex:1; min-width:130px;">
-                    Cancelar
-                </a>
             </div>
 
         </form>

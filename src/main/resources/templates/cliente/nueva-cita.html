@@ -12,9 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header">
-        <h2>Agendar Nueva Cita</h2>
-        <p>Selecciona tu mascota, el veterinario y el horario que prefieras. Los campos con * son obligatorios.</p>
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Agendar Nueva Cita</h2>
+            <p>Selecciona tu mascota, el veterinario y el horario que prefieras. Los campos con * son obligatorios.</p>
+        </div>
+        <a th:href="@{/cliente/dashboard}" class="btn btn-outline">← Volver</a>
     </div>
 
     <!-- Sin mascotas registradas -->
@@ -126,9 +129,13 @@
                 </ul>
             </div>
 
-            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                <button type="submit" class="btn btn-verde">Confirmar cita</button>
-                <a th:href="@{/cliente/dashboard}" class="btn btn-outline">Volver al panel</a>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/cliente/dashboard}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-regular fa-calendar-check"></i> Confirmar cita
+                </button>
             </div>
 
         </form>
@@ -136,7 +143,7 @@
 
     <!-- Si no tiene mascotas, solo botón para regresar -->
     <div th:if="${#lists.isEmpty(mascotas)}" style="margin-top:1rem;">
-        <a th:href="@{/cliente/dashboard}" class="btn btn-outline">Volver al panel</a>
+        <a th:href="@{/cliente/dashboard}" class="btn btn-outline">← Volver al panel</a>
     </div>
 
 </main>

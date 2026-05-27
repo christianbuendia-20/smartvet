@@ -92,14 +92,14 @@
 
             <hr class="divisor">
 
-            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                <button type="submit" class="btn btn-primario" style="flex:1; min-width:130px;">
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
+                   class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
                     <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
                 </button>
-                <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
-                   class="btn btn-outline" style="flex:1; min-width:130px;">
-                    Cancelar
-                </a>
             </div>
 
         </form>
