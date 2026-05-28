@@ -34,7 +34,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,10 +93,15 @@ public class VeterinarioController {
     // ── Agenda completa ───────────────────────────────────────────────────────
 
     @GetMapping("/agenda")
-    public String agenda(Model model) {
+    public String agenda(@RequestParam(value = "keyword", required = false) String keyword,
+                         @RequestParam(value = "fecha", required = false)
+                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                         Model model) {
         SmartVetUserDetails details = principal();
-        List<Cita> misCitas = citaService.listarAgendaPorVeterinario(details.getIdUsuario());
+        List<Cita> misCitas = citaService.listarAgendaPorVeterinario(details.getIdUsuario(), keyword, fecha);
         model.addAttribute("misCitas", misCitas);
+        model.addAttribute("keyword",  keyword != null ? keyword : "");
+        model.addAttribute("fecha",    fecha);
         return "vet/agenda";
     }
 
@@ -290,7 +297,8 @@ public class VeterinarioController {
                     propietario.getNombres() + " " + propietario.getApellidos(),
                     pdf, id);
             redirectAttributes.addFlashAttribute("mensajeExito",
-                    "Informe enviado al correo: " + propietario.getEmail());
+                    "PDF enviado exitosamente a " + propietario.getEmail()
+                    + ". Indíquele al cliente que revise su carpeta de Spam si no lo visualiza en unos minutos.");
         } catch (RecursoNoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("errorForm", "Consulta no encontrada.");
         } catch (RuntimeException ex) {

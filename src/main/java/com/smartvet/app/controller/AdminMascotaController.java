@@ -42,8 +42,10 @@ public class AdminMascotaController {
     // ── Listado ───────────────────────────────────────────────────────────────
 
     @GetMapping
-    public String listarMascotas(Model model) {
-        model.addAttribute("mascotas", mascotaService.listarTodas());
+    public String listarMascotas(@RequestParam(value = "keyword", required = false) String keyword,
+                                  Model model) {
+        model.addAttribute("mascotas", mascotaService.listarTodas(keyword));
+        model.addAttribute("keyword",  keyword != null ? keyword : "");
         return "admin/mascotas";
     }
 

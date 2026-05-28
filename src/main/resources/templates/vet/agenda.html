@@ -22,8 +22,26 @@
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorAcceso}"  class="alerta alerta-error"  th:text="${errorAcceso}"></div>
 
+    <!-- ── Barra de búsqueda ─────────────────────────────────────────────── -->
+    <form th:action="@{/vet/agenda}" method="get" class="busqueda-form">
+        <input type="text" name="keyword" class="form-input busqueda-input"
+               th:value="${keyword}"
+               placeholder="Buscar por mascota, propietario o motivo…">
+        <input type="date" name="fecha" class="form-input"
+               style="width:auto; min-width:9rem;"
+               th:value="${fecha}">
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        <a th:if="${keyword != '' or fecha != null}" th:href="@{/vet/agenda}" class="btn btn-gris">✕ Limpiar</a>
+    </form>
+
     <!-- ── Tabla de citas ──────────────────────────────────────────────────── -->
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(misCitas)}">
             <thead>
                 <tr>
@@ -33,7 +51,7 @@
                     <th>Tipo</th>
                     <th>Motivo</th>
                     <th>Estado</th>
-                    <th>Acción</th>
+                    <th class="tabla-col-accion">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,7 +76,7 @@
                               th:classappend="${' badge-' + cita.estado.name().toLowerCase().replace('_', '-')}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <div style="display:flex; flex-direction:column; gap:0.35rem; align-items:flex-start;">
                             <a th:if="${cita.estado.name() == 'PROGRAMADA' or
                                         cita.estado.name() == 'CONFIRMADA'  or
@@ -84,10 +102,12 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(misCitas)}">
             <span class="icono-vacio">📭</span>
-            No tienes citas asignadas aún.
+            <span th:if="${keyword != '' or fecha != null}">No se encontraron citas con los filtros aplicados.</span>
+            <span th:if="${keyword == '' and fecha == null}">No tienes citas asignadas aún.</span>
         </div>
     </div>
 

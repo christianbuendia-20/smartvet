@@ -164,8 +164,12 @@
                             <!-- Fila plantilla (visible, primera fila obligatoria) -->
                             <tr class="fila-medicamento">
                                 <td>
+                                    <input type="text" class="filtro-medicamento"
+                                           placeholder="Buscar medicamento…"
+                                           autocomplete="off"
+                                           style="margin-bottom:0.3rem; font-size:0.82rem;">
                                     <select name="idProducto">
-                                        <option value="">— Medicamento —</option>
+                                        <option value="">— Seleccionar —</option>
                                         <option th:each="p : ${productos}"
                                                 th:value="${p.idProducto}"
                                                 th:text="${p.nombre}">
@@ -224,7 +228,9 @@
         const nueva     = plantilla.cloneNode(true);
 
         nueva.querySelectorAll('input').forEach(el => el.value = '');
-        nueva.querySelector('select').innerHTML = opcionesProducto;
+        const sel = nueva.querySelector('select');
+        sel.innerHTML = opcionesProducto;   // restaura todas las opciones sin filtrar
+        sel.value = '';
         cuerpo.appendChild(nueva);
     }
 
@@ -234,6 +240,24 @@
             btn.closest('tr').remove();
         }
     }
+
+    /* ── Filtro de búsqueda sobre cada select de medicamento ─────────────── */
+    document.getElementById('medicamentos-body').addEventListener('input', function (e) {
+        if (!e.target.classList.contains('filtro-medicamento')) return;
+        const term   = e.target.value.trim().toLowerCase();
+        const select = e.target.nextElementSibling;   // el <select> contiguo
+
+        Array.from(select.options).forEach(opt => {
+            if (!opt.value) { opt.style.display = ''; return; }   // mantener placeholder
+            opt.style.display = opt.text.toLowerCase().includes(term) ? '' : 'none';
+        });
+
+        // Si la opción seleccionada quedó oculta, limpiar la selección
+        const selected = select.options[select.selectedIndex];
+        if (selected && selected.value && selected.style.display === 'none') {
+            select.value = '';
+        }
+    });
 </script>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

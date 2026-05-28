@@ -4,6 +4,8 @@ import com.smartvet.app.model.Mascota;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,4 +24,10 @@ public interface MascotaRepository extends JpaRepository<Mascota, Integer> {
     List<Mascota> findByEspecie(String especie);
 
     List<Mascota> findByActivoTrue();
+
+    @Query("SELECT m FROM Mascota m WHERE " +
+           "LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Mascota> buscarPorKeyword(@Param("keyword") String keyword);
 }

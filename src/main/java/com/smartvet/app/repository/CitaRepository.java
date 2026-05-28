@@ -96,4 +96,83 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
            "ORDER BY c.fechaHora DESC")
     List<Cita> findCitasCompletadasSinPago(@Param("estadoCita") EstadoCita estadoCita,
                                             @Param("estadoPago") EstadoPago estadoPago);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(c.motivo) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "ORDER BY c.fechaHora DESC")
+    List<Cita> buscarConDetallePorKeyword(@Param("keyword") String keyword);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE v.idVeterinario = :idVet AND (" +
+           "LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(c.motivo) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY c.fechaHora ASC")
+    List<Cita> buscarPorVeterinarioYKeyword(@Param("idVet") Integer idVet,
+                                             @Param("keyword") String keyword);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE (:keyword IS NULL OR " +
+           "       LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "       LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "       LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "       LOWER(c.motivo) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:inicio IS NULL OR c.fechaHora >= :inicio) " +
+           "AND (:fin IS NULL OR c.fechaHora <= :fin) " +
+           "ORDER BY c.fechaHora DESC")
+    List<Cita> filtrarAdmin(@Param("keyword") String keyword,
+                             @Param("inicio") LocalDateTime inicio,
+                             @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE v.idVeterinario = :idVet " +
+           "AND (:keyword IS NULL OR " +
+           "     LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "     LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "     LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "     LOWER(c.motivo) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:inicio IS NULL OR c.fechaHora >= :inicio) " +
+           "AND (:fin IS NULL OR c.fechaHora <= :fin) " +
+           "ORDER BY c.fechaHora ASC")
+    List<Cita> filtrarVeterinario(@Param("idVet") Integer idVet,
+                                   @Param("keyword") String keyword,
+                                   @Param("inicio") LocalDateTime inicio,
+                                   @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE m.propietario.idUsuario = :idPropietario " +
+           "AND (:keyword IS NULL OR " +
+           "     LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "     LOWER(c.motivo) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:inicio IS NULL OR c.fechaHora >= :inicio) " +
+           "AND (:fin IS NULL OR c.fechaHora <= :fin) " +
+           "ORDER BY c.fechaHora DESC")
+    List<Cita> filtrarCliente(@Param("idPropietario") Integer idPropietario,
+                               @Param("keyword") String keyword,
+                               @Param("inicio") LocalDateTime inicio,
+                               @Param("fin") LocalDateTime fin);
 }

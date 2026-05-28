@@ -30,4 +30,6 @@ public interface MascotaService {
     void activarMascota(Integer idMascota);
 
     List<Mascota> listarTodas();
+
+    List<Mascota> listarTodas(String keyword);
 }

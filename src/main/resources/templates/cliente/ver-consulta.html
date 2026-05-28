@@ -15,63 +15,36 @@
             <h2 th:text="'Consulta #' + ${consulta.idConsulta}">Consulta</h2>
             <p th:text="${#temporals.format(consulta.fechaHora, 'dd/MM/yyyy HH:mm')}">Fecha</p>
         </div>
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <a th:if="${editable}"
-               th:href="@{/vet/consultas/{id}/editar(id=${consulta.idConsulta})}"
-               class="btn btn-outline" style="white-space:nowrap;">
-                <i class="fa-solid fa-pen-to-square"></i> Editar Consulta
-            </a>
-            <a th:href="@{/vet/historial/{id}(id=${consulta.mascota.idMascota})}"
-               class="btn btn-outline" style="white-space:nowrap;">
-                ← Historial
-            </a>
-        </div>
+        <a th:href="@{/cliente/citas}" class="btn btn-outline" style="white-space:nowrap;">
+            ← Mis Citas
+        </a>
     </div>
 
     <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
-    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
+    <div th:if="${errorAcceso}"  class="alerta alerta-error"  th:text="${errorAcceso}"></div>
 
-    <!-- ── Banner de acciones PDF (siempre visible, arriba de todo) ── -->
+    <!-- Banner de descarga PDF -->
     <div style="background:linear-gradient(135deg,#FF9800 0%,#F57C00 100%);
                 border-radius:12px; padding:1.25rem 1.75rem; margin-bottom:1.5rem;
                 display:flex; align-items:center; justify-content:space-between;
                 flex-wrap:wrap; gap:1rem; box-shadow:0 4px 18px rgba(255,152,0,0.28);">
         <div style="color:#fff;">
             <p style="margin:0; font-size:0.78rem; font-weight:700; text-transform:uppercase;
-                       letter-spacing:0.08em; opacity:0.88;">Informe de Consulta</p>
+                       letter-spacing:0.08em; opacity:0.88;">Informe Médico</p>
             <p style="margin:0.2rem 0 0; font-size:1rem; font-weight:600;">
                 <i class="fa-solid fa-file-medical"></i>
-                Consulta #<span th:text="${consulta.idConsulta}">0</span> lista para exportar
+                Descarga el informe de tu mascota <strong th:text="${consulta.mascota.nombre}">mascota</strong>
             </p>
         </div>
-        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <a th:href="@{/vet/consultas/{id}/pdf/descargar(id=${consulta.idConsulta})}"
-               style="background:#fff; color:#E65100; border:none; border-radius:8px;
-                      padding:0.6rem 1.4rem; font-size:0.875rem; font-weight:700;
-                      display:inline-flex; align-items:center; gap:0.5rem;
-                      text-decoration:none; white-space:nowrap;
-                      box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-                <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
-            </a>
-            <form th:action="@{/vet/consultas/{id}/pdf/enviar(id=${consulta.idConsulta})}"
-                  method="post" style="margin:0;">
-                <button type="submit"
-                        style="background:rgba(255,255,255,0.18); color:#fff;
-                               border:2px solid rgba(255,255,255,0.65); border-radius:8px;
-                               padding:0.55rem 1.3rem; font-size:0.875rem; font-weight:600;
-                               cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;
-                               white-space:nowrap;">
-                    <i class="fa-solid fa-envelope"></i> Enviar por Correo
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Aviso de ventana de edición cerrada -->
-    <div th:unless="${editable}" class="alerta alerta-aviso">
-        <i class="fa-solid fa-lock"></i>
-        Esta consulta ya no puede editarse: han transcurrido más de 60 minutos desde su registro.
+        <a th:href="@{/cliente/consultas/{id}/pdf/descargar(id=${consulta.idConsulta})}"
+           style="background:#fff; color:#E65100; border:none; border-radius:8px;
+                  padding:0.6rem 1.4rem; font-size:0.875rem; font-weight:700;
+                  display:inline-flex; align-items:center; gap:0.5rem;
+                  text-decoration:none; white-space:nowrap;
+                  box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+            <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
+        </a>
     </div>
 
     <div style="max-width:800px; margin:0 auto;">
@@ -102,11 +75,11 @@
             </dl>
         </div>
 
-        <!-- Paciente y Propietario -->
+        <!-- Paciente -->
         <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
             <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
                 <i class="fa-solid fa-paw" style="color:var(--primario);"></i>
-                Paciente y Propietario
+                Paciente
             </p>
             <dl class="ficha-grid">
                 <div>
@@ -118,29 +91,7 @@
                     <dd th:text="${consulta.mascota.especie + (consulta.mascota.raza != null ? ' · ' + consulta.mascota.raza : '')}">-</dd>
                 </div>
                 <div>
-                    <dt>Propietario</dt>
-                    <dd th:text="${consulta.mascota.propietario.nombres + ' ' + consulta.mascota.propietario.apellidos}">-</dd>
-                </div>
-                <div>
-                    <dt>Correo</dt>
-                    <dd th:text="${consulta.mascota.propietario.email}">-</dd>
-                </div>
-                <div th:if="${consulta.mascota.propietario.telefono != null and !consulta.mascota.propietario.telefono.isBlank()}">
-                    <dt>Teléfono</dt>
-                    <dd th:text="${consulta.mascota.propietario.telefono}">-</dd>
-                </div>
-            </dl>
-        </div>
-
-        <!-- Veterinario -->
-        <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
-            <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
-                <i class="fa-solid fa-user-doctor" style="color:var(--primario);"></i>
-                Veterinario Responsable
-            </p>
-            <dl class="ficha-grid">
-                <div>
-                    <dt>Nombre</dt>
+                    <dt>Veterinario</dt>
                     <dd th:text="${consulta.veterinario.usuario.nombres + ' ' + consulta.veterinario.usuario.apellidos}">-</dd>
                 </div>
             </dl>
@@ -168,7 +119,7 @@
             </dl>
         </div>
 
-        <!-- Diagnóstico / Tratamiento / Observaciones -->
+        <!-- Diagnóstico Clínico -->
         <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
             <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
                 <i class="fa-solid fa-stethoscope" style="color:var(--primario);"></i>
@@ -227,7 +178,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    </div><!-- /.tabla-scroll -->
+                    </div>
                 </div>
                 <dl class="ficha-grid">
                     <div th:if="${receta.instrucciones != null and !receta.instrucciones.isBlank()}">

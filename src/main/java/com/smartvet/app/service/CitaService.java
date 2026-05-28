@@ -5,6 +5,7 @@ import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.EstadoCita;
 import com.smartvet.app.model.Veterinario;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface CitaService {
@@ -48,4 +49,14 @@ public interface CitaService {
     Cita reasignarVeterinario(Integer idCita, Integer idVeterinario);
 
     List<Cita> listarTodas();
+
+    List<Cita> listarTodas(String keyword);
+
+    List<Cita> listarTodas(String keyword, LocalDate fecha);
+
+    List<Cita> listarAgendaPorVeterinario(Integer idUsuario, String keyword);
+
+    List<Cita> listarAgendaPorVeterinario(Integer idUsuario, String keyword, LocalDate fecha);
+
+    List<Cita> listarPorPropietario(Integer idUsuario, String keyword, LocalDate fecha);
 }

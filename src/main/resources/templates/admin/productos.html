@@ -58,7 +58,11 @@
     </p>
 
     <!-- ── Tabla de inventario ───────────────────────────────────────────── -->
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(productos)}">
             <thead>
                 <tr>
@@ -70,7 +74,7 @@
                     <th>Unidad</th>
                     <th>Receta</th>
                     <th>Reponer pedido</th>
-                    <th>Acciones</th>
+                    <th class="tabla-col-accion">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,7 +119,7 @@
                             </button>
                         </form>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <a th:href="@{/admin/productos/{id}(id=${producto.idProducto})}"
                            class="btn btn-gris"
                            style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
@@ -126,6 +130,7 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(productos)}">
             <span class="icono-vacio">📦</span>

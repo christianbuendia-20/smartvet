@@ -5,6 +5,26 @@
 <head>
     <title>SmartVet — Agendar Cita</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+        .btn-calendario-destacado {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-calendario-destacado:hover {
+            background-color: #e68a00;
+            border-color: #e68a00;
+        }
+        .btn-calendario-destacado i {
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -88,16 +108,23 @@
                 <!-- Fecha y hora -->
                 <div class="form-grupo">
                     <label for="fechaHora">Fecha y hora *</label>
-                    <input type="datetime-local"
-                           id="fechaHora"
-                           name="fechaHora"
-                           required
-                           th:attr="min=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd') + 'T08:00'}"
-                           th:value="${fechaHoraPrev != null ?
-                               #temporals.format(fechaHoraPrev, 'yyyy-MM-dd') + 'T' + #temporals.format(fechaHoraPrev, 'HH:mm') : ''}">
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <span id="btn-calendario-izq"
+                              class="btn-calendario-destacado"
+                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center; padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                            <i class="fa-regular fa-calendar"></i>
+                        </span>
+                        <input type="datetime-local"
+                               id="fechaHora"
+                               name="fechaHora"
+                               required
+                               style="padding-left:3rem; width:100%;"
+                               th:value="${fechaHoraPrev != null ?
+                                   #temporals.format(fechaHoraPrev, 'yyyy-MM-dd') + 'T' + #temporals.format(fechaHoraPrev, 'HH:mm') : ''}">
+                    </div>
+                    <span id="error-fecha" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
                     <span class="hint">
-                        Cada veterinario atiende en bloques de 30 minutos.
-                        Elige un horario dentro del horario de atención.
+                        Horario de atención: 09:00 – 19:00 h. Mínimo con un día de anticipación.
                     </span>
                 </div>
             </div>
@@ -147,6 +174,41 @@
     </div>
 
 </main>
+
+<script>
+(function () {
+    const input    = document.getElementById('fechaHora');
+    const errorMsg = document.getElementById('error-fecha');
+
+    // Mínimo: mañana a las 09:00
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    const yyyy = manana.getFullYear();
+    const mm   = String(manana.getMonth() + 1).padStart(2, '0');
+    const dd   = String(manana.getDate()).padStart(2, '0');
+    input.min = `${yyyy}-${mm}-${dd}T09:00`;
+
+    document.getElementById('btn-calendario-izq').addEventListener('click', function () {
+        try { input.showPicker(); } catch (e) { input.focus(); }
+    });
+
+    input.addEventListener('change', function () {
+        if (!this.value) return;
+
+        const [, timePart] = this.value.split('T');
+        const [hh, mi]     = timePart.split(':').map(Number);
+        const totalMin     = hh * 60 + mi;
+
+        if (totalMin < 9 * 60 || totalMin > 19 * 60) {
+            errorMsg.textContent = 'El horario de atención es de 09:00 a 19:00 horas. Por favor elige otro horario.';
+            errorMsg.style.display = 'block';
+            this.value = '';
+        } else {
+            errorMsg.style.display = 'none';
+        }
+    });
+})();
+</script>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 

@@ -151,6 +151,13 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotaRepository.findAll();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Mascota> listarTodas(String keyword) {
+        if (keyword == null || keyword.isBlank()) return mascotaRepository.findAll();
+        return mascotaRepository.buscarPorKeyword(keyword.trim());
+    }
+
     // ── helpers de mapeo ─────────────────────────────────────────────────────
 
     private Mascota construirMascota(MascotaDTO dto, Usuario propietario) {

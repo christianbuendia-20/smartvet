@@ -14,6 +14,7 @@ import com.smartvet.app.model.TipoCita;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.security.SmartVetUserDetails;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.ConsultaPdfService;
 import com.smartvet.app.service.ConsultaService;
 import com.smartvet.app.service.MascotaService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -42,16 +47,19 @@ import java.util.Objects;
 @RequestMapping("/cliente")
 public class ClienteController {
 
-    private final CitaService     citaService;
-    private final MascotaService  mascotaService;
-    private final ConsultaService consultaService;
+    private final CitaService        citaService;
+    private final MascotaService     mascotaService;
+    private final ConsultaService    consultaService;
+    private final ConsultaPdfService consultaPdfService;
 
     public ClienteController(CitaService citaService,
                               MascotaService mascotaService,
-                              ConsultaService consultaService) {
-        this.citaService     = citaService;
-        this.mascotaService  = mascotaService;
-        this.consultaService = consultaService;
+                              ConsultaService consultaService,
+                              ConsultaPdfService consultaPdfService) {
+        this.citaService        = citaService;
+        this.mascotaService     = mascotaService;
+        this.consultaService    = consultaService;
+        this.consultaPdfService = consultaPdfService;
     }
 
     private SmartVetUserDetails principal() {
@@ -85,11 +93,15 @@ public class ClienteController {
     // ── Historial completo de citas ───────────────────────────────────────────
 
     @GetMapping("/citas")
-    public String listarMisCitas(Model model) {
+    public String listarMisCitas(@RequestParam(value = "keyword", required = false) String keyword,
+                                  @RequestParam(value = "fecha", required = false)
+                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                                  Model model) {
         Integer idUsuario = principal().getIdUsuario();
-        List<Cita> citas = Objects.requireNonNullElse(
-                citaService.listarPorPropietario(idUsuario), Collections.emptyList());
-        model.addAttribute("citas", citas);
+        List<Cita> citas = citaService.listarPorPropietario(idUsuario, keyword, fecha);
+        model.addAttribute("citas",   citas);
+        model.addAttribute("keyword", keyword != null ? keyword : "");
+        model.addAttribute("fecha",   fecha);
         return "cliente/mis-citas";
     }
 
@@ -242,6 +254,29 @@ public class ClienteController {
 
         Integer idUsuario = principal().getIdUsuario();
 
+        if (!fechaHora.toLocalDate().isAfter(LocalDate.now())) {
+            recargarForm(idUsuario, model);
+            model.addAttribute("errorForm",          "Las citas deben agendarse con al menos un día de anticipación.");
+            model.addAttribute("idMascotaPrev",      idMascota);
+            model.addAttribute("idVeterinarioxPrev", idVeterinario);
+            model.addAttribute("tipoCitaPrev",       tipoCita);
+            model.addAttribute("fechaHoraPrev",      fechaHora);
+            model.addAttribute("motivoPrev",         motivo);
+            return "cliente/nueva-cita";
+        }
+
+        LocalTime hora = fechaHora.toLocalTime();
+        if (hora.isBefore(LocalTime.of(9, 0)) || hora.isAfter(LocalTime.of(19, 0))) {
+            recargarForm(idUsuario, model);
+            model.addAttribute("errorForm",          "El horario de atención es de 09:00 a 19:00 horas.");
+            model.addAttribute("idMascotaPrev",      idMascota);
+            model.addAttribute("idVeterinarioxPrev", idVeterinario);
+            model.addAttribute("tipoCitaPrev",       tipoCita);
+            model.addAttribute("fechaHoraPrev",      fechaHora);
+            model.addAttribute("motivoPrev",         motivo);
+            return "cliente/nueva-cita";
+        }
+
         try {
             CitaAgendamientoDTO dto = new CitaAgendamientoDTO(
                     idMascota, idVeterinario, tipoCita, fechaHora, motivo);
@@ -303,6 +338,73 @@ public class ClienteController {
             log.warn("Historial no disponible para mascota_id={}: {}", idMascota, ex.getMessage());
             redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
             return "redirect:/cliente/mascotas";
+        }
+    }
+
+    // ── Detalle y descarga de consulta ────────────────────────────────────────
+
+    @GetMapping("/consultas/por-cita/{idCita}")
+    public String redirigirAConsulta(@PathVariable Integer idCita,
+                                      RedirectAttributes redirectAttributes) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            Consulta consulta = consultaService.buscarPorCita(idCita);
+            if (!consulta.getMascota().getPropietario().getIdUsuario().equals(idUsuario)) {
+                redirectAttributes.addFlashAttribute("errorAcceso",
+                        "No tienes permiso para ver esta consulta.");
+                return "redirect:/cliente/citas";
+            }
+            return "redirect:/cliente/consultas/" + consulta.getIdConsulta();
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso",
+                    "No se encontró un registro médico para esta cita.");
+            return "redirect:/cliente/citas";
+        }
+    }
+
+    @GetMapping("/consultas/{id}")
+    public String verConsulta(@PathVariable Integer id,
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            if (!consulta.getMascota().getPropietario().getIdUsuario().equals(idUsuario)) {
+                log.warn("Cliente usuario_id={} intentó acceder a consulta_id={} de otra mascota",
+                        idUsuario, id);
+                redirectAttributes.addFlashAttribute("errorAcceso",
+                        "No tienes permiso para ver esta consulta.");
+                return "redirect:/cliente/citas";
+            }
+            model.addAttribute("consulta", consulta);
+            return "cliente/ver-consulta";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/cliente/citas";
+        }
+    }
+
+    @GetMapping("/consultas/{id}/pdf/descargar")
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable Integer id) {
+        Integer idUsuario = principal().getIdUsuario();
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            if (!consulta.getMascota().getPropietario().getIdUsuario().equals(idUsuario)) {
+                log.warn("Cliente usuario_id={} intentó descargar PDF de consulta_id={} ajena",
+                        idUsuario, id);
+                return ResponseEntity.status(403).build();
+            }
+            byte[] pdf = consultaPdfService.generarPdf(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"Consulta_" + id + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException ex) {
+            log.error("Error al generar PDF consulta_id={}", id, ex);
+            return ResponseEntity.internalServerError().build();
         }
     }
 

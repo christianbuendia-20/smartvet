@@ -23,6 +23,15 @@
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorAcceso}"  class="alerta alerta-error"  th:text="${errorAcceso}"></div>
 
+    <!-- ── Banner visual ─────────────────────────────────────────────────── -->
+    <div class="dash-banner">
+        <img th:src="@{/img/internamiento.jpg}" alt="" class="dash-banner-img">
+        <div class="dash-banner-overlay">
+            <span class="dash-banner-tag">Panel Veterinario</span>
+            <span class="dash-banner-title">Agenda del Día</span>
+        </div>
+    </div>
+
     <!-- ── Estadísticas del día ──────────────────────────────────────────── -->
     <div class="stats-grid">
 
@@ -54,7 +63,11 @@
 
     <!-- ── Lista de citas ────────────────────────────────────────────────── -->
     <p class="seccion-titulo">🩺 Mis Citas de Hoy</p>
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(citasHoy)}">
             <thead>
                 <tr>
@@ -64,7 +77,7 @@
                     <th>Tipo</th>
                     <th>Motivo</th>
                     <th>Estado</th>
-                    <th>Acción</th>
+                    <th class="tabla-col-accion">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,7 +105,7 @@
                                                                                       ' badge-no-asistio'}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <div style="display:flex; flex-direction:column; gap:0.35rem; align-items:flex-start;">
                             <!-- Acción principal según estado -->
                             <a th:if="${cita.estado.name() == 'PROGRAMADA' or
@@ -120,6 +133,7 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(citasHoy)}">
             <span class="icono-vacio">📭</span>
@@ -128,13 +142,17 @@
     </div>
 
     <!-- ── Próximas citas (a partir de mañana) ──────────────────────────── -->
-    <p class="seccion-titulo" style="margin-top:2rem;">
+    <p class="seccion-titulo" style="margin-top:2rem; margin-bottom:0.4rem;">
         <i class="fa-regular fa-calendar-days" style="color:var(--primario);"></i>
         Próximas Citas de la Semana
         <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave);"
               th:text="'(' + ${#lists.size(proximasCitas)} + ' pendiente(s))'"></span>
     </p>
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(proximasCitas)}">
             <thead>
                 <tr>
@@ -144,7 +162,7 @@
                     <th>Propietario</th>
                     <th>Tipo</th>
                     <th>Estado</th>
-                    <th>Historial</th>
+                    <th class="tabla-col-accion">Historial</th>
                 </tr>
             </thead>
             <tbody>
@@ -166,7 +184,7 @@
                               th:classappend="${cita.estado.name() == 'PROGRAMADA' ? ' badge-programada' : ' badge-confirmada'}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <a th:href="@{/vet/historial/{id}(id=${cita.mascota.idMascota})}"
                            class="btn btn-outline"
                            style="padding:0.25rem 0.75rem; font-size:0.75rem;">
@@ -176,6 +194,7 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(proximasCitas)}">
             <span class="icono-vacio">📅</span>

@@ -29,8 +29,51 @@
         </div>
     </div>
 
-    <div style="max-width:720px; margin:0 auto;">
-        <div class="tabla-card" style="padding:1.75rem 2rem;">
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
+
+    <!-- Banner PDF (solo cuando la cita tiene consulta médica registrada) -->
+    <div th:if="${consulta != null}"
+         style="background:linear-gradient(135deg,#FF9800 0%,#F57C00 100%);
+                border-radius:12px; padding:1.25rem 1.75rem; margin-bottom:1.5rem;
+                display:flex; align-items:center; justify-content:space-between;
+                flex-wrap:wrap; gap:1rem; box-shadow:0 4px 18px rgba(255,152,0,0.28);">
+        <div style="color:#fff;">
+            <p style="margin:0; font-size:0.78rem; font-weight:700; text-transform:uppercase;
+                       letter-spacing:0.08em; opacity:0.88;">Informe de Consulta</p>
+            <p style="margin:0.2rem 0 0; font-size:1rem; font-weight:600;">
+                <i class="fa-solid fa-file-medical"></i>
+                Consulta #<span th:text="${consulta.idConsulta}">0</span> lista para exportar
+            </p>
+        </div>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a th:href="@{/admin/consultas/{id}/pdf/descargar(id=${consulta.idConsulta})}"
+               style="background:#fff; color:#E65100; border:none; border-radius:8px;
+                      padding:0.6rem 1.4rem; font-size:0.875rem; font-weight:700;
+                      display:inline-flex; align-items:center; gap:0.5rem;
+                      text-decoration:none; white-space:nowrap;
+                      box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+                <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
+            </a>
+            <form th:action="@{/admin/consultas/{id}/pdf/enviar(id=${consulta.idConsulta})}"
+                  method="post" style="margin:0;">
+                <button type="submit"
+                        style="background:rgba(255,255,255,0.18); color:#fff;
+                               border:2px solid rgba(255,255,255,0.65); border-radius:8px;
+                               padding:0.55rem 1.3rem; font-size:0.875rem; font-weight:600;
+                               cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;
+                               white-space:nowrap;">
+                    <i class="fa-solid fa-envelope"></i> Enviar por Correo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div style="max-width:800px; margin:0 auto;">
+
+        <!-- Datos básicos de la cita -->
+        <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
             <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
                 <i class="fa-regular fa-calendar-check" style="color:var(--primario);"></i>
                 Detalle de la Cita
@@ -76,6 +119,108 @@
                 </div>
             </dl>
         </div>
+
+        <!-- Secciones clínicas (solo si existe registro médico) -->
+        <th:block th:if="${consulta != null}">
+
+            <!-- Signos Vitales -->
+            <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-heart-pulse" style="color:var(--primario);"></i>
+                    Signos Vitales
+                </p>
+                <dl class="ficha-grid">
+                    <div>
+                        <dt>Temperatura</dt>
+                        <dd th:text="${consulta.temperatura != null ? consulta.temperatura + ' °C' : '—'}">—</dd>
+                    </div>
+                    <div>
+                        <dt>Peso</dt>
+                        <dd th:text="${consulta.peso != null ? consulta.peso + ' kg' : '—'}">—</dd>
+                    </div>
+                    <div>
+                        <dt>Frecuencia cardíaca</dt>
+                        <dd th:text="${consulta.frecuenciaCardiaca != null ? consulta.frecuenciaCardiaca + ' lpm' : '—'}">—</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Diagnóstico Clínico -->
+            <div class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-stethoscope" style="color:var(--primario);"></i>
+                    Diagnóstico Clínico
+                </p>
+                <dl class="ficha-grid">
+                    <div style="grid-column: 1 / -1;">
+                        <dt>Diagnóstico</dt>
+                        <dd th:text="${consulta.diagnostico}">-</dd>
+                    </div>
+                    <div style="grid-column: 1 / -1;"
+                         th:if="${consulta.tratamiento != null and !consulta.tratamiento.isBlank()}">
+                        <dt>Tratamiento</dt>
+                        <dd th:text="${consulta.tratamiento}">-</dd>
+                    </div>
+                    <div style="grid-column: 1 / -1;"
+                         th:if="${consulta.observaciones != null and !consulta.observaciones.isBlank()}">
+                        <dt>Observaciones</dt>
+                        <dd th:text="${consulta.observaciones}">-</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Receta Médica -->
+            <div th:if="${consulta.recetas != null and !#lists.isEmpty(consulta.recetas)}"
+                 class="tabla-card" style="padding:1.75rem 2rem; margin-bottom:1.5rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-prescription-bottle-medical" style="color:var(--primario);"></i>
+                    Receta Médica
+                </p>
+                <div th:each="receta : ${consulta.recetas}">
+                    <div class="tabla-swipe-hint">
+                        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+                    </div>
+                    <div class="tabla-card" style="padding:0; margin-bottom:1rem;">
+                        <div class="tabla-scroll">
+                        <table th:if="${receta.detalles != null and !#lists.isEmpty(receta.detalles)}">
+                            <thead>
+                                <tr>
+                                    <th>Medicamento</th>
+                                    <th>Cantidad</th>
+                                    <th>Dosis</th>
+                                    <th>Frecuencia</th>
+                                    <th>Duración</th>
+                                    <th>Instrucciones adicionales</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="det : ${receta.detalles}">
+                                    <td><strong th:text="${det.producto.nombre}">-</strong></td>
+                                    <td th:text="${det.cantidad}">-</td>
+                                    <td th:text="${det.dosis ?: '—'}">—</td>
+                                    <td th:text="${det.frecuencia ?: '—'}">—</td>
+                                    <td th:text="${det.duracionDias != null ? det.duracionDias + ' días' : '—'}">—</td>
+                                    <td th:text="${det.instruccionesAdicionales ?: '—'}">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                    <dl class="ficha-grid">
+                        <div th:if="${receta.instrucciones != null and !receta.instrucciones.isBlank()}">
+                            <dt>Instrucciones generales</dt>
+                            <dd th:text="${receta.instrucciones}">-</dd>
+                        </div>
+                        <div>
+                            <dt>Vigencia</dt>
+                            <dd th:text="${receta.vigenciaDias + ' días'}">-</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+        </th:block>
+
     </div>
 
 </main>

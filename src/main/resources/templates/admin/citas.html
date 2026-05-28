@@ -32,7 +32,25 @@
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
+    <!-- ── Barra de búsqueda ─────────────────────────────────────────────── -->
+    <form th:action="@{/admin/citas}" method="get" class="busqueda-form">
+        <input type="text" name="keyword" class="form-input busqueda-input"
+               th:value="${keyword}"
+               placeholder="Buscar por mascota, propietario o motivo…">
+        <input type="date" name="fecha" class="form-input"
+               style="width:auto; min-width:9rem;"
+               th:value="${fecha}">
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        <a th:if="${keyword != '' or fecha != null}" th:href="@{/admin/citas}" class="btn btn-gris">✕ Limpiar</a>
+    </form>
+
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(citas)}">
             <thead>
                 <tr>
@@ -43,7 +61,7 @@
                     <th>Veterinario</th>
                     <th>Tipo</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
+                    <th class="tabla-col-accion">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,7 +93,7 @@
                                                                                    ' badge-no-asistio'}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
                             <a th:href="@{/admin/citas/{id}(id=${c.idCita})}"
                                class="btn btn-gris"
@@ -107,10 +125,12 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(citas)}">
             <span class="icono-vacio">📭</span>
-            No hay citas registradas en el sistema.
+            <span th:if="${keyword != '' or fecha != null}">No se encontraron citas con los filtros aplicados.</span>
+            <span th:if="${keyword == '' and fecha == null}">No hay citas registradas en el sistema.</span>
         </div>
     </div>
 

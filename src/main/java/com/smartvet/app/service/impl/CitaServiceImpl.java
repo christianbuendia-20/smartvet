@@ -192,7 +192,22 @@ public class CitaServiceImpl implements CitaService {
 
     @Override
     public List<Cita> listarAgendaPorVeterinario(Integer idUsuario) {
-        return listarPorUsuarioVeterinario(idUsuario).stream()
+        return listarAgendaPorVeterinario(idUsuario, null);
+    }
+
+    @Override
+    public List<Cita> listarAgendaPorVeterinario(Integer idUsuario, String keyword) {
+        Veterinario vet = veterinarioRepository.findByUsuario_IdUsuario(idUsuario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró perfil de veterinario para el usuario id=" + idUsuario));
+        if (keyword == null || keyword.isBlank()) {
+            return citaRepository.findCitasByVeterinarioConDetalle(vet.getIdVeterinario())
+                    .stream()
+                    .sorted(java.util.Comparator.comparing(Cita::getFechaHora))
+                    .toList();
+        }
+        return citaRepository.buscarPorVeterinarioYKeyword(vet.getIdVeterinario(), keyword.trim())
+                .stream()
                 .sorted(java.util.Comparator.comparing(Cita::getFechaHora))
                 .toList();
     }
@@ -211,6 +226,43 @@ public class CitaServiceImpl implements CitaService {
     @Transactional(readOnly = true)
     public List<Cita> listarTodas() {
         return citaRepository.findAllWithDetalle();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarTodas(String keyword) {
+        if (keyword == null || keyword.isBlank()) return citaRepository.findAllWithDetalle();
+        return citaRepository.buscarConDetallePorKeyword(keyword.trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarTodas(String keyword, LocalDate fecha) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        LocalDateTime inicio = fecha != null ? fecha.atStartOfDay() : null;
+        LocalDateTime fin    = fecha != null ? fecha.atTime(23, 59, 59) : null;
+        return citaRepository.filtrarAdmin(kw, inicio, fin);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarAgendaPorVeterinario(Integer idUsuario, String keyword, LocalDate fecha) {
+        Veterinario vet = veterinarioRepository.findByUsuario_IdUsuario(idUsuario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró perfil de veterinario para el usuario id=" + idUsuario));
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        LocalDateTime inicio = fecha != null ? fecha.atStartOfDay() : null;
+        LocalDateTime fin    = fecha != null ? fecha.atTime(23, 59, 59) : null;
+        return citaRepository.filtrarVeterinario(vet.getIdVeterinario(), kw, inicio, fin);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarPorPropietario(Integer idUsuario, String keyword, LocalDate fecha) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        LocalDateTime inicio = fecha != null ? fecha.atStartOfDay() : null;
+        LocalDateTime fin    = fecha != null ? fecha.atTime(23, 59, 59) : null;
+        return citaRepository.filtrarCliente(idUsuario, kw, inicio, fin);
     }
 
     // ── lógica de disponibilidad ──────────────────────────────────────────────

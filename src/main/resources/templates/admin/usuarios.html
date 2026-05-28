@@ -33,8 +33,23 @@
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
+    <!-- ── Barra de búsqueda ─────────────────────────────────────────────── -->
+    <form th:action="@{/admin/usuarios}" method="get" class="busqueda-form">
+        <input type="text" name="keyword" class="form-input busqueda-input"
+               th:value="${keyword}"
+               placeholder="Buscar por nombre, apellido o DNI…">
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+        </button>
+        <a th:if="${keyword != ''}" th:href="@{/admin/usuarios}" class="btn btn-gris">✕ Limpiar</a>
+    </form>
+
     <!-- ── Tabla de usuarios ──────────────────────────────────────────────── -->
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(usuarios)}">
             <thead>
                 <tr>
@@ -45,7 +60,7 @@
                     <th>Estado</th>
                     <th>Rol actual</th>
                     <th>Cambiar rol</th>
-                    <th>Acciones</th>
+                    <th class="tabla-col-accion">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -88,7 +103,7 @@
                             </button>
                         </form>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
                             <a th:href="@{/admin/usuarios/{id}(id=${usuario.idUsuario})}"
                                class="btn btn-gris"
@@ -125,10 +140,12 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(usuarios)}">
             <span class="icono-vacio">👤</span>
-            No hay usuarios registrados.
+            <span th:if="${keyword != ''}">No se encontraron usuarios para "<strong th:text="${keyword}"></strong>".</span>
+            <span th:if="${keyword == ''}">No hay usuarios registrados.</span>
         </div>
     </div>
 

@@ -17,13 +17,34 @@
             <h2>Mis Citas</h2>
             <p>Historial completo de citas de <strong sec:authentication="principal.nombreCompleto">Cliente</strong>.</p>
         </div>
-        <a th:href="@{/cliente/citas/nueva}" class="btn btn-verde">+ Agendar cita</a>
+        <div style="display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center;">
+            <a th:href="@{/cliente/dashboard}" class="btn btn-outline">← Mi Panel</a>
+            <a th:href="@{/cliente/citas/nueva}" class="btn btn-verde">+ Agendar cita</a>
+        </div>
     </div>
 
     <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
 
+    <!-- ── Barra de búsqueda ─────────────────────────────────────────────── -->
+    <form th:action="@{/cliente/citas}" method="get" class="busqueda-form">
+        <input type="text" name="keyword" class="form-input busqueda-input"
+               th:value="${keyword}"
+               placeholder="Buscar por mascota o motivo…">
+        <input type="date" name="fecha" class="form-input"
+               style="width:auto; min-width:9rem;"
+               th:value="${fecha}">
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        <a th:if="${keyword != '' or fecha != null}" th:href="@{/cliente/citas}" class="btn btn-gris">✕ Limpiar</a>
+    </form>
+
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(citas)}">
             <thead>
                 <tr>
@@ -33,7 +54,7 @@
                     <th>Tipo</th>
                     <th>Motivo</th>
                     <th>Estado</th>
-                    <th>Acción</th>
+                    <th class="tabla-col-accion">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,7 +79,7 @@
                               th:classappend="${' badge-' + cita.estado.name().toLowerCase().replace('_', '-')}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <form th:if="${cita.estado.name() == 'PROGRAMADA' or cita.estado.name() == 'CONFIRMADA'}"
                               th:action="@{/cliente/citas/{id}/cancelar(id=${cita.idCita})}"
                               method="post"
@@ -68,20 +89,31 @@
                                 Cancelar
                             </button>
                         </form>
-                        <span th:if="${cita.estado.name() != 'PROGRAMADA' and cita.estado.name() != 'CONFIRMADA'}"
+                        <a th:if="${cita.estado.name() == 'COMPLETADA'}"
+                           th:href="@{/cliente/consultas/por-cita/{id}(id=${cita.idCita})}"
+                           class="btn btn-outline"
+                           style="padding:0.3rem 0.75rem; font-size:0.8rem; white-space:nowrap;">
+                            <i class="fa-solid fa-file-medical"></i> Ver Historial
+                        </a>
+                        <span th:if="${cita.estado.name() != 'PROGRAMADA' and
+                                      cita.estado.name() != 'CONFIRMADA'  and
+                                      cita.estado.name() != 'COMPLETADA'}"
                               style="color:var(--texto-suave); font-size:0.85rem;">—</span>
                     </td>
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(citas)}">
             <span class="icono-vacio">📭</span>
-            Aún no tienes ninguna cita registrada.
-            <br>
-            <a th:href="@{/cliente/citas/nueva}" style="margin-top:0.75rem; display:inline-block;">
-                Agenda tu primera cita
-            </a>
+            <span th:if="${keyword != '' or fecha != null}">No se encontraron citas con los filtros aplicados.</span>
+            <span th:if="${keyword == '' and fecha == null}">
+                Aún no tienes ninguna cita registrada.<br>
+                <a th:href="@{/cliente/citas/nueva}" style="margin-top:0.75rem; display:inline-block;">
+                    Agenda tu primera cita
+                </a>
+            </span>
         </div>
     </div>
 

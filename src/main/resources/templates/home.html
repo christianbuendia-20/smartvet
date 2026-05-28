@@ -888,6 +888,11 @@
 
         /* 4 vets grid en pantallas grandes */
         @media (min-width: 1100px) { .vets-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        @media (max-width: 640px) {
+            .brands-img     { aspect-ratio: 4 / 3; }
+            .brands-overlay { padding: 1.5rem 1rem; }
+        }
     </style>
 </head>
 <body>
@@ -1241,6 +1246,34 @@
                 </div>
             </div>
 
+            <!-- Transporte Veterinario -->
+            <div class="service-card">
+                <img th:src="@{/img/transporte_vet.jpg}"
+                     alt="Transporte veterinario a domicilio"
+                     class="service-card-img">
+                <div class="service-card-overlay">
+                    <div class="service-icon">
+                        <i class="fa-solid fa-truck-medical"></i>
+                    </div>
+                    <h3>Transporte Veterinario</h3>
+                    <p>Recojo y traslado seguro de tu mascota hasta nuestra clínica y de vuelta a casa.</p>
+                </div>
+            </div>
+
+            <!-- Crematorio -->
+            <div class="service-card">
+                <img th:src="@{/img/crematorio.avif}"
+                     alt="Servicio de cremación para mascotas"
+                     class="service-card-img">
+                <div class="service-card-overlay">
+                    <div class="service-icon">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <h3>Servicio de Cremación</h3>
+                    <p>Despedida digna y amorosa para tu compañero, con urnas y certificado de cremación.</p>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
@@ -1313,10 +1346,10 @@
                      class="vet-img">
                 <div class="vet-body">
                     <span class="vet-badge">Cirugía Veterinaria</span>
-                    <h3 class="vet-name">Dra. Hossue Osorio</h3>
+                    <h3 class="vet-name">Dr. Hossue Osorio</h3>
                     <p class="vet-bio">
-                        Experta en cirugía de tejidos blandos y ortopedia.
-                        Dedicada a mejorar la calidad de vida de cada paciente quirúrgico.
+                        Experto en cirugía de tejidos blandos y ortopedia.
+                        Dedicado a mejorar la calidad de vida de cada paciente quirúrgico.
                     </p>
                     <div class="vet-meta">
                         <span class="vet-meta-item">

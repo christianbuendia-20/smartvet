@@ -21,6 +21,15 @@
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
+    <!-- ── Banner visual ─────────────────────────────────────────────────── -->
+    <div class="dash-banner">
+        <img th:src="@{/img/petshop_1.jpg}" alt="" class="dash-banner-img">
+        <div class="dash-banner-overlay">
+            <span class="dash-banner-tag">Panel de Administración</span>
+            <span class="dash-banner-title">Resumen del Sistema SmartVet</span>
+        </div>
+    </div>
+
     <!-- ── Tarjetas de estadísticas ───────────────────────────────────────── -->
     <div class="stats-grid">
 

@@ -81,7 +81,7 @@
         </a>
 
         <!-- ── Navegación por rol ─────────────────────────────────────── -->
-        <div class="navbar-nav">
+        <div class="navbar-nav" id="svNavMenu">
 
             <!-- Admin -->
             <span sec:authorize="hasAuthority('admin')">
@@ -120,9 +120,6 @@
                 <a class="nav-link" th:href="@{/cliente/mascotas}">
                     <i class="fa-solid fa-paw"></i> Mis Mascotas
                 </a>
-                <a class="nav-link" th:href="@{/cliente/citas/nueva}">
-                    <i class="fa-regular fa-calendar-plus"></i> Agendar Cita
-                </a>
                 <a class="nav-link" th:href="@{/cliente/citas}">
                     <i class="fa-solid fa-calendar-check"></i> Mis Citas
                 </a>
@@ -158,16 +155,46 @@
 
         </div>
 
+        <!-- ── Hamburguesa (móvil) — al final para quedar en row-1 derecha ── -->
+        <button class="navbar-hamburger" id="svHamburger"
+                aria-label="Abrir menú" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
     </div>
 </nav>
 <script>
 !function(){
+  /* ── Dropdown de perfil ────────────────────────────────── */
   var d=document.getElementById('svPdrop');
-  if(!d) return;
-  d.querySelector('.sv-pdrop-btn').addEventListener('click',function(e){
-    e.stopPropagation(); d.classList.toggle('open');
+  if(d){
+    d.querySelector('.sv-pdrop-btn').addEventListener('click',function(e){
+      e.stopPropagation(); d.classList.toggle('open');
+    });
+  }
+
+  /* ── Menú hamburguesa ──────────────────────────────────── */
+  var ham=document.getElementById('svHamburger');
+  var nav=document.getElementById('svNavMenu');
+  if(ham&&nav){
+    ham.addEventListener('click',function(e){
+      e.stopPropagation();
+      var abierto=nav.classList.toggle('abierto');
+      ham.setAttribute('aria-expanded',abierto);
+      ham.querySelector('i').className=abierto?'fa-solid fa-xmark':'fa-solid fa-bars';
+    });
+  }
+
+  /* ── Cierra todo al hacer click fuera ──────────────────── */
+  document.addEventListener('click',function(){
+    if(d) d.classList.remove('open');
+    if(ham&&nav){
+      nav.classList.remove('abierto');
+      ham.setAttribute('aria-expanded',false);
+      var ic=ham.querySelector('i');
+      if(ic) ic.className='fa-solid fa-bars';
+    }
   });
-  document.addEventListener('click',function(){ d.classList.remove('open'); });
 }();
 </script>
 </header>

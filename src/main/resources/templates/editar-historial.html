@@ -23,6 +23,8 @@
         <a th:href="${returnUrl}" class="btn btn-outline">← Volver al Historial</a>
     </div>
 
+    <div style="max-width:760px; margin:0 auto;">
+
     <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorAcceso}"  class="alerta alerta-error"  th:text="${errorAcceso}"></div>
@@ -37,7 +39,7 @@
     <form th:action="@{/mascota/historial/editar/{id}(id=${mascota.idMascota})}"
           method="post" novalidate>
 
-        <div class="tabla-card" style="padding:2rem; max-width:760px;">
+        <div class="tabla-card" style="padding:2rem;">
 
             <p class="seccion-titulo" style="margin-top:0;">
                 <i class="fa-solid fa-triangle-exclamation" style="color:var(--primario);"></i>
@@ -106,6 +108,8 @@
         </div>
 
     </form>
+
+    </div><!-- /.centrado max-760 -->
 
 </main>
 

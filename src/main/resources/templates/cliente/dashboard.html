@@ -5,6 +5,26 @@
 <head>
     <title>SmartVet — Mi Panel</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .quick-action-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background-color: #fffaf0;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff9800;
+            box-shadow: 0 10px 15px rgba(255, 152, 0, 0.15);
+        }
+        .quick-action-card i {
+            transition: transform 0.3s ease;
+        }
+        .quick-action-card:hover i {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -22,6 +42,15 @@
 
     <!-- Mensajes flash -->
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+
+    <!-- ── Banner visual ─────────────────────────────────────────────────── -->
+    <div class="dash-banner">
+        <img th:src="@{/img/baños.png}" alt="" class="dash-banner-img">
+        <div class="dash-banner-overlay">
+            <span class="dash-banner-tag">Mi Portal</span>
+            <span class="dash-banner-title">Cuida a tu mascota con Santa Victoria</span>
+        </div>
+    </div>
 
     <!-- ── Estadísticas rápidas ──────────────────────────────────────────── -->
     <div class="stats-grid">
@@ -50,13 +79,13 @@
     <p class="seccion-titulo">⚡ Acciones Rápidas</p>
     <div class="acciones-grid">
 
-        <a th:href="@{/cliente/citas/nueva}" class="accion-card">
+        <a th:href="@{/cliente/citas/nueva}" class="accion-card quick-action-card">
             <span class="accion-icono">📅</span>
             <span class="accion-titulo">Nueva Cita</span>
             <span class="accion-desc">Agenda una consulta para tu mascota</span>
         </a>
 
-        <a th:href="@{/cliente/mascotas/nueva}" class="accion-card">
+        <a th:href="@{/cliente/mascotas/nueva}" class="accion-card quick-action-card">
             <span class="accion-icono">➕</span>
             <span class="accion-titulo">Registrar Mascota</span>
             <span class="accion-desc">Añade una nueva mascota a tu perfil</span>
@@ -101,8 +130,15 @@
     </div>
 
     <!-- ── Próximas citas ─────────────────────────────────────────────────── -->
-    <p class="seccion-titulo">📅 Próximas Citas</p>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <p class="seccion-titulo" style="margin-bottom:0;">📅 Próximas Citas</p>
+        <a th:href="@{/cliente/citas}" class="btn btn-outline" style="font-size:0.85rem;">Ver todas</a>
+    </div>
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
     <div class="tabla-card">
+        <div class="tabla-scroll">
         <table th:if="${not #lists.isEmpty(proximasCitas)}">
             <thead>
                 <tr>
@@ -112,7 +148,7 @@
                     <th>Tipo</th>
                     <th>Motivo</th>
                     <th>Estado</th>
-                    <th>Acción</th>
+                    <th class="tabla-col-accion">Acción</th>
                 </tr>
             </thead>
             <tbody>
@@ -137,7 +173,7 @@
                               th:classappend="${cita.estado.name() == 'PROGRAMADA' ? ' badge-programada' : ' badge-confirmada'}">
                         </span>
                     </td>
-                    <td>
+                    <td class="tabla-col-accion">
                         <form th:action="@{/cliente/citas/{id}/cancelar(id=${cita.idCita})}"
                               method="post"
                               onsubmit="return confirm('¿Confirmas la cancelación de esta cita?')">
@@ -150,6 +186,7 @@
                 </tr>
             </tbody>
         </table>
+        </div><!-- /.tabla-scroll -->
 
         <div class="tabla-vacia" th:if="${#lists.isEmpty(proximasCitas)}">
             <span class="icono-vacio">📭</span>

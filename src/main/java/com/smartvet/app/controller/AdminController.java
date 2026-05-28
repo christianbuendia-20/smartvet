@@ -9,6 +9,7 @@ import com.smartvet.app.exception.EmailDuplicadoException;
 import com.smartvet.app.exception.EstadoInvalidoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
 import com.smartvet.app.model.Cita;
+import com.smartvet.app.model.Consulta;
 import com.smartvet.app.model.EstadoCita;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.MetodoPago;
@@ -19,16 +20,24 @@ import com.smartvet.app.model.TipoProducto;
 import com.smartvet.app.model.Usuario;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.ConsultaPdfService;
+import com.smartvet.app.service.ConsultaService;
+import com.smartvet.app.service.EmailService;
 import com.smartvet.app.service.MascotaService;
 import com.smartvet.app.service.PagoService;
 import com.smartvet.app.service.ProductoService;
 import com.smartvet.app.service.UsuarioService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,22 +55,31 @@ import java.util.List;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final CitaService     citaService;
-    private final MascotaService  mascotaService;
-    private final PagoService     pagoService;
-    private final ProductoService productoService;
-    private final UsuarioService  usuarioService;
+    private final CitaService        citaService;
+    private final MascotaService     mascotaService;
+    private final PagoService        pagoService;
+    private final ProductoService    productoService;
+    private final UsuarioService     usuarioService;
+    private final ConsultaService    consultaService;
+    private final ConsultaPdfService consultaPdfService;
+    private final EmailService       emailService;
 
     public AdminController(CitaService citaService,
                            MascotaService mascotaService,
                            PagoService pagoService,
                            ProductoService productoService,
-                           UsuarioService usuarioService) {
-        this.citaService     = citaService;
-        this.mascotaService  = mascotaService;
-        this.pagoService     = pagoService;
-        this.productoService = productoService;
-        this.usuarioService  = usuarioService;
+                           UsuarioService usuarioService,
+                           ConsultaService consultaService,
+                           ConsultaPdfService consultaPdfService,
+                           EmailService emailService) {
+        this.citaService        = citaService;
+        this.mascotaService     = mascotaService;
+        this.pagoService        = pagoService;
+        this.productoService    = productoService;
+        this.usuarioService     = usuarioService;
+        this.consultaService    = consultaService;
+        this.consultaPdfService = consultaPdfService;
+        this.emailService       = emailService;
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -247,7 +265,7 @@ public class AdminController {
             return "admin/editar-cita";
         } catch (RecursoNoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
-            return "redirect:/admin/dashboard";
+            return "redirect:/admin/citas";
         }
     }
 
@@ -264,7 +282,7 @@ public class AdminController {
             log.warn("Error al reasignar cita_id={}: {}", id, ex.getMessage());
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
         }
-        return "redirect:/admin/dashboard";
+        return "redirect:/admin/citas";
     }
 
     @PostMapping("/citas/cancelar/{id}")
@@ -278,14 +296,16 @@ public class AdminController {
             log.warn("Error al cancelar cita_id={}: {}", id, ex.getMessage());
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
         }
-        return "redirect:/admin/dashboard";
+        return "redirect:/admin/citas";
     }
 
     // ── Gestión de roles de usuarios ──────────────────────────────────────────
 
     @GetMapping("/usuarios")
-    public String listarUsuarios(Model model) {
-        model.addAttribute("usuarios", usuarioService.listarTodos());
+    public String listarUsuarios(@RequestParam(value = "keyword", required = false) String keyword,
+                                  Model model) {
+        model.addAttribute("usuarios", usuarioService.listarTodos(keyword));
+        model.addAttribute("keyword",  keyword != null ? keyword : "");
         return "admin/usuarios";
     }
 
@@ -363,10 +383,14 @@ public class AdminController {
     // ── Listado completo de citas ─────────────────────────────────────────────
 
     @GetMapping("/citas")
-    public String listarTodasCitas(Model model) {
-        List<Cita> citas = citaService.listarTodas();
-        model.addAttribute("citas",   citas);
+    public String listarTodasCitas(@RequestParam(value = "keyword", required = false) String keyword,
+                                    @RequestParam(value = "fecha", required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                                    Model model) {
+        model.addAttribute("citas",   citaService.listarTodas(keyword, fecha));
         model.addAttribute("estados", EstadoCita.values());
+        model.addAttribute("keyword", keyword != null ? keyword : "");
+        model.addAttribute("fecha",   fecha);
         return "admin/citas";
     }
 
@@ -375,12 +399,61 @@ public class AdminController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         try {
-            model.addAttribute("cita", citaService.buscarPorId(id));
+            Cita cita = citaService.buscarPorId(id);
+            model.addAttribute("cita", cita);
+            try {
+                model.addAttribute("consulta", consultaService.buscarPorCita(id));
+            } catch (RecursoNoEncontradoException ignored) {
+                // cita sin consulta asociada aún
+            }
             return "admin/ver-cita";
         } catch (RecursoNoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
             return "redirect:/admin/citas";
         }
+    }
+
+    @GetMapping("/consultas/{id}/pdf/descargar")
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable Integer id) {
+        try {
+            byte[] pdf = consultaPdfService.generarPdf(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"Consulta_" + id + ".pdf\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException ex) {
+            log.error("Error al generar PDF consulta_id={}", id, ex);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/consultas/{id}/pdf/enviar")
+    public String enviarPdfPorCorreo(@PathVariable Integer id,
+                                      RedirectAttributes redirectAttributes) {
+        Integer citaId = null;
+        try {
+            Consulta consulta = consultaService.buscarPorId(id);
+            citaId = consulta.getCita().getIdCita();
+            byte[] pdf = consultaPdfService.generarPdf(id);
+            Usuario propietario = consulta.getMascota().getPropietario();
+            emailService.enviarConsultaPdf(
+                    propietario.getEmail(),
+                    propietario.getNombres() + " " + propietario.getApellidos(),
+                    pdf, id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "PDF enviado exitosamente a " + propietario.getEmail()
+                    + ". Indíquele al cliente que revise su carpeta de Spam si no lo visualiza en unos minutos.");
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", "Consulta no encontrada.");
+        } catch (RuntimeException ex) {
+            log.error("Error al enviar PDF consulta_id={}", id, ex);
+            redirectAttributes.addFlashAttribute("errorForm",
+                    "No se pudo enviar el correo. Verifique la configuración SMTP.");
+        }
+        return citaId != null ? "redirect:/admin/citas/" + citaId : "redirect:/admin/citas";
     }
 
     // ── Agendar nueva cita (en nombre de un cliente) ──────────────────────────

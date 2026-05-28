@@ -156,6 +156,12 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public List<Usuario> listarTodos(String keyword) {
+        if (keyword == null || keyword.isBlank()) return usuarioRepository.findAll();
+        return usuarioRepository.buscarPorKeyword(keyword.trim());
+    }
+
+    @Override
     @Transactional
     public Usuario cambiarRol(Integer idUsuario, String nuevoRol) {
         Usuario usuario = buscarPorId(idUsuario);
