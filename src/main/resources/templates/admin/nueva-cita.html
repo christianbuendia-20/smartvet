@@ -5,21 +5,6 @@
 <head>
     <title>SmartVet — Nueva Cita</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
-    <style>
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-            display: none;
-            -webkit-appearance: none;
-        }
-        .btn-calendario-destacado {
-            background-color: #ff9800;
-            color: white;
-            border-color: #ff9800;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .btn-calendario-destacado:hover { background-color: #e68a00; border-color: #e68a00; }
-        .btn-calendario-destacado i     { font-size: 1.1rem; }
-    </style>
 </head>
 <body>
 
@@ -128,19 +113,30 @@
                     <label for="fechaHora">
                         Fecha y hora <span style="color:var(--rojo);">*</span>
                     </label>
-                    <div style="position:relative; display:flex; align-items:center;">
-                        <span id="btn-calendario-izq"
-                              class="btn-calendario-destacado"
-                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center;
-                                     padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                    <div style="display:flex; border:2px solid var(--borde,#e5e7eb); border-radius:10px;
+                                overflow:hidden; background:#fff;">
+                        <span id="btn-abrir-cal-cita"
+                              style="display:flex; align-items:center; padding:0 0.75rem;
+                                     background:var(--primario); color:#fff; flex-shrink:0; cursor:pointer;">
                             <i class="bi bi-calendar-event"></i>
                         </span>
-                        <input type="datetime-local" id="fechaHora" name="fechaHora"
-                               required style="padding-left:3rem; width:100%;"
-                               th:value="${fechaHoraPrev}">
+                        <input type="text" id="fechaHora" name="fechaHora"
+                               class="form-input"
+                               th:value="${fechaHoraPrev}"
+                               placeholder="dd/mm/aaaa hh:mm"
+                               required
+                               style="border:none !important; border-radius:0 !important;
+                                      flex:1; min-width:0; padding:0.45rem 0.6rem;">
+                        <button type="button" id="btn-hora-actual"
+                                style="display:flex; align-items:center; gap:0.4rem; padding:0 1rem;
+                                       background:var(--primario); color:#fff; border:none; cursor:pointer;
+                                       font-size:0.82rem; font-weight:600; flex-shrink:0; white-space:nowrap;
+                                       border-left:1px solid rgba(255,255,255,0.25);">
+                            <i class="bi bi-clock-history"></i> Ahora
+                        </button>
                     </div>
                     <span id="error-fecha" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
-                    <span class="hint">Horario de atención: 09:00 – 19:00 h. Reserva disponible solo para los próximos 15 días con un día de anticipación.</span>
+                    <span class="hint">Horario de atención: 09:00 – 19:00 h. Reserva disponible solo para los próximos 15 días.</span>
                 </div>
 
                 <div class="form-grupo" style="margin-bottom:0;">
@@ -187,55 +183,67 @@
     }
     selCliente.addEventListener('change', poblarMascotas);
 
-    /* ── Validación de fecha y hora ── */
-    var input     = document.getElementById('fechaHora');
-    var errorMsg  = document.getElementById('error-fecha');
-    var btnSubmit = document.querySelector('[type="submit"]');
-
-    // Regla 1: mínimo exactamente 24 horas desde ahora
-    var minDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    input.min = minDate.getFullYear()
-        + '-' + String(minDate.getMonth() + 1).padStart(2, '0')
-        + '-' + String(minDate.getDate()).padStart(2, '0')
-        + 'T' + String(minDate.getHours()).padStart(2, '0')
-        + ':' + String(minDate.getMinutes()).padStart(2, '0');
-
-    // Regla 3: máximo hoy + 15 días
-    var maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 15);
-    input.max = maxDate.getFullYear()
-        + '-' + String(maxDate.getMonth() + 1).padStart(2, '0')
-        + '-' + String(maxDate.getDate()).padStart(2, '0')
-        + 'T19:00';
-
-    document.getElementById('btn-calendario-izq').addEventListener('click', function () {
-        try { input.showPicker(); } catch (e) { input.focus(); }
-    });
-
-    // Regla 2: horario de atención 09:00 – 19:00
-    input.addEventListener('change', function () {
-        if (!this.value) return;
-        var parts    = this.value.split('T')[1].split(':').map(Number);
-        var totalMin = parts[0] * 60 + parts[1];
-
-        if (totalMin < 9 * 60 || totalMin > 19 * 60) {
-            errorMsg.textContent   = 'El horario de atención es de 09:00 a 19:00 horas. Por favor elige otro horario.';
-            errorMsg.style.display = 'block';
-            if (btnSubmit) btnSubmit.disabled = true;
-        } else if (new Date(this.value) > maxDate) {
-            errorMsg.textContent   = 'Solo se permite reservar citas dentro de los próximos 15 días. Por favor, selecciona una fecha válida.';
-            errorMsg.style.display = 'block';
-            if (btnSubmit) btnSubmit.disabled = true;
-            this.value = '';
-        } else {
-            errorMsg.style.display = 'none';
-            if (btnSubmit) btnSubmit.disabled = false;
-        }
-    });
-})();
+}());
 </script>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Flatpickr ya está disponible gracias al footer; init específico de esta vista -->
+<script>
+(function () {
+    var inputFH   = document.getElementById('fechaHora');
+    var errorMsg  = document.getElementById('error-fecha');
+    var btnSubmit = document.querySelector('[type="submit"]');
+
+    /* Máximo: hoy + 15 días a las 19:00 */
+    var maxFecha = new Date();
+    maxFecha.setDate(maxFecha.getDate() + 15);
+    var maxStr = maxFecha.getFullYear()
+        + '-' + String(maxFecha.getMonth() + 1).padStart(2, '0')
+        + '-' + String(maxFecha.getDate()).padStart(2, '0');
+
+    var fp = flatpickr(inputFH, {
+        locale: 'es',
+        enableTime: true,
+        dateFormat: 'Y-m-dTH:i',       /* formato para Spring Boot LocalDateTime */
+        altInput: true,
+        altFormat: 'd/m/Y H:i',         /* formato visual para el usuario         */
+        altInputClass: inputFH.className,
+        allowInput: true,
+        minDate: 'today',               /* admin puede agendar desde hoy           */
+        maxDate: maxStr + 'T19:00',
+        disableMobile: true,
+        onChange: function (selectedDates) {
+            if (!selectedDates.length) return;
+            var d        = selectedDates[0];
+            var totalMin = d.getHours() * 60 + d.getMinutes();
+            if (totalMin < 9 * 60 || totalMin > 19 * 60) {
+                errorMsg.textContent   = 'El horario de atención es de 09:00 a 19:00 horas.';
+                errorMsg.style.display = 'block';
+                if (btnSubmit) btnSubmit.disabled = true;
+            } else {
+                errorMsg.style.display = 'none';
+                if (btnSubmit) btnSubmit.disabled = false;
+            }
+        }
+    });
+
+    /* Transferir estilos inline al alt input para respetar el flex wrapper */
+    if (fp.altInput && inputFH.getAttribute('style')) {
+        fp.altInput.setAttribute('style', inputFH.getAttribute('style'));
+    }
+
+    /* Ícono naranja → abre el calendario */
+    document.getElementById('btn-abrir-cal-cita').addEventListener('click', function () {
+        fp.open();
+    });
+
+    /* Botón "Ahora" → establece fecha y hora del momento actual */
+    document.getElementById('btn-hora-actual').addEventListener('click', function () {
+        fp.setDate(new Date(), true);
+    });
+}());
+</script>
 
 </body>
 </html>

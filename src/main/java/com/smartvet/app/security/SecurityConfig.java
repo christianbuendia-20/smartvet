@@ -62,7 +62,7 @@ public class SecurityConfig {
                                 } else if (isVet) {
                                     response.sendRedirect(request.getContextPath() + "/vet/dashboard");
                                 } else if (isCliente) {
-                                    response.sendRedirect(request.getContextPath() + "/cliente/panel");
+                                    response.sendRedirect(request.getContextPath() + "/cliente/dashboard");
                                 } else {
                                     response.sendRedirect(request.getContextPath() + "/");
                                 }
