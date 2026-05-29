@@ -1,12 +1,15 @@
 package com.smartvet.app.service.impl;
 
+import com.smartvet.app.dto.PagoFilaDTO;
 import com.smartvet.app.dto.PagoRegistroDTO;
 import com.smartvet.app.exception.EstadoInvalidoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
 import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.EstadoCita;
 import com.smartvet.app.model.EstadoPago;
+import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.PagoCita;
+import com.smartvet.app.model.Usuario;
 import com.smartvet.app.repository.CitaRepository;
 import com.smartvet.app.repository.PagoCitaRepository;
 import com.smartvet.app.service.PagoService;
@@ -14,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Sort;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -76,6 +82,56 @@ public class PagoServiceImpl implements PagoService {
     @Override
     public List<Cita> listarCitasCompletadasSinPago() {
         return citaRepository.findCitasCompletadasSinPago(EstadoCita.COMPLETADA, EstadoPago.COMPLETADO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PagoCita> listarTodos() {
+        return pagoCitaRepository.findAll(Sort.by(Sort.Direction.DESC, "fechaPago"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PagoFilaDTO> listarParaVista() {
+        List<PagoFilaDTO> filas = new ArrayList<>();
+
+        for (PagoCita p : pagoCitaRepository.findAllWithDetalle()) {
+            Mascota  m   = p.getCita().getMascota();
+            Usuario  pro = m.getPropietario();
+            filas.add(new PagoFilaDTO(
+                    p.getIdPago(),
+                    p.getCita().getIdCita(),
+                    p.getCita().getFechaHora(),
+                    p.getFechaPago(),
+                    m.getNombre(),
+                    m.getEspecie() != null ? m.getEspecie().toString() : "—",
+                    pro.getNombres() + " " + pro.getApellidos(),
+                    p.getMonto(),
+                    p.getMetodoPago() != null ? p.getMetodoPago().name() : null,
+                    p.getReferencia(),
+                    p.getEstado()
+            ));
+        }
+
+        for (Cita c : citaRepository.findCitasCompletadasSinPago(EstadoCita.COMPLETADA, EstadoPago.COMPLETADO)) {
+            Mascota  m   = c.getMascota();
+            Usuario  pro = m.getPropietario();
+            filas.add(new PagoFilaDTO(
+                    null,
+                    c.getIdCita(),
+                    c.getFechaHora(),
+                    null,
+                    m.getNombre(),
+                    m.getEspecie() != null ? m.getEspecie().toString() : "—",
+                    pro.getNombres() + " " + pro.getApellidos(),
+                    null,
+                    null,
+                    null,
+                    EstadoPago.PENDIENTE
+            ));
+        }
+
+        return filas;
     }
 
     @Override

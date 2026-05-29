@@ -56,6 +56,9 @@ public class Mascota {
     @Column(name = "fecha_registro", insertable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
+    @Column(name = "ruta_foto", length = 255)
+    private String rutaFoto;
+
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "mascota", cascade = CascadeType.ALL, orphanRemoval = true)

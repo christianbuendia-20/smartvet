@@ -5,6 +5,86 @@
 <head>
     <title>SmartVet — Nueva Mascota</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+        /* ── Select2 — integración con el tema del proyecto ── */
+        .select2-container { display: block !important; }
+
+        .select2-container--default .select2-selection--single {
+            height: auto;
+            min-height: 38px;
+            padding: 0.42rem 2.25rem 0.42rem 0.75rem;
+            border: 1px solid var(--borde);
+            border-radius: 6px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--texto-principal);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            padding: 0;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: var(--texto-suave);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100%;
+            top: 0;
+            right: 10px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: var(--primario);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            outline: none;
+        }
+        .select2-dropdown {
+            border: 1px solid var(--borde);
+            border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 1px solid var(--borde);
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.875rem;
+            outline: none;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+            border-color: var(--primario);
+        }
+        .select2-container--default .select2-results__option {
+            padding: 0.45rem 0.75rem;
+            color: var(--texto-principal);
+        }
+        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: var(--primario);
+            color: #fff;
+        }
+        .select2-container--default .select2-results__option[aria-selected="true"] {
+            background-color: var(--fondo, #f8f9fa);
+            color: var(--primario);
+            font-weight: 600;
+        }
+
+        /* ── Selector de fecha de nacimiento ── */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+        .btn-calendario-destacado {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-calendario-destacado:hover { background-color: #e68a00; border-color: #e68a00; }
+        .btn-calendario-destacado i     { font-size: 1.1rem; }
+    </style>
 </head>
 <body>
 
@@ -23,7 +103,7 @@
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
     <div style="max-width:720px; margin:0 auto;">
-        <form th:action="@{/admin/mascotas/nueva}" method="post" novalidate>
+        <form th:action="@{/admin/mascotas/nueva}" method="post" enctype="multipart/form-data">
 
             <!-- ── Propietario ── -->
             <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.75rem 2rem;">
@@ -35,8 +115,8 @@
                     <label for="idPropietario">
                         Cliente <span style="color:var(--rojo);">*</span>
                     </label>
-                    <select id="idPropietario" name="idPropietario" required>
-                        <option value="" disabled selected>— Selecciona un cliente —</option>
+                    <select id="selectCliente" name="idPropietario" required>
+                        <option value=""></option>
                         <option th:each="c : ${clientes}"
                                 th:value="${c.idUsuario}"
                                 th:text="${c.nombres + ' ' + c.apellidos + ' · ' + c.email}"
@@ -105,8 +185,35 @@
 
                 <div class="form-grupo" style="margin-bottom:0;">
                     <label for="fechaNacimiento">Fecha de nacimiento</label>
-                    <input type="date" id="fechaNacimiento" name="fechaNacimiento"
-                           th:value="${fechaNacimientoPrev}">
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <span id="btn-fecha-nacimiento"
+                              class="btn-calendario-destacado"
+                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center;
+                                     padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                            <i class="bi bi-calendar-date"></i>
+                        </span>
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+                               style="padding-left:3rem; width:100%;"
+                               th:value="${fechaNacimientoPrev}">
+                    </div>
+                    <span id="error-fecha-nac" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
+                    <span class="hint">La fecha de nacimiento no puede ser una fecha futura.</span>
+                </div>
+            </div>
+
+            <!-- ── Fotografía ── -->
+            <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:0.4rem;">
+                    <i class="fa-solid fa-camera" style="color:var(--primario);"></i>
+                    Fotografía
+                    <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave); margin-left:0.4rem;">(Opcional)</span>
+                </p>
+                <p style="font-size:0.83rem; color:var(--texto-suave); margin:0 0 1.25rem; line-height:1.5;">
+                    Sube una foto de la mascota. Formatos admitidos: JPG, PNG, WEBP. Máx. 5 MB.
+                </p>
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="foto">Seleccionar imagen</label>
+                    <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp">
                 </div>
             </div>
 
@@ -159,6 +266,50 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#selectCliente').select2({
+            placeholder: 'Buscar cliente por nombre o email...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function () { return 'No se encontraron clientes.'; },
+                searching: function () { return 'Buscando...'; }
+            }
+        });
+    });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const hoy         = new Date();
+    const anio        = hoy.getFullYear();
+    const mes         = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia         = String(hoy.getDate()).padStart(2, '0');
+    const fechaActual = `${anio}-${mes}-${dia}`;
+
+    document.querySelectorAll('input[type="date"]').forEach(function (input) {
+        input.setAttribute('max', fechaActual);
+
+        input.addEventListener('change', function () {
+            if (this.value > fechaActual) {
+                alert('La fecha de nacimiento no puede ser una fecha futura. Por favor, selecciona una fecha válida.');
+                this.value = '';
+            }
+        });
+    });
+
+    const btnCal     = document.getElementById('btn-fecha-nacimiento');
+    const inputFecha = document.getElementById('fechaNacimiento');
+    if (btnCal && inputFecha) {
+        btnCal.addEventListener('click', function () {
+            try { inputFecha.showPicker(); } catch (e) { inputFecha.focus(); }
+        });
+    }
+});
+</script>
 
 </body>
 </html>

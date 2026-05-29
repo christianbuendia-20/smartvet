@@ -152,6 +152,14 @@ public class CitaServiceImpl implements CitaService {
     }
 
     @Override
+    public List<Cita> listarCitasDeManana() {
+        LocalDate manana = LocalDate.now().plusDays(1);
+        LocalDateTime inicio = manana.atStartOfDay();
+        LocalDateTime fin    = manana.atTime(LocalTime.MAX);
+        return citaRepository.findCitasConDetallePorFecha(inicio, fin);
+    }
+
+    @Override
     public List<Cita> listarCitasDeHoyPorVeterinario(Integer idUsuario) {
         Veterinario vet = veterinarioRepository.findByUsuario_IdUsuario(idUsuario)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -280,6 +288,39 @@ public class CitaServiceImpl implements CitaService {
             throw new CitaNoDisponibleException(idVeterinario, fechaHora);
         }
     }
+
+    private void validarDisponibilidadVeterinario(Integer idVeterinario, LocalDateTime fechaHora,
+                                                  Integer excludeCitaId) {
+        LocalDateTime inicio = fechaHora.minusMinutes(30);
+        LocalDateTime fin    = fechaHora.plusMinutes(30);
+
+        List<Cita> conflictos = citaRepository.findCitasActivasByVeterinarioAndRangoFechaExcluyendo(
+                idVeterinario, inicio, fin, ESTADOS_ACTIVOS, excludeCitaId);
+
+        if (!conflictos.isEmpty()) {
+            log.warn("Conflicto de agenda (reasignación): veterinario_id={}, fecha={}, conflictos={}",
+                    idVeterinario, fechaHora, conflictos.size());
+            throw new CitaNoDisponibleException(idVeterinario, fechaHora);
+        }
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public long contarCitasActivasPorPropietario(Integer idPropietario) {
+        return citaRepository.countCitasActivasByPropietario(
+                idPropietario, Set.of(EstadoCita.PROGRAMADA, EstadoCita.CONFIRMADA));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long contarCitasActivasPorMascota(Integer idMascota) {
+        Mascota mascota = mascotaRepository.findById(idMascota)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Mascota con id=" + idMascota + " no encontrada"));
+        return citaRepository.countCitasActivasByPropietario(
+                mascota.getPropietario().getIdUsuario(),
+                Set.of(EstadoCita.PROGRAMADA, EstadoCita.CONFIRMADA));
+    }
+
     @Override
     @Transactional
     public Cita reasignarVeterinario(Integer idCita, Integer idVeterinario) {
@@ -290,7 +331,7 @@ public class CitaServiceImpl implements CitaService {
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Veterinario con id=" + idVeterinario + " no encontrado"));
 
-        validarDisponibilidadVeterinario(idVeterinario, cita.getFechaHora());
+        validarDisponibilidadVeterinario(idVeterinario, cita.getFechaHora(), idCita);
 
         cita.setVeterinario(veterinario);
 

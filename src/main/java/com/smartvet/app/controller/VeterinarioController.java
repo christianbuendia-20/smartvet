@@ -17,8 +17,12 @@ import com.smartvet.app.service.CitaService;
 import com.smartvet.app.service.ConsultaPdfService;
 import com.smartvet.app.service.ConsultaService;
 import com.smartvet.app.service.EmailService;
+import com.smartvet.app.dto.MascotaDTO;
+import com.smartvet.app.model.Sexo;
+import com.smartvet.app.service.FileStorageService;
 import com.smartvet.app.service.MascotaService;
 import com.smartvet.app.service.ProductoService;
+import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,25 +49,28 @@ import java.util.List;
 @RequestMapping("/vet")
 public class VeterinarioController {
 
-    private final CitaService       citaService;
-    private final ConsultaService   consultaService;
-    private final MascotaService    mascotaService;
-    private final ProductoService   productoService;
+    private final CitaService        citaService;
+    private final ConsultaService    consultaService;
+    private final MascotaService     mascotaService;
+    private final ProductoService    productoService;
     private final ConsultaPdfService consultaPdfService;
-    private final EmailService      emailService;
+    private final EmailService       emailService;
+    private final FileStorageService fileStorageService;
 
     public VeterinarioController(CitaService citaService,
                                   ConsultaService consultaService,
                                   MascotaService mascotaService,
                                   ProductoService productoService,
                                   ConsultaPdfService consultaPdfService,
-                                  EmailService emailService) {
-        this.citaService        = citaService;
-        this.consultaService    = consultaService;
-        this.mascotaService     = mascotaService;
-        this.productoService    = productoService;
-        this.consultaPdfService = consultaPdfService;
-        this.emailService       = emailService;
+                                  EmailService emailService,
+                                  FileStorageService fileStorageService) {
+        this.citaService         = citaService;
+        this.consultaService     = consultaService;
+        this.mascotaService      = mascotaService;
+        this.productoService     = productoService;
+        this.consultaPdfService  = consultaPdfService;
+        this.emailService        = emailService;
+        this.fileStorageService  = fileStorageService;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -307,6 +314,71 @@ public class VeterinarioController {
                     "No se pudo enviar el correo. Verifique la configuración SMTP.");
         }
         return "redirect:/vet/consultas/" + id;
+    }
+
+    // ── Directorio de mascotas (solo lectura) ────────────────────────────────
+
+    @GetMapping("/mascotas")
+    public String listarMascotas(@RequestParam(value = "keyword", required = false) String keyword,
+                                  Model model) {
+        List<Mascota> mascotas = (keyword != null && !keyword.isBlank())
+                ? mascotaService.listarTodas(keyword)
+                : mascotaService.listarTodas();
+        model.addAttribute("mascotas", mascotas);
+        model.addAttribute("keyword",  keyword != null ? keyword : "");
+        return "vet/mascotas";
+    }
+
+    // ── Edición de mascota (datos físicos) ───────────────────────────────────
+
+    @GetMapping("/mascotas/{id}/editar")
+    public String mostrarFormEditarMascota(@PathVariable Integer id,
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("mascota", mascotaService.buscarPorId(id));
+            model.addAttribute("sexos",   Sexo.values());
+            return "vet/editar-mascota";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorAcceso", ex.getMessage());
+            return "redirect:/vet/dashboard";
+        }
+    }
+
+    @PostMapping("/mascotas/{id}/editar")
+    public String editarMascota(@PathVariable Integer id,
+                                 @RequestParam String nombre,
+                                 @RequestParam String especie,
+                                 @RequestParam(required = false) String raza,
+                                 @RequestParam(required = false) String color,
+                                 @RequestParam(value = "fechaNacimiento", required = false)
+                                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                                 @RequestParam Sexo sexo,
+                                 @RequestParam(required = false) BigDecimal peso,
+                                 @RequestParam(value = "archivo", required = false) MultipartFile archivo,
+                                 RedirectAttributes redirectAttributes,
+                                 Model model) {
+        try {
+            MascotaDTO dto = new MascotaDTO(nombre, especie, raza, color, fecha, sexo, peso);
+            mascotaService.actualizarMascota(id, dto);
+
+            if (archivo != null && !archivo.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarFotoMascota(archivo);
+                mascotaService.actualizarFoto(id, nombreFoto);
+            }
+
+            log.info("Mascota id={} actualizada por veterinario", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Datos del paciente actualizados correctamente.");
+            return "redirect:/vet/historial/" + id;
+        } catch (Exception ex) {
+            log.error("Error al actualizar mascota id={} por veterinario: {}", id, ex.getMessage());
+            try { model.addAttribute("mascota", mascotaService.buscarPorId(id)); }
+            catch (Exception ignored) {}
+            model.addAttribute("sexos",    Sexo.values());
+            model.addAttribute("errorForm", "No se pudo actualizar: " + ex.getMessage());
+            return "vet/editar-mascota";
+        }
     }
 
     // ── Helper privado ────────────────────────────────────────────────────────

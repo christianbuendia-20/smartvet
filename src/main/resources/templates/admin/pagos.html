@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Gestión de Pagos</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .sv-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--borde, #e5e7eb);
+            margin-bottom: 1.5rem;
+            gap: 0;
+        }
+        .sv-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.65rem 1.4rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--texto-suave);
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .sv-tab-btn:hover { color: var(--primario); }
+        .sv-tab-btn.activo {
+            color: var(--primario);
+            border-bottom-color: var(--primario);
+            font-weight: 600;
+        }
+        .sv-tab-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.3rem;
+            height: 1.3rem;
+            padding: 0 0.3rem;
+            border-radius: 9999px;
+            background: var(--rojo, #dc2626);
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+        .sv-tab-panel { display: none; }
+        .sv-tab-panel.activo { display: block; }
+        .fila-pendiente { background: rgba(251, 191, 36, 0.09) !important; }
+    </style>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Gestión de Pagos y Facturación</h2>
+            <p>Historial de pagos registrados en el sistema.</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+            ← Dashboard
+        </a>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
+
+    <!-- ── Estadísticas rápidas ──────────────────────────────────────────── -->
+    <div class="stats-grid" style="margin-bottom:2rem;">
+
+        <div class="stat-card">
+            <span class="stat-icono">💳</span>
+            <span class="stat-numero" th:text="${totalPagos}">0</span>
+            <span class="stat-label">Pagos registrados</span>
+        </div>
+
+        <div class="stat-card" th:classappend="${totalPendientes > 0 ? ' naranja' : ''}">
+            <span class="stat-icono">⏳</span>
+            <span class="stat-numero" th:text="${totalPendientes}">0</span>
+            <span class="stat-label">Citas sin cobrar</span>
+        </div>
+
+        <div class="stat-card verde">
+            <span class="stat-icono">💰</span>
+            <span class="stat-numero"
+                  th:text="'S/ ' + ${#numbers.formatDecimal(recaudacionMes, 1, 2)}">S/ 0.00</span>
+            <span class="stat-label">Recaudado este mes</span>
+        </div>
+
+    </div>
+
+    <!-- ── Barra de búsqueda ────────────────────────────────────────────── -->
+    <form class="busqueda-form" onsubmit="return false;">
+        <input type="text" id="inputBuscarTexto"
+               class="form-input busqueda-input"
+               placeholder="Buscar por mascota, propietario o motivo…">
+        <div style="display:flex; border:2px solid var(--borde, #e5e7eb); border-radius:10px;
+                    overflow:hidden; min-width:11rem; background:#fff; flex-shrink:0;">
+            <span id="btn-abrir-cal-pagos"
+                  style="display:flex; align-items:center; padding:0 0.75rem;
+                         background:var(--primario); color:#fff; flex-shrink:0; cursor:pointer;">
+                <i class="bi bi-calendar-event"></i>
+            </span>
+            <input type="date" id="inputBuscarFecha"
+                   class="form-input"
+                   max="2099-12-31"
+                   placeholder="Ej: 24/05/2026"
+                   style="border:none !important; border-radius:0 !important;
+                          flex:1; min-width:0; padding:0.45rem 0.6rem;">
+        </div>
+        <button type="button" id="btnFiltrar" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        <button type="button" id="btnLimpiar" class="btn btn-gris">
+            ✕ Limpiar
+        </button>
+    </form>
+
+    <!-- ── Nav Tabs ───────────────────────────────────────────────────────── -->
+    <div class="sv-tabs" id="pagosTabs">
+        <button class="sv-tab-btn activo" data-tab="pendientes" type="button">
+            <i class="fa-solid fa-circle-exclamation" style="color:var(--primario);"></i>
+            Pendientes de Cobro
+            <span th:if="${totalPendientes > 0}" class="sv-tab-badge"
+                  th:text="${totalPendientes}">0</span>
+        </button>
+        <button class="sv-tab-btn" data-tab="completados" type="button">
+            <i class="fa-solid fa-circle-check" style="color:var(--verde, #16a34a);"></i>
+            Historial Completado
+        </button>
+    </div>
+
+    <!-- ── Tab Content ────────────────────────────────────────────────────── -->
+
+    <!-- Panel: Pendientes de Cobro -->
+    <div id="tab-pendientes" class="sv-tab-panel activo">
+        <div class="tabla-swipe-hint">
+            <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+        </div>
+        <div class="tabla-card">
+            <div class="tabla-scroll">
+                <table th:if="${totalPendientes > 0}">
+                    <thead>
+                        <tr>
+                            <th>Cita</th>
+                            <th>Fecha de Cita</th>
+                            <th>Mascota</th>
+                            <th>Propietario</th>
+                            <th class="tabla-col-accion">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pago : ${pagos}"
+                            th:if="${pago.pendiente}"
+                            class="fila-pendiente">
+                            <td>
+                                <a th:href="@{/admin/citas/{id}(id=${pago.idCita})}"
+                                   style="color:var(--primario); text-decoration:none; font-weight:600;"
+                                   th:text="'#' + ${pago.idCita}">#-</a>
+                            </td>
+                            <td th:text="${#temporals.format(pago.fechaCita, 'dd/MM/yyyy HH:mm')}">-</td>
+                            <td>
+                                <strong th:text="${pago.nombreMascota}">-</strong>
+                                <span style="color:var(--texto-suave); font-size:0.8rem;"
+                                      th:text="' (' + ${pago.especieMascota} + ')'"></span>
+                            </td>
+                            <td th:text="${pago.nombrePropietario}">-</td>
+                            <td class="tabla-col-accion">
+                                <a th:href="@{/admin/pagos/registrar/{id}(id=${pago.idCita})}"
+                                   class="btn btn-primario"
+                                   style="padding:0.28rem 0.75rem; font-size:0.78rem; white-space:nowrap;">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i> Cobrar
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- /.tabla-scroll -->
+
+            <div class="tabla-vacia" th:if="${totalPendientes == 0}">
+                <span class="icono-vacio">✅</span>
+                No hay citas pendientes de cobro.
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel: Historial Completado -->
+    <div id="tab-completados" class="sv-tab-panel">
+        <div class="tabla-swipe-hint">
+            <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+        </div>
+        <div class="tabla-card">
+            <div class="tabla-scroll">
+                <table th:if="${totalPagos - totalPendientes > 0}">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha de Pago</th>
+                            <th>Cita</th>
+                            <th>Mascota</th>
+                            <th>Propietario</th>
+                            <th>Método</th>
+                            <th>Referencia</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pago : ${pagos}"
+                            th:unless="${pago.pendiente}">
+                            <td th:text="${pago.idPago}">-</td>
+                            <td th:text="${pago.fechaPago != null
+                                           ? #temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm')
+                                           : '—'}">-</td>
+                            <td>
+                                <a th:href="@{/admin/citas/{id}(id=${pago.idCita})}"
+                                   style="color:var(--primario); text-decoration:none; font-weight:600;"
+                                   th:text="'#' + ${pago.idCita}">#-</a>
+                            </td>
+                            <td>
+                                <strong th:text="${pago.nombreMascota}">-</strong>
+                                <span style="color:var(--texto-suave); font-size:0.8rem;"
+                                      th:text="' (' + ${pago.especieMascota} + ')'"></span>
+                            </td>
+                            <td th:text="${pago.nombrePropietario}">-</td>
+                            <td>
+                                <span style="font-size:0.82rem;"
+                                      th:text="${pago.metodoPago ?: '—'}">-</span>
+                            </td>
+                            <td style="max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                                th:text="${pago.referencia ?: '—'}">—</td>
+                            <td>
+                                <strong style="color:var(--verde, #16a34a);"
+                                        th:text="'S/ ' + ${#numbers.formatDecimal(pago.monto, 1, 2)}">S/ 0.00</strong>
+                            </td>
+                            <td>
+                                <span th:if="${pago.estado.name() == 'COMPLETADO'}"
+                                      class="badge badge-completada">COMPLETADO</span>
+                                <span th:if="${pago.estado.name() == 'REEMBOLSADO'}"
+                                      class="badge badge-cancelada">REEMBOLSADO</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- /.tabla-scroll -->
+
+            <div class="tabla-vacia" th:if="${totalPagos - totalPendientes == 0}">
+                <span class="icono-vacio">📭</span>
+                No hay pagos completados registrados aún.
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+(function () {
+    /* ── Pestañas ──────────────────────────────────────────────────────── */
+    var botones = document.querySelectorAll('#pagosTabs .sv-tab-btn');
+    var paneles = document.querySelectorAll('.sv-tab-panel');
+
+    botones.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            botones.forEach(function (b) { b.classList.remove('activo'); });
+            paneles.forEach(function (p) { p.classList.remove('activo'); });
+            btn.classList.add('activo');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('activo');
+        });
+    });
+
+    /* ── Filtrado cliente ──────────────────────────────────────────────── */
+
+    /* Convierte "dd/MM/yyyy HH:mm" → "yyyy-MM-dd" para comparar con <input type="date"> */
+    function celdaAFecha(texto) {
+        var parte = texto.trim().substring(0, 10); // "dd/MM/yyyy"
+        if (!parte || parte === '—') return null;
+        var p = parte.split('/');
+        return p.length === 3 ? (p[2] + '-' + p[1] + '-' + p[0]) : null;
+    }
+
+    function filtrar() {
+        var texto = document.getElementById('inputBuscarTexto').value.toLowerCase().trim();
+        var fecha = document.getElementById('inputBuscarFecha').value; // "yyyy-MM-dd" o ""
+
+        /* Índice de la columna de fecha en cada tabla:
+           Pendientes  → col 1 (Fecha Cita)
+           Completados → col 1 (Fecha de Pago)                          */
+        var selectores = [
+            { tbody: '#tab-pendientes  table tbody',  colFecha: 1 },
+            { tbody: '#tab-completados table tbody',  colFecha: 1 }
+        ];
+
+        selectores.forEach(function (cfg) {
+            var tbody = document.querySelector(cfg.tbody);
+            if (!tbody) return;
+
+            tbody.querySelectorAll('tr').forEach(function (fila) {
+                var contenido = fila.textContent.toLowerCase();
+
+                /* Comprobación de texto */
+                var pasaTexto = !texto || contenido.indexOf(texto) !== -1;
+
+                /* Comprobación de fecha */
+                var pasaFecha = true;
+                if (fecha) {
+                    var celdas   = fila.querySelectorAll('td');
+                    var celFecha = celdas[cfg.colFecha];
+                    var fechaFila = celFecha ? celdaAFecha(celFecha.textContent) : null;
+                    pasaFecha = (fechaFila === fecha);
+                }
+
+                fila.style.display = (pasaTexto && pasaFecha) ? '' : 'none';
+            });
+        });
+    }
+
+    /* Filtrar al escribir (tiempo real) */
+    document.getElementById('inputBuscarTexto')
+            .addEventListener('input', filtrar);
+
+    /* Filtrar al cambiar la fecha */
+    document.getElementById('inputBuscarFecha')
+            .addEventListener('change', filtrar);
+
+    /* Botón Filtrar (útil en móvil donde no dispara 'input') */
+    document.getElementById('btnFiltrar')
+            .addEventListener('click', filtrar);
+
+    /* Botón Limpiar */
+    document.getElementById('btnLimpiar').addEventListener('click', function () {
+        document.getElementById('inputBuscarTexto').value = '';
+        document.getElementById('inputBuscarFecha').value = '';
+        /* Muestra todas las filas de ambas tablas */
+        document.querySelectorAll(
+            '#tab-pendientes table tbody tr, #tab-completados table tbody tr'
+        ).forEach(function (fila) { fila.style.display = ''; });
+    });
+
+    /* ── Date picker: abrir el calendario al hacer clic en el ícono naranja ── */
+    var btnCal     = document.getElementById('btn-abrir-cal-pagos');
+    var inputFecha = document.getElementById('inputBuscarFecha');
+    if (btnCal && inputFecha) {
+        btnCal.addEventListener('click', function () {
+            try { inputFecha.showPicker(); } catch (e) { inputFecha.focus(); }
+        });
+    }
+}());
+</script>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.smartvet.app.service;
 
+import com.smartvet.app.dto.PagoFilaDTO;
 import com.smartvet.app.dto.PagoRegistroDTO;
 import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.PagoCita;
@@ -19,4 +20,8 @@ public interface PagoService {
     List<Cita> listarCitasCompletadasSinPago();
 
     BigDecimal calcularRecaudacion(LocalDateTime inicio, LocalDateTime fin);
+
+    List<PagoCita> listarTodos();
+
+    List<PagoFilaDTO> listarParaVista();
 }

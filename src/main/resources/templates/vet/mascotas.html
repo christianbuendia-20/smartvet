@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Directorio de Pacientes</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Directorio de Pacientes</h2>
+            <p>Consulta los pacientes registrados en el sistema.</p>
+        </div>
+        <a th:href="@{/vet/dashboard}" class="btn btn-outline"
+           style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
+            ← Dashboard
+        </a>
+    </div>
+
+    <!-- ── Barra de búsqueda ─────────────────────────────────────────────── -->
+    <form th:action="@{/vet/mascotas}" method="get" class="busqueda-form">
+        <input type="text" name="keyword" class="form-input busqueda-input"
+               th:value="${keyword}"
+               placeholder="Buscar por nombre de mascota o propietario…">
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+        </button>
+        <a th:if="${keyword != ''}" th:href="@{/vet/mascotas}" class="btn btn-gris">✕ Limpiar</a>
+    </form>
+
+    <div class="tabla-swipe-hint">
+        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+    </div>
+    <div class="tabla-card">
+        <div class="tabla-scroll">
+        <table th:if="${not #lists.isEmpty(mascotas)}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Especie / Raza</th>
+                    <th>Sexo</th>
+                    <th>Peso</th>
+                    <th>Propietario</th>
+                    <th class="tabla-col-accion">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="m : ${mascotas}">
+                    <td th:text="${m.idMascota}">-</td>
+                    <td>
+                        <strong th:text="${m.nombre}">-</strong>
+                        <div th:if="${m.color != null}"
+                             style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${m.color}"></div>
+                    </td>
+                    <td>
+                        <span th:text="${m.especie}">-</span>
+                        <span th:if="${m.raza != null}"
+                              style="color:var(--texto-suave); font-size:0.8rem;"
+                              th:text="' · ' + ${m.raza}"></span>
+                    </td>
+                    <td th:text="${m.sexo}">-</td>
+                    <td th:text="${m.peso != null ? m.peso + ' kg' : '—'}">—</td>
+                    <td>
+                        <span th:text="${m.propietario.nombres + ' ' + m.propietario.apellidos}">-</span>
+                        <div style="font-size:0.76rem; color:var(--texto-suave);"
+                             th:text="${m.propietario.email}">-</div>
+                    </td>
+                    <td class="tabla-col-accion">
+                        <a th:href="@{/vet/historial/{id}(id=${m.idMascota})}"
+                           class="btn btn-gris"
+                           style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        </div><!-- /.tabla-scroll -->
+
+        <div class="tabla-vacia" th:if="${#lists.isEmpty(mascotas)}">
+            <span class="icono-vacio">🐾</span>
+            <span th:if="${keyword != ''}">No se encontraron pacientes para "<strong th:text="${keyword}"></strong>".</span>
+            <span th:if="${keyword == ''}">No hay pacientes registrados en el sistema.</span>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

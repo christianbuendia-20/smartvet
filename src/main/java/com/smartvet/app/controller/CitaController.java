@@ -6,8 +6,11 @@ import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.TipoCita;
 import com.smartvet.app.model.Veterinario;
+import com.smartvet.app.service.CitaPdfService;
 import com.smartvet.app.service.CitaService;
+import com.smartvet.app.service.EmailService;
 import com.smartvet.app.service.MascotaService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,12 +32,19 @@ import java.util.List;
 @RequestMapping("/citas")
 public class CitaController {
 
-    private final CitaService citaService;
+    private final CitaService    citaService;
     private final MascotaService mascotaService;
+    private final CitaPdfService citaPdfService;
+    private final EmailService   emailService;
 
-    public CitaController(CitaService citaService, MascotaService mascotaService) {
-        this.citaService = citaService;
+    public CitaController(CitaService citaService,
+                          MascotaService mascotaService,
+                          CitaPdfService citaPdfService,
+                          EmailService emailService) {
+        this.citaService    = citaService;
         this.mascotaService = mascotaService;
+        this.citaPdfService = citaPdfService;
+        this.emailService   = emailService;
     }
 
     // ── Listado ───────────────────────────────────────────────────────────────
@@ -87,6 +98,25 @@ public class CitaController {
 
         Integer idUsuario = (Integer) session.getAttribute("usuarioId");
 
+        if (citaService.contarCitasActivasPorPropietario(idUsuario) >= 3) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Límite de citas alcanzado: Ya tienes 3 citas activas. " +
+                    "Debes cancelar o finalizar una cita existente antes de registrar una nueva.");
+            return "redirect:/citas/nueva";
+        }
+
+        LocalDateTime fechaMaxima = LocalDateTime.now().plusDays(15);
+        if (fechaHora.isAfter(fechaMaxima)) {
+            recargarFormNueva(idUsuario, session, model);
+            model.addAttribute("errorForm",          "No se pueden programar citas con más de 15 días de anticipación.");
+            model.addAttribute("idMascotaPrev",      idMascota);
+            model.addAttribute("idVeterinarioxPrev", idVeterinario);
+            model.addAttribute("tipoCitaPrev",       tipoCita);
+            model.addAttribute("fechaHoraPrev",      fechaHora);
+            model.addAttribute("motivoPrev",         motivo);
+            return "citas/nueva";
+        }
+
         try {
             CitaAgendamientoDTO dto = new CitaAgendamientoDTO(idMascota, idVeterinario, tipoCita, fechaHora, motivo);
             Cita cita = citaService.programarCita(dto);
@@ -108,6 +138,28 @@ public class CitaController {
         }
     }
 
+    // ── Comprobante PDF ───────────────────────────────────────────────────────
+
+    @GetMapping("/{id}/comprobante")
+    public void descargarComprobante(@PathVariable Integer id,
+                                     HttpSession session,
+                                     HttpServletResponse response) throws IOException {
+
+        if (session.getAttribute("usuarioId") == null) {
+            response.sendRedirect("/auth/login");
+            return;
+        }
+
+        byte[] pdf = citaPdfService.generarPdf(id);
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"comprobante_cita_" + id + ".pdf\"");
+        response.setContentLength(pdf.length);
+        response.getOutputStream().write(pdf);
+        response.flushBuffer();
+        log.info("Comprobante descargado: cita_id={} por usuario_id={}", id, session.getAttribute("usuarioId"));
+    }
+
     // ── Cancelar ──────────────────────────────────────────────────────────────
 
     @PostMapping("/{id}/cancelar")
@@ -119,6 +171,7 @@ public class CitaController {
 
         citaService.cancelarCita(id);
         log.info("Cita id={} cancelada por usuario_id={}", id, session.getAttribute("usuarioId"));
+        emailService.enviarCancelacionCita(id);
         redirectAttributes.addFlashAttribute("mensajeExito", "Cita cancelada correctamente.");
         return "redirect:/citas";
     }

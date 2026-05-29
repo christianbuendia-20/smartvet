@@ -99,11 +99,46 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     @Transactional
+    public Producto actualizarProducto(Integer id, ProductoRegistroDTO dto) {
+        Producto producto = buscarPorId(id);
+        producto.setNombre(dto.nombre());
+        producto.setDescripcion(dto.descripcion());
+        producto.setTipoProducto(dto.tipoProducto());
+        producto.setPrecioCompra(dto.precioCompra());
+        producto.setPrecioVenta(dto.precioVenta());
+        if (dto.stockActual() != null) producto.setStockActual(dto.stockActual());
+        producto.setStockMinimo(dto.stockMinimo() != null ? dto.stockMinimo() : 0);
+        producto.setUnidadMedida(dto.unidadMedida());
+        producto.setRequiereReceta(dto.requiereReceta() != null ? dto.requiereReceta() : false);
+        Producto actualizado = productoRepository.save(producto);
+        log.info("Producto actualizado: id={}, nombre='{}'", id, actualizado.getNombre());
+        return actualizado;
+    }
+
+    @Override
+    @Transactional
     public void desactivarProducto(Integer id) {
         Producto producto = buscarPorId(id);
         producto.setActivo(false);
         productoRepository.save(producto);
         log.info("Producto desactivado: id={}, nombre='{}'", id, producto.getNombre());
+    }
+
+    @Override
+    @Transactional
+    public void activarProducto(Integer id) {
+        Producto producto = buscarPorId(id);
+        producto.setActivo(true);
+        productoRepository.save(producto);
+        log.info("Producto activado: id={}, nombre='{}'", id, producto.getNombre());
+    }
+
+    @Override
+    public Page<Producto> listarTodosPaginado(String busqueda, Pageable pageable) {
+        if (busqueda != null && !busqueda.isBlank()) {
+            return productoRepository.findByNombreContainingIgnoreCase(busqueda.trim(), pageable);
+        }
+        return productoRepository.findAll(pageable);
     }
 
     // ── helpers de mapeo y lógica interna ────────────────────────────────────

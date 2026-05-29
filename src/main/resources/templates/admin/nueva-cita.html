@@ -5,6 +5,21 @@
 <head>
     <title>SmartVet — Nueva Cita</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+        .btn-calendario-destacado {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-calendario-destacado:hover { background-color: #e68a00; border-color: #e68a00; }
+        .btn-calendario-destacado i     { font-size: 1.1rem; }
+    </style>
 </head>
 <body>
 
@@ -20,6 +35,7 @@
         <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
+    <div th:if="${error}"    class="alerta alerta-error" th:text="${error}"></div>
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
     <!--
@@ -37,7 +53,7 @@
     </select>
 
     <div style="max-width:720px; margin:0 auto;">
-        <form th:action="@{/admin/citas/nueva}" method="post" novalidate>
+        <form th:action="@{/admin/citas/nueva}" method="post">
 
             <!-- ── Paciente y Propietario ── -->
             <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.75rem 2rem;">
@@ -50,7 +66,7 @@
                     <label for="idCliente">
                         Cliente <span style="color:var(--rojo);">*</span>
                     </label>
-                    <select id="idCliente" name="_clienteSelector">
+                    <select id="idCliente" name="_clienteSelector" required>
                         <option value="" disabled th:selected="${idMascotaPrev == null}">
                             — Selecciona un cliente —
                         </option>
@@ -112,8 +128,19 @@
                     <label for="fechaHora">
                         Fecha y hora <span style="color:var(--rojo);">*</span>
                     </label>
-                    <input type="datetime-local" id="fechaHora" name="fechaHora"
-                           th:value="${fechaHoraPrev}" required>
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <span id="btn-calendario-izq"
+                              class="btn-calendario-destacado"
+                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center;
+                                     padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                            <i class="bi bi-calendar-event"></i>
+                        </span>
+                        <input type="datetime-local" id="fechaHora" name="fechaHora"
+                               required style="padding-left:3rem; width:100%;"
+                               th:value="${fechaHoraPrev}">
+                    </div>
+                    <span id="error-fecha" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
+                    <span class="hint">Horario de atención: 09:00 – 19:00 h. Reserva disponible solo para los próximos 15 días con un día de anticipación.</span>
                 </div>
 
                 <div class="form-grupo" style="margin-bottom:0;">
@@ -143,9 +170,10 @@
 
 <script>
 (function () {
-    var selCliente  = document.getElementById('idCliente');
-    var selMascota  = document.getElementById('idMascota');
-    var fuente      = document.getElementById('mascotaFuente');
+    /* ── Filtro de mascotas por cliente ── */
+    var selCliente = document.getElementById('idCliente');
+    var selMascota = document.getElementById('idMascota');
+    var fuente     = document.getElementById('mascotaFuente');
 
     function poblarMascotas() {
         var idCliente = parseInt(selCliente.value, 10);
@@ -153,13 +181,57 @@
         if (!idCliente) return;
         Array.from(fuente.options).forEach(function (opt) {
             if (parseInt(opt.dataset.propietario, 10) === idCliente) {
-                var clon = opt.cloneNode(true);
-                selMascota.appendChild(clon);
+                selMascota.appendChild(opt.cloneNode(true));
             }
         });
     }
-
     selCliente.addEventListener('change', poblarMascotas);
+
+    /* ── Validación de fecha y hora ── */
+    var input     = document.getElementById('fechaHora');
+    var errorMsg  = document.getElementById('error-fecha');
+    var btnSubmit = document.querySelector('[type="submit"]');
+
+    // Regla 1: mínimo exactamente 24 horas desde ahora
+    var minDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    input.min = minDate.getFullYear()
+        + '-' + String(minDate.getMonth() + 1).padStart(2, '0')
+        + '-' + String(minDate.getDate()).padStart(2, '0')
+        + 'T' + String(minDate.getHours()).padStart(2, '0')
+        + ':' + String(minDate.getMinutes()).padStart(2, '0');
+
+    // Regla 3: máximo hoy + 15 días
+    var maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 15);
+    input.max = maxDate.getFullYear()
+        + '-' + String(maxDate.getMonth() + 1).padStart(2, '0')
+        + '-' + String(maxDate.getDate()).padStart(2, '0')
+        + 'T19:00';
+
+    document.getElementById('btn-calendario-izq').addEventListener('click', function () {
+        try { input.showPicker(); } catch (e) { input.focus(); }
+    });
+
+    // Regla 2: horario de atención 09:00 – 19:00
+    input.addEventListener('change', function () {
+        if (!this.value) return;
+        var parts    = this.value.split('T')[1].split(':').map(Number);
+        var totalMin = parts[0] * 60 + parts[1];
+
+        if (totalMin < 9 * 60 || totalMin > 19 * 60) {
+            errorMsg.textContent   = 'El horario de atención es de 09:00 a 19:00 horas. Por favor elige otro horario.';
+            errorMsg.style.display = 'block';
+            if (btnSubmit) btnSubmit.disabled = true;
+        } else if (new Date(this.value) > maxDate) {
+            errorMsg.textContent   = 'Solo se permite reservar citas dentro de los próximos 15 días. Por favor, selecciona una fecha válida.';
+            errorMsg.style.display = 'block';
+            if (btnSubmit) btnSubmit.disabled = true;
+            this.value = '';
+        } else {
+            errorMsg.style.display = 'none';
+            if (btnSubmit) btnSubmit.disabled = false;
+        }
+    });
 })();
 </script>
 

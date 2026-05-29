@@ -176,7 +176,7 @@
                     <td class="tabla-col-accion">
                         <form th:action="@{/cliente/citas/{id}/cancelar(id=${cita.idCita})}"
                               method="post"
-                              onsubmit="return confirm('¿Confirmas la cancelación de esta cita?')">
+                              class="form-cancelar-cita">
                             <button type="submit" class="btn btn-peligro"
                                     style="padding:0.3rem 0.75rem; font-size:0.8rem;">
                                 Cancelar
@@ -201,6 +201,27 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+document.querySelectorAll('.form-cancelar-cita').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var _form = this;
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción no se puede deshacer y se enviará una notificación a tu correo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar cita',
+            cancelButtonText: 'Mantener cita'
+        }).then(function (result) {
+            if (result.isConfirmed) { _form.submit(); }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

@@ -26,6 +26,8 @@ public interface CitaService {
 
     List<Cita> listarCitasDeHoy();
 
+    List<Cita> listarCitasDeManana();
+
     List<Cita> listarCitasDeHoyPorVeterinario(Integer idUsuario);
 
     List<Cita> listarPorPropietario(Integer idUsuario);
@@ -59,4 +61,8 @@ public interface CitaService {
     List<Cita> listarAgendaPorVeterinario(Integer idUsuario, String keyword, LocalDate fecha);
 
     List<Cita> listarPorPropietario(Integer idUsuario, String keyword, LocalDate fecha);
+
+    long contarCitasActivasPorPropietario(Integer idPropietario);
+
+    long contarCitasActivasPorMascota(Integer idMascota);
 }

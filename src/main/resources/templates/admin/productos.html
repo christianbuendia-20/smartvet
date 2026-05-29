@@ -12,12 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
+    <div class="page-header" style="display:flex; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div style="flex:1; min-width:0;">
             <h2>Inventario</h2>
             <p>Gestión de productos, medicamentos y stock disponible.</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap; margin-left:auto;">
             <a th:href="@{/admin/productos/nuevo}" class="btn btn-primario"
                style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
                 <i class="fa-solid fa-plus"></i> Nuevo Producto
@@ -43,7 +43,9 @@
         <input type="text" name="busqueda" class="form-input busqueda-input"
                th:value="${busqueda}"
                placeholder="Buscar producto por nombre…">
-        <button type="submit" class="btn btn-outline">Buscar</button>
+        <button type="submit" class="btn btn-primario">
+            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+        </button>
         <a th:if="${busqueda != ''}" th:href="@{/admin/productos}" class="btn btn-gris">✕ Limpiar</a>
     </form>
 
@@ -73,8 +75,8 @@
                     <th>Precio venta</th>
                     <th>Unidad</th>
                     <th>Receta</th>
-                    <th>Reponer pedido</th>
-                    <th class="tabla-col-accion">Acciones</th>
+                    <th>Estado</th>
+                    <th class="tabla-col-accion" style="min-width:120px;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,22 +111,45 @@
                     </td>
 
                     <td>
-                        <form th:action="@{/admin/productos/{id}/reponer(id=${producto.idProducto})}"
-                              method="post" class="reponer-form">
-                            <input type="number" name="cantidad" min="1" max="9999"
-                                   placeholder="Cant." required>
-                            <button type="submit" class="btn btn-verde"
-                                    style="padding:0.3rem 0.85rem; font-size:0.82rem;">
-                                + Reponer
-                            </button>
-                        </form>
+                        <span th:if="${producto.activo}"
+                              style="color:var(--verde); font-weight:600; font-size:0.82rem;">Activo</span>
+                        <span th:unless="${producto.activo}"
+                              style="color:var(--rojo); font-size:0.82rem;">Inactivo</span>
                     </td>
+
                     <td class="tabla-col-accion">
-                        <a th:href="@{/admin/productos/{id}(id=${producto.idProducto})}"
-                           class="btn btn-gris"
-                           style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
-                            <i class="fa-solid fa-eye"></i> Ver
-                        </a>
+                        <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">
+                            <a th:href="@{/admin/productos/{id}(id=${producto.idProducto})}"
+                               class="btn btn-gris"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-eye"></i> Ver
+                            </a>
+                            <a th:href="@{/admin/productos/{id}/editar(id=${producto.idProducto})}"
+                               class="btn btn-outline"
+                               style="padding:0.25rem 0.75rem; font-size:0.78rem; width:auto;">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <form th:if="${producto.activo}"
+                                  th:action="@{/admin/productos/{id}/desactivar(id=${producto.idProducto})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Desactivar este producto? Ya no aparecerá en búsquedas activas.')">
+                                <button type="submit"
+                                        class="btn btn-rojo"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-box-xmark"></i> Desactivar
+                                </button>
+                            </form>
+                            <form th:unless="${producto.activo}"
+                                  th:action="@{/admin/productos/{id}/activar(id=${producto.idProducto})}"
+                                  method="post"
+                                  onsubmit="return confirm('¿Reactivar este producto?')">
+                                <button type="submit"
+                                        class="btn btn-verde"
+                                        style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
+                                    <i class="fa-solid fa-box-open"></i> Activar
+                                </button>
+                            </form>
+                        </div>
                     </td>
 
                 </tr>

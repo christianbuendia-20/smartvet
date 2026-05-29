@@ -12,6 +12,8 @@
 
 <main class="main-content">
 
+    <div style="max-width:760px; margin:0 auto;">
+
     <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2 th:text="'Editar — ' + ${usuario.nombres + ' ' + usuario.apellidos}">Editar Usuario</h2>
@@ -22,8 +24,6 @@
 
     <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
     <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
-
-    <div style="max-width:760px; margin:0 auto;">
         <form th:action="@{/admin/usuarios/{id}/editar(id=${usuario.idUsuario})}" method="post" novalidate>
 
             <!-- ── Datos Personales ── -->
@@ -53,16 +53,28 @@
                 </div>
 
                 <div class="form-fila" style="gap:1.25rem;">
-                    <div class="form-grupo" style="margin-bottom:0;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
                         <label for="telefono">Teléfono</label>
                         <input type="tel" id="telefono" name="telefono"
                                th:value="${usuario.telefono}" placeholder="999 888 777">
                     </div>
-                    <div class="form-grupo" style="margin-bottom:0;">
+                    <div class="form-grupo" style="margin-bottom:1.4rem;">
                         <label for="dni">DNI</label>
                         <input type="text" id="dni" name="dni"
                                th:value="${usuario.dni}" maxlength="20">
                     </div>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="nuevoRol">Rol <span style="color:var(--rojo);">*</span></label>
+                    <select id="nuevoRol" name="nuevoRol" required>
+                        <option th:each="rol : ${roles}"
+                                th:value="${rol}"
+                                th:text="${rol}"
+                                th:selected="${usuario.rol.nombre == rol}">
+                        </option>
+                    </select>
+                    <span class="hint">Cambia el nivel de acceso de este usuario en el sistema.</span>
                 </div>
             </div>
 
@@ -102,6 +114,8 @@
 
         </form>
     </div>
+
+    </div><!-- /.centrado -->
 
 </main>
 

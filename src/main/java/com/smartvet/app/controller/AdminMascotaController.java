@@ -7,6 +7,7 @@ import com.smartvet.app.model.HistoriaClinica;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.Sexo;
 import com.smartvet.app.service.ConsultaService;
+import com.smartvet.app.service.FileStorageService;
 import com.smartvet.app.service.MascotaService;
 import com.smartvet.app.service.UsuarioService;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -27,16 +29,19 @@ import java.time.LocalDate;
 @RequestMapping("/admin/mascotas")
 public class AdminMascotaController {
 
-    private final MascotaService  mascotaService;
-    private final UsuarioService  usuarioService;
-    private final ConsultaService consultaService;
+    private final MascotaService      mascotaService;
+    private final UsuarioService      usuarioService;
+    private final ConsultaService     consultaService;
+    private final FileStorageService  fileStorageService;
 
     public AdminMascotaController(MascotaService mascotaService,
                                    UsuarioService usuarioService,
-                                   ConsultaService consultaService) {
-        this.mascotaService  = mascotaService;
-        this.usuarioService  = usuarioService;
-        this.consultaService = consultaService;
+                                   ConsultaService consultaService,
+                                   FileStorageService fileStorageService) {
+        this.mascotaService     = mascotaService;
+        this.usuarioService     = usuarioService;
+        this.consultaService    = consultaService;
+        this.fileStorageService = fileStorageService;
     }
 
     // ── Listado ───────────────────────────────────────────────────────────────
@@ -90,6 +95,7 @@ public class AdminMascotaController {
                                     @RequestParam(required = false) String alergias,
                                     @RequestParam(required = false) String enfermedadesCronicas,
                                     @RequestParam(required = false) String notasGenerales,
+                                    @RequestParam(required = false) MultipartFile foto,
                                     RedirectAttributes redirectAttributes,
                                     Model model) {
         try {
@@ -102,6 +108,11 @@ public class AdminMascotaController {
             if (tieneHistoria) {
                 mascotaService.actualizarHistoriaClinica(guardada.getIdMascota(),
                         new HistoriaClinicaUpdateDTO(alergias, enfermedadesCronicas, notasGenerales));
+            }
+
+            if (foto != null && !foto.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarFotoMascota(foto);
+                if (nombreFoto != null) mascotaService.actualizarFoto(guardada.getIdMascota(), nombreFoto);
             }
 
             log.info("Admin registró mascota: id={}, nombre='{}', propietario_id={}",
@@ -159,6 +170,7 @@ public class AdminMascotaController {
                                  @RequestParam(required = false) String alergias,
                                  @RequestParam(required = false) String enfermedadesCronicas,
                                  @RequestParam(required = false) String notasGenerales,
+                                 @RequestParam(required = false) MultipartFile foto,
                                  RedirectAttributes redirectAttributes,
                                  Model model) {
         try {
@@ -166,6 +178,12 @@ public class AdminMascotaController {
             mascotaService.actualizarMascota(id, dto);
             mascotaService.actualizarHistoriaClinica(id,
                     new HistoriaClinicaUpdateDTO(alergias, enfermedadesCronicas, notasGenerales));
+
+            if (foto != null && !foto.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarFotoMascota(foto);
+                if (nombreFoto != null) mascotaService.actualizarFoto(id, nombreFoto);
+            }
+
             log.info("Admin actualizó mascota: id={}", id);
             redirectAttributes.addFlashAttribute("mensajeExito", "Mascota actualizada correctamente.");
             return "redirect:/admin/mascotas";

@@ -345,7 +345,7 @@ a:hover { text-decoration: underline; }
     gap: 0.2rem;
 }
 .nav-link {
-    padding: 0.4rem 0.8rem;
+    padding: 0.4rem 0.6rem;
     border-radius: 6px;
     font-size: 0.845rem;
     font-weight: 500;
@@ -1059,6 +1059,8 @@ a:hover { text-decoration: underline; }
 }
 
 /* ── Navbar: botón hamburguesa ───────────────────────────── */
+/* Breakpoint en 1023px: con 5 enlaces de admin el navbar necesita
+   colapsar antes de que los links se desborden en pantallas medianas */
 .navbar-hamburger {
     display: none;
     align-items: center;
@@ -1080,7 +1082,7 @@ a:hover { text-decoration: underline; }
     color: var(--primario-deep);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
     .navbar-hamburger { display: flex; }
 
     .navbar-inner {

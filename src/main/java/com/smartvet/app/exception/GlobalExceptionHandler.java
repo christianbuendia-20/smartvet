@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Slf4j
 @ControllerAdvice
@@ -52,6 +54,16 @@ public class GlobalExceptionHandler {
                 "Horario no disponible",
                 ex.getMessage(),
                 "Seleccione otro horario o un veterinario diferente para continuar.",
+                HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(LimiteCitasException.class)
+    public ModelAndView handleLimiteCitas(LimiteCitasException ex) {
+        log.warn("Límite de citas activas excedido: {}", ex.getMessage());
+        return buildErrorView(
+                "Límite de citas alcanzado",
+                ex.getMessage(),
+                "Cancela o finaliza una cita existente antes de registrar una nueva.",
                 HttpStatus.CONFLICT);
     }
 

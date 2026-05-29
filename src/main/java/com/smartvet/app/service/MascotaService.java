@@ -32,4 +32,6 @@ public interface MascotaService {
     List<Mascota> listarTodas();
 
     List<Mascota> listarTodas(String keyword);
+
+    Mascota actualizarFoto(Integer idMascota, String nombreFoto);
 }

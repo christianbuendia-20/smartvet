@@ -3,6 +3,20 @@
 <head>
     <title>SmartVet — Registrar Mascota</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+        .btn-calendario-destacado {
+            background-color: #ff9800;
+            color: white;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-calendario-destacado:hover { background-color: #e68a00; }
+        .btn-calendario-destacado i     { font-size: 1.1rem; }
+    </style>
 </head>
 <body>
 
@@ -21,7 +35,7 @@
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
     <div class="tabla-card" style="padding: 2rem;">
-        <form th:action="@{/cliente/mascotas/nueva}" method="post">
+        <form th:action="@{/cliente/mascotas/nueva}" method="post" enctype="multipart/form-data">
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -63,8 +77,19 @@
             <div class="form-fila">
                 <div class="form-grupo">
                     <label for="fechaNacimiento">Fecha de nacimiento <span class="hint" style="font-weight:400;">(opcional)</span></label>
-                    <input type="date" id="fechaNacimiento" name="fechaNacimiento"
-                           th:value="${fechaNacimientoPrev}" max="9999-12-31">
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <span id="btn-fecha-nacimiento"
+                              class="btn-calendario-destacado"
+                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center;
+                                     padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                            <i class="bi bi-calendar-date"></i>
+                        </span>
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+                               style="padding-left:3rem; width:100%;"
+                               th:value="${fechaNacimientoPrev}">
+                    </div>
+                    <span id="error-fecha-nac" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
+                    <span class="hint">La fecha de nacimiento no puede ser una fecha futura.</span>
                 </div>
 
                 <div class="form-grupo">
@@ -85,6 +110,17 @@
                 <input type="number" id="peso" name="peso" step="0.01" min="0" max="999.99"
                        th:value="${pesoPrev}" placeholder="Ej: 12.5">
                 <span class="hint">Ingresa el peso en kilogramos con hasta 2 decimales.</span>
+            </div>
+
+            <div class="form-grupo" style="max-width:340px;">
+                <label for="archivo">
+                    <i class="fa-solid fa-camera" style="color:var(--primario);"></i>
+                    Foto de la mascota <span class="hint" style="font-weight:400;">(opcional)</span>
+                </label>
+                <input type="file" id="archivo" name="archivo"
+                       accept="image/png, image/jpeg, image/jpg"
+                       style="padding:0.4rem;">
+                <span class="hint">Formatos aceptados: JPG, JPEG, PNG. Tamaño recomendado: menor a 5 MB.</span>
             </div>
 
             <hr class="divisor">
@@ -137,6 +173,35 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const hoy         = new Date();
+    const anio        = hoy.getFullYear();
+    const mes         = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia         = String(hoy.getDate()).padStart(2, '0');
+    const fechaActual = `${anio}-${mes}-${dia}`;
+
+    document.querySelectorAll('input[type="date"]').forEach(function (input) {
+        input.setAttribute('max', fechaActual);
+
+        input.addEventListener('change', function () {
+            if (this.value > fechaActual) {
+                alert('La fecha de nacimiento no puede ser una fecha futura. Por favor, selecciona una fecha válida.');
+                this.value = '';
+            }
+        });
+    });
+
+    const btnCal     = document.getElementById('btn-fecha-nacimiento');
+    const inputFecha = document.getElementById('fechaNacimiento');
+    if (btnCal && inputFecha) {
+        btnCal.addEventListener('click', function () {
+            try { inputFecha.showPicker(); } catch (e) { inputFecha.focus(); }
+        });
+    }
+});
+</script>
 
 </body>
 </html>

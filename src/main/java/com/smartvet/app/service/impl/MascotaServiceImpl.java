@@ -158,6 +158,16 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotaRepository.buscarPorKeyword(keyword.trim());
     }
 
+    @Override
+    @Transactional
+    public Mascota actualizarFoto(Integer idMascota, String nombreFoto) {
+        Mascota mascota = mascotaRepository.findById(idMascota)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Mascota con id=" + idMascota + " no encontrada"));
+        mascota.setRutaFoto(nombreFoto);
+        return mascotaRepository.save(mascota);
+    }
+
     // ── helpers de mapeo ─────────────────────────────────────────────────────
 
     private Mascota construirMascota(MascotaDTO dto, Usuario propietario) {

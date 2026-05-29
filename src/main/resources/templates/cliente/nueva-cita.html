@@ -46,6 +46,9 @@
         <a th:href="@{/cliente/mascotas/nueva}">Registra una mascota primero.</a>
     </div>
 
+    <!-- Error de límite / flash redirect -->
+    <div th:if="${error}" class="alerta alerta-error" th:text="${error}"></div>
+
     <!-- Error de disponibilidad -->
     <div th:if="${errorForm}" class="alerta alerta-error">
         <strong>No fue posible agendar la cita:</strong>
@@ -53,7 +56,7 @@
     </div>
 
     <div class="tabla-card" style="padding: 2rem;" th:if="${not #lists.isEmpty(mascotas)}">
-        <form th:action="@{/cliente/citas/nueva}" method="post">
+        <form id="formAgendarCita" th:action="@{/cliente/citas/nueva}" method="post">
 
             <div class="form-fila">
                 <!-- Mascota -->
@@ -112,7 +115,7 @@
                         <span id="btn-calendario-izq"
                               class="btn-calendario-destacado"
                               style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center; padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
-                            <i class="fa-regular fa-calendar"></i>
+                            <i class="bi bi-calendar-event"></i>
                         </span>
                         <input type="datetime-local"
                                id="fechaHora"
@@ -124,7 +127,7 @@
                     </div>
                     <span id="error-fecha" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
                     <span class="hint">
-                        Horario de atención: 09:00 – 19:00 h. Mínimo con un día de anticipación.
+                        Horario de atención: 09:00 – 19:00 h. Reserva disponible solo para los próximos 15 días con un día de anticipación.
                     </span>
                 </div>
             </div>
@@ -175,37 +178,127 @@
 
 </main>
 
+<!-- ── Modal de confirmación de cita ───────────────────────────────────────── -->
+<div id="modal-confirmacion"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
+            z-index:9999; align-items:center; justify-content:center; padding:1.25rem;">
+    <div style="background:var(--fondo,#ffffff); border-radius:var(--radio,10px);
+                max-width:460px; width:100%; padding:2rem 2.25rem;
+                box-shadow:0 24px 64px rgba(0,0,0,0.22); animation:modalIn .18s ease;">
+        <div style="text-align:center; margin-bottom:1.1rem;">
+            <i class="bi bi-envelope-paper-fill"
+               style="font-size:2.75rem; color:var(--primario,#FF9800);"></i>
+        </div>
+        <h3 style="margin:0 0 0.65rem; text-align:center; font-size:1.1rem;
+                   color:var(--texto-oscuro,#1a1a1a); font-weight:700;">
+            Confirmar cita
+        </h3>
+        <p style="margin:0 0 1.6rem; text-align:center; font-size:0.9rem;
+                  color:var(--texto-suave,#6b6b6b); line-height:1.65;">
+            ¿Deseas confirmar la cita? Se generará un comprobante en PDF que será enviado
+            automáticamente a tu correo electrónico.
+        </p>
+        <div style="display:flex; gap:0.75rem;">
+            <button type="button" id="btn-modal-cancelar"
+                    class="btn btn-outline"
+                    style="flex:1; font-size:0.875rem;">
+                Cancelar
+            </button>
+            <button type="button" id="btn-modal-confirmar"
+                    class="btn btn-primario"
+                    style="flex:1; font-size:0.875rem;">
+                <i class="bi bi-check-circle-fill"></i> Sí, confirmar
+            </button>
+        </div>
+    </div>
+</div>
+<style>
+@keyframes modalIn {
+    from { opacity:0; transform:scale(0.94) translateY(-8px); }
+    to   { opacity:1; transform:scale(1)    translateY(0); }
+}
+</style>
+
 <script>
 (function () {
-    const input    = document.getElementById('fechaHora');
-    const errorMsg = document.getElementById('error-fecha');
+    var input     = document.getElementById('fechaHora');
+    var errorMsg  = document.getElementById('error-fecha');
+    var btnSubmit = document.querySelector('[type="submit"]');
 
-    // Mínimo: mañana a las 09:00
-    const manana = new Date();
-    manana.setDate(manana.getDate() + 1);
-    const yyyy = manana.getFullYear();
-    const mm   = String(manana.getMonth() + 1).padStart(2, '0');
-    const dd   = String(manana.getDate()).padStart(2, '0');
-    input.min = `${yyyy}-${mm}-${dd}T09:00`;
+    // Regla 1: mínimo exactamente 24 horas desde ahora
+    var minDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    input.min = minDate.getFullYear()
+        + '-' + String(minDate.getMonth() + 1).padStart(2, '0')
+        + '-' + String(minDate.getDate()).padStart(2, '0')
+        + 'T' + String(minDate.getHours()).padStart(2, '0')
+        + ':' + String(minDate.getMinutes()).padStart(2, '0');
+
+    // Regla 3: máximo hoy + 15 días
+    var maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 15);
+    input.max = maxDate.getFullYear()
+        + '-' + String(maxDate.getMonth() + 1).padStart(2, '0')
+        + '-' + String(maxDate.getDate()).padStart(2, '0')
+        + 'T19:00';
 
     document.getElementById('btn-calendario-izq').addEventListener('click', function () {
         try { input.showPicker(); } catch (e) { input.focus(); }
     });
 
+    // Regla 2: horario de atención 09:00 – 19:00
     input.addEventListener('change', function () {
         if (!this.value) return;
-
-        const [, timePart] = this.value.split('T');
-        const [hh, mi]     = timePart.split(':').map(Number);
-        const totalMin     = hh * 60 + mi;
+        var parts    = this.value.split('T')[1].split(':').map(Number);
+        var totalMin = parts[0] * 60 + parts[1];
 
         if (totalMin < 9 * 60 || totalMin > 19 * 60) {
-            errorMsg.textContent = 'El horario de atención es de 09:00 a 19:00 horas. Por favor elige otro horario.';
+            errorMsg.textContent   = 'El horario de atención es de 09:00 a 19:00 horas. Por favor elige otro horario.';
             errorMsg.style.display = 'block';
+            if (btnSubmit) btnSubmit.disabled = true;
+        } else if (new Date(this.value) > maxDate) {
+            errorMsg.textContent   = 'Solo se permite reservar citas dentro de los próximos 15 días. Por favor, selecciona una fecha válida.';
+            errorMsg.style.display = 'block';
+            if (btnSubmit) btnSubmit.disabled = true;
             this.value = '';
         } else {
             errorMsg.style.display = 'none';
+            if (btnSubmit) btnSubmit.disabled = false;
         }
+    });
+})();
+
+// ── Modal de confirmación ──────────────────────────────────────────────────
+(function () {
+    var form      = document.getElementById('formAgendarCita');
+    var modal     = document.getElementById('modal-confirmacion');
+    var btnConf   = document.getElementById('btn-modal-confirmar');
+    var btnCanc   = document.getElementById('btn-modal-cancelar');
+    var enviando  = false;
+
+    if (!form || !modal) return;
+
+    form.addEventListener('submit', function (e) {
+        if (enviando) return;
+        e.preventDefault();
+        modal.style.display = 'flex';
+    });
+
+    btnConf.addEventListener('click', function () {
+        modal.style.display = 'none';
+        enviando = true;
+        form.submit();
+    });
+
+    btnCanc.addEventListener('click', function () {
+        modal.style.display = 'none';
+    });
+
+    // Cerrar con Escape o clic en el fondo
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') modal.style.display = 'none';
+    });
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.style.display = 'none';
     });
 })();
 </script>

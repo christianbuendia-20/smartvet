@@ -5,6 +5,53 @@
 <head>
     <title>SmartVet — Registrar Pago</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .pago-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--texto-suave);
+            margin-bottom: 0.25rem;
+        }
+        .pago-valor {
+            display: block;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--texto-principal);
+        }
+        .monto-group {
+            display: flex;
+            border: 2px solid var(--borde, #e5e7eb);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .monto-group:focus-within { border-color: var(--primario); }
+        .monto-prefix {
+            display: flex;
+            align-items: center;
+            padding: 0 1.1rem;
+            background: var(--primario);
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .monto-input {
+            flex: 1;
+            border: none !important;
+            border-radius: 0 !important;
+            font-size: 1.35rem !important;
+            font-weight: 700 !important;
+            color: var(--verde, #16a34a) !important;
+            padding: 0.7rem 1rem !important;
+            outline: none;
+            box-shadow: none !important;
+            background: transparent;
+        }
+    </style>
 </head>
 <body>
 
@@ -15,113 +62,169 @@
     <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2>Registrar Pago</h2>
-            <p>Cita #<span th:text="${cita.idCita}">0</span></p>
+            <p style="margin:0;">
+                <span style="font-size:0.78rem; font-weight:700; letter-spacing:0.06em;
+                             text-transform:uppercase; color:var(--texto-suave);">Cita</span>
+                <span style="font-weight:700; color:var(--primario);"
+                      th:text="' #' + ${cita.idCita}"> #0</span>
+            </p>
         </div>
-        <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
+        <a th:href="@{/admin/pagos}" class="btn btn-outline"
+           style="width:auto; padding:0.5rem 1.3rem;">← Volver a Pagos</a>
     </div>
 
     <!-- Error -->
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
-    <!-- Resumen de la cita -->
-    <div class="tabla-card" style="margin-bottom:1.5rem;">
-        <p class="seccion-titulo" style="margin-bottom:0.75rem;">
-            <i class="fa-regular fa-calendar-check" style="color:var(--primario);"></i>
-            Resumen de la Cita
-        </p>
-        <dl style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:0.5rem 1.5rem; margin:0;">
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Mascota</dt>
-                <dd style="margin:0; font-weight:600;"
-                    th:text="${cita.mascota.nombre + ' (' + cita.mascota.especie + ')'}">—</dd>
-            </div>
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Propietario</dt>
-                <dd style="margin:0;"
-                    th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">—</dd>
-            </div>
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Veterinario</dt>
-                <dd style="margin:0;"
-                    th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">—</dd>
-            </div>
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Fecha y hora</dt>
-                <dd style="margin:0;"
-                    th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy HH:mm')}">—</dd>
-            </div>
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Tipo</dt>
-                <dd style="margin:0;" th:text="${cita.tipoCita}">—</dd>
-            </div>
-            <div>
-                <dt style="font-size:0.78rem; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.04em;">Motivo</dt>
-                <dd style="margin:0;" th:text="${cita.motivo ?: '—'}">—</dd>
-            </div>
-        </dl>
-    </div>
+    <div style="max-width:820px; margin:0 auto;">
 
-    <!-- Formulario de pago -->
-    <div class="tabla-card">
-        <p class="seccion-titulo" style="margin-bottom:1rem;">
-            <i class="fa-solid fa-credit-card" style="color:var(--primario);"></i>
-            Datos del Pago
-        </p>
+        <!-- ── Tarjeta: Resumen de la Cita ────────────────────────────────── -->
+        <div class="tabla-card"
+             style="margin-bottom:1.5rem; padding:1.75rem 2rem;
+                    border-left:4px solid var(--primario);">
 
-        <form th:action="@{/admin/pagos/registrar/{id}(id=${cita.idCita})}" method="post"
-              style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem 1.5rem;">
+            <p style="margin:0 0 1.25rem; font-size:0.72rem; font-weight:700;
+                      letter-spacing:0.07em; text-transform:uppercase; color:var(--texto-suave);">
+                <i class="fa-regular fa-calendar-check"
+                   style="color:var(--primario); margin-right:0.4rem;"></i>
+                Resumen de la Cita
+            </p>
 
-            <!-- Monto -->
-            <div class="form-group">
-                <label for="monto" class="form-label">Monto (S/) <span style="color:var(--rojo);">*</span></label>
-                <input id="monto" name="monto" type="number" step="0.01" min="0.01"
-                       class="form-input"
-                       th:value="${montoPrev}"
-                       placeholder="0.00" required>
+            <!-- Avatar + nombre mascota -->
+            <div style="display:flex; align-items:center; gap:1rem;
+                        padding-bottom:1.25rem; margin-bottom:1.25rem;
+                        border-bottom:1px solid var(--borde, #e5e7eb);">
+                <img th:if="${cita.mascota.rutaFoto != null and !cita.mascota.rutaFoto.isEmpty()}"
+                     th:src="@{/uploads/mascotas/} + ${cita.mascota.rutaFoto}"
+                     th:alt="${cita.mascota.nombre}"
+                     style="width:64px; height:64px; object-fit:cover; border-radius:50%;
+                            border:3px solid var(--primario); flex-shrink:0;">
+                <div th:unless="${cita.mascota.rutaFoto != null and !cita.mascota.rutaFoto.isEmpty()}"
+                     style="width:64px; height:64px; border-radius:50%; flex-shrink:0;
+                            background:var(--fondo-suave, #f3f4f6);
+                            border:3px solid var(--borde, #e5e7eb);
+                            display:flex; align-items:center; justify-content:center;
+                            color:var(--texto-suave);">
+                    <i class="bi bi-balloon-heart" style="font-size:1.7rem;"></i>
+                </div>
+                <div>
+                    <div style="font-size:1.05rem; font-weight:700; color:var(--texto-principal);"
+                         th:text="${cita.mascota.nombre}">Osita</div>
+                    <div style="font-size:0.85rem; color:var(--texto-suave);"
+                         th:text="${cita.mascota.especie}">Perro</div>
+                </div>
             </div>
 
-            <!-- Método de pago -->
-            <div class="form-group">
-                <label for="metodoPago" class="form-label">Método de pago <span style="color:var(--rojo);">*</span></label>
-                <select id="metodoPago" name="metodoPago" class="form-input" required>
-                    <option value="" disabled th:selected="${metodoPrev == null}">Seleccionar...</option>
-                    <option th:each="metodo : ${metodos}"
-                            th:value="${metodo.name()}"
-                            th:text="${metodo.name()}"
-                            th:selected="${metodoPrev != null and metodoPrev.name() == metodo.name()}">
-                    </option>
-                </select>
+            <!-- Detalles en cuadrícula -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(185px, 1fr));
+                        gap:1rem 2rem;">
+                <div>
+                    <span class="pago-label">Propietario</span>
+                    <span class="pago-valor"
+                          th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">—</span>
+                </div>
+                <div>
+                    <span class="pago-label">Veterinario</span>
+                    <span class="pago-valor"
+                          th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">—</span>
+                </div>
+                <div>
+                    <span class="pago-label">Fecha y Hora</span>
+                    <span class="pago-valor"
+                          th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy HH:mm')}">—</span>
+                </div>
+                <div>
+                    <span class="pago-label">Tipo de Cita</span>
+                    <span class="pago-valor" th:text="${cita.tipoCita}">—</span>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <span class="pago-label">Motivo</span>
+                    <span class="pago-valor" th:text="${cita.motivo ?: '—'}">—</span>
+                </div>
             </div>
+        </div>
 
-            <!-- Referencia -->
-            <div class="form-group">
-                <label for="referencia" class="form-label">Referencia / N° operación</label>
-                <input id="referencia" name="referencia" type="text"
-                       class="form-input"
-                       th:value="${referenciaPrev}"
-                       placeholder="Opcional">
-            </div>
+        <!-- ── Tarjeta: Datos del Pago ────────────────────────────────────── -->
+        <div class="tabla-card" style="padding:1.75rem 2rem;">
 
-            <!-- Observaciones (full width) -->
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label for="observaciones" class="form-label">Observaciones</label>
-                <textarea id="observaciones" name="observaciones"
-                          class="form-input" rows="3"
-                          placeholder="Opcional"
-                          th:text="${observacionesPrev}"></textarea>
-            </div>
+            <p style="margin:0 0 1.5rem; font-size:0.72rem; font-weight:700;
+                      letter-spacing:0.07em; text-transform:uppercase; color:var(--texto-suave);">
+                <i class="fa-solid fa-credit-card"
+                   style="color:var(--primario); margin-right:0.4rem;"></i>
+                Datos del Pago
+            </p>
 
-            <!-- Botones (full width) -->
-            <div style="grid-column: 1 / -1; display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
-                <a th:href="@{/admin/pagos/pendientes}" class="btn btn-outline"
-                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
-                <button type="submit" class="btn btn-primario"
-                        style="flex:1; min-width:130px;">
-                    <i class="fa-solid fa-circle-check"></i> Confirmar Pago
-                </button>
-            </div>
+            <form th:action="@{/admin/pagos/registrar/{id}(id=${cita.idCita})}" method="post"
+                  style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+                         gap:1.25rem 1.5rem;">
 
-        </form>
+                <!-- Monto destacado — ocupa todo el ancho -->
+                <div class="form-grupo" style="grid-column: 1 / -1;">
+                    <label class="form-label">
+                        Monto a cobrar <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <div class="monto-group">
+                        <span class="monto-prefix">S/</span>
+                        <input id="monto" name="monto"
+                               type="number" step="0.01" min="0.01"
+                               class="form-input monto-input"
+                               th:value="${montoPrev}"
+                               placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <!-- Método de pago -->
+                <div class="form-grupo">
+                    <label for="metodoPago" class="form-label">
+                        Método de pago <span style="color:var(--rojo);">*</span>
+                    </label>
+                    <select id="metodoPago" name="metodoPago" class="form-input" required>
+                        <option value="" disabled th:selected="${metodoPrev == null}">
+                            Seleccionar...
+                        </option>
+                        <option th:each="metodo : ${metodos}"
+                                th:value="${metodo.name()}"
+                                th:text="${metodo.name()}"
+                                th:selected="${metodoPrev != null and metodoPrev.name() == metodo.name()}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Referencia -->
+                <div class="form-grupo">
+                    <label for="referencia" class="form-label">Referencia / N° operación</label>
+                    <input id="referencia" name="referencia" type="text"
+                           class="form-input"
+                           th:value="${referenciaPrev}"
+                           placeholder="Opcional (Ej: Op. 12345)">
+                </div>
+
+                <!-- Observaciones -->
+                <div class="form-grupo" style="grid-column: 1 / -1;">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones"
+                              class="form-input" rows="3"
+                              placeholder="Notas adicionales sobre el pago..."
+                              th:text="${observacionesPrev}"></textarea>
+                </div>
+
+                <!-- Botones -->
+                <div style="grid-column:1 / -1; display:flex; gap:0.75rem;
+                            flex-wrap:wrap; margin-top:0.25rem;">
+                    <a th:href="@{/admin/pagos}" class="btn btn-outline"
+                       style="flex:1; min-width:140px; text-align:center; padding:0.75rem;">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primario"
+                            style="flex:2; min-width:200px; padding:0.75rem; font-size:1rem;">
+                        <i class="fa-solid fa-circle-check" style="margin-right:0.4rem;"></i>
+                        Confirmar Pago
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
     </div>
 
 </main>

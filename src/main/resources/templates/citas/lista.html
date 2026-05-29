@@ -74,23 +74,29 @@
                         </span>
                     </td>
                     <td>
-                        <!-- Botón cancelar solo para estados no terminales y solo para propietarios -->
-                        <form th:if="${not esVeterinario and
-                                      (cita.estado.name() == 'PROGRAMADA' or
-                                       cita.estado.name() == 'CONFIRMADA' or
-                                       cita.estado.name() == 'EN_CURSO')}"
-                              th:action="@{/citas/{id}/cancelar(id=${cita.idCita})}"
-                              method="post"
-                              onsubmit="return confirm('¿Confirmas la cancelación de esta cita?')">
-                            <button type="submit" class="btn btn-peligro"
-                                    style="padding:0.3rem 0.75rem; font-size:0.8rem;">
-                                Cancelar
-                            </button>
-                        </form>
-                        <span th:if="${cita.estado.name() == 'COMPLETADA' or
-                                       cita.estado.name() == 'CANCELADA' or
-                                       cita.estado.name() == 'NO_ASISTIO'}"
-                              style="color:var(--texto-suave); font-size:0.82rem;">—</span>
+                        <div style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
+                            <!-- Descargar comprobante PDF (todos los estados y roles) -->
+                            <a th:href="@{/citas/{id}/comprobante(id=${cita.idCita})}"
+                               target="_blank"
+                               class="btn btn-outline"
+                               style="padding:0.3rem 0.6rem; font-size:0.8rem;"
+                               title="Descargar comprobante PDF">
+                                <i class="bi bi-file-earmark-pdf-fill" style="color:var(--primario);"></i>
+                            </a>
+                            <!-- Cancelar: solo propietario + estados activos -->
+                            <form th:if="${not esVeterinario and
+                                          (cita.estado.name() == 'PROGRAMADA' or
+                                           cita.estado.name() == 'CONFIRMADA' or
+                                           cita.estado.name() == 'EN_CURSO')}"
+                                  th:action="@{/citas/{id}/cancelar(id=${cita.idCita})}"
+                                  method="post"
+                                  class="form-cancelar-cita">
+                                <button type="submit" class="btn btn-peligro"
+                                        style="padding:0.3rem 0.75rem; font-size:0.8rem;">
+                                    Cancelar
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             </tbody>
@@ -110,6 +116,27 @@
     </div>
 
 </main>
+
+<script>
+document.querySelectorAll('.form-cancelar-cita').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var _form = this;
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción no se puede deshacer y se enviará una notificación a tu correo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar cita',
+            cancelButtonText: 'Mantener cita'
+        }).then(function (result) {
+            if (result.isConfirmed) { _form.submit(); }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

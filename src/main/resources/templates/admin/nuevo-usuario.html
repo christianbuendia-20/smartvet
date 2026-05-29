@@ -12,6 +12,8 @@
 
 <main class="main-content">
 
+    <div style="max-width:760px; margin:0 auto;">
+
     <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
             <h2>Crear Nuevo Usuario</h2>
@@ -22,8 +24,8 @@
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
-    <div class="tabla-card" style="padding:2rem; max-width:700px;">
-        <form th:action="@{/admin/usuarios/nuevo}" method="post" novalidate>
+    <div class="tabla-card" style="padding:2rem;">
+        <form th:action="@{/admin/usuarios/nuevo}" method="post">
 
             <p class="seccion-titulo" style="margin-top:0;">
                 <i class="fa-solid fa-lock" style="color:var(--primario);"></i>
@@ -89,11 +91,10 @@
             <div class="form-grupo" style="max-width:300px;">
                 <label for="rol">Rol *</label>
                 <select id="rol" name="rol" required>
-                    <option value="">Selecciona un rol…</option>
                     <option th:each="r : ${roles}"
                             th:value="${r}"
                             th:text="${r}"
-                            th:selected="${r == rolPrev}">-</option>
+                            th:selected="${rolPrev != null ? r == rolPrev : r == 'cliente'}">-</option>
                 </select>
                 <span class="hint">
                     <strong>cliente</strong>: acceso al portal de clientes.
@@ -115,6 +116,8 @@
 
         </form>
     </div>
+
+    </div><!-- /.centrado -->
 
 </main>
 

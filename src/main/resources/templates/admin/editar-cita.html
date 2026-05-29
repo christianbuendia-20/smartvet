@@ -5,6 +5,26 @@
 <head>
     <title>SmartVet — Editar Cita</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .resumen-label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--texto-suave);
+            margin-bottom: 0.2rem;
+        }
+        .resumen-valor {
+            font-size: 0.9rem;
+            color: var(--texto-principal);
+        }
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: 1.1rem 1.5rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,92 +43,148 @@
     <!-- Mensajes flash -->
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
-    <!-- ── Detalle de la cita ──────────────────────────────────────────────── -->
-    <div class="tabla-card" style="margin-bottom:1.5rem;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Mascota</th>
-                    <th>Propietario</th>
-                    <th>Fecha y hora</th>
-                    <th>Tipo</th>
-                    <th>Motivo</th>
-                    <th>Estado</th>
-                    <th>Veterinario actual</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <strong th:text="${cita.mascota.nombre}">-</strong>
+    <!-- ── Tarjeta de resumen ─────────────────────────────────────────────── -->
+    <div class="tabla-card" style="margin-bottom:1.5rem; padding:1.5rem 2rem;">
+        <p style="margin:0 0 1.1rem; font-size:0.72rem; font-weight:700; letter-spacing:0.07em;
+                  text-transform:uppercase; color:var(--texto-suave);">
+            Detalles de la Cita
+        </p>
+        <div class="resumen-grid">
+
+            <div>
+                <span class="resumen-label">Mascota</span>
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-top:0.2rem;">
+                    <img th:if="${cita.mascota.rutaFoto != null and !cita.mascota.rutaFoto.isEmpty()}"
+                         th:src="@{/uploads/mascotas/} + ${cita.mascota.rutaFoto}"
+                         th:alt="${cita.mascota.nombre}"
+                         style="width:48px; height:48px; object-fit:cover; border-radius:50%;
+                                border:2px solid var(--borde, #e5e7eb); flex-shrink:0;">
+                    <div th:unless="${cita.mascota.rutaFoto != null and !cita.mascota.rutaFoto.isEmpty()}"
+                         style="width:48px; height:48px; border-radius:50%; flex-shrink:0;
+                                background:var(--fondo-suave, #f3f4f6);
+                                border:2px solid var(--borde, #e5e7eb);
+                                display:flex; align-items:center; justify-content:center;
+                                color:var(--texto-suave);">
+                        <i class="bi bi-balloon-heart" style="font-size:1.25rem;"></i>
+                    </div>
+                    <div style="display:flex; flex-direction:column; line-height:1.3;">
+                        <strong class="resumen-valor" th:text="${cita.mascota.nombre}">-</strong>
                         <span style="color:var(--texto-suave); font-size:0.8rem;"
-                              th:text="' (' + ${cita.mascota.especie} + ')'"></span>
-                    </td>
-                    <td th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</td>
-                    <td>
-                        <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
-                        <span style="color:var(--texto-suave); font-size:0.82rem;"
-                              th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
-                    </td>
-                    <td th:text="${cita.tipoCita}">-</td>
-                    <td th:text="${cita.motivo ?: '—'}">—</td>
-                    <td>
-                        <span class="badge"
-                              th:text="${cita.estado}"
-                              th:classappend="${' badge-' + cita.estado.name().toLowerCase().replace('_', '-')}">
-                        </span>
-                    </td>
-                    <td th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</td>
-                </tr>
-            </tbody>
-        </table>
+                              th:text="'(' + ${cita.mascota.especie} + ')'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <span class="resumen-label">Propietario</span>
+                <span class="resumen-valor"
+                      th:text="${cita.mascota.propietario.nombres + ' ' + cita.mascota.propietario.apellidos}">-</span>
+            </div>
+
+            <div>
+                <span class="resumen-label">Fecha y hora</span>
+                <span class="resumen-valor">
+                    <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                    <span style="color:var(--texto-suave); font-size:0.82rem;"
+                          th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
+                </span>
+            </div>
+
+            <div>
+                <span class="resumen-label">Tipo</span>
+                <span class="resumen-valor" th:text="${cita.tipoCita}">-</span>
+            </div>
+
+            <div>
+                <span class="resumen-label">Motivo</span>
+                <span class="resumen-valor" th:text="${cita.motivo ?: '—'}">—</span>
+            </div>
+
+            <div>
+                <span class="resumen-label">Estado</span>
+                <span class="resumen-valor">
+                    <span class="badge"
+                          th:text="${cita.estado}"
+                          th:classappend="${cita.estado.name() == 'PROGRAMADA'  ? ' badge-programada'  :
+                                           cita.estado.name() == 'CONFIRMADA'  ? ' badge-confirmada'  :
+                                           cita.estado.name() == 'EN_CURSO'    ? ' badge-en-curso'    :
+                                           cita.estado.name() == 'COMPLETADA'  ? ' badge-completada'  :
+                                           cita.estado.name() == 'CANCELADA'   ? ' badge-cancelada'   :
+                                                                                  ' badge-no-asistio'}">
+                    </span>
+                </span>
+            </div>
+
+            <div>
+                <span class="resumen-label">Veterinario actual</span>
+                <span class="resumen-valor"
+                      th:text="${cita.veterinario.usuario.nombres + ' ' + cita.veterinario.usuario.apellidos}">-</span>
+            </div>
+
+        </div>
     </div>
 
-    <!-- ── Tarjetas de acción (contenedor centrado) ──────────────────────── -->
+    <!-- ── Tarjetas de acción ─────────────────────────────────────────────── -->
     <div style="max-width:680px; margin:0 auto;">
 
-        <!-- Formulario de reasignación -->
-        <div class="tabla-card">
-            <h3 style="margin:0 0 1.25rem; font-size:1rem; color:var(--texto-principal);">Reasignar Veterinario</h3>
+        <!-- Reasignar veterinario -->
+        <div class="tabla-card" style="padding:1.75rem 2rem;">
+            <h3 style="margin:0 0 1.25rem; font-size:1rem; color:var(--texto-principal);">
+                <i class="fa-solid fa-user-doctor" style="color:var(--primario); margin-right:0.4rem;"></i>
+                Reasignar Veterinario
+            </h3>
 
             <form th:action="@{/admin/citas/editar/{id}(id=${cita.idCita})}" method="post">
 
                 <div class="form-grupo" style="margin-bottom:1rem;">
                     <label for="idVeterinario">Nuevo veterinario</label>
                     <select id="idVeterinario" name="idVeterinario" required>
-                        <option value="" disabled selected>— Selecciona un veterinario —</option>
+                        <option value="" disabled selected>— Selecciona un nuevo veterinario —</option>
                         <option th:each="vet : ${veterinarios}"
+                                th:if="${vet.idVeterinario != cita.veterinario.idVeterinario}"
                                 th:value="${vet.idVeterinario}"
-                                th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}"
-                                th:selected="${vet.idVeterinario == cita.veterinario.idVeterinario}">
+                                th:text="${vet.usuario.nombres + ' ' + vet.usuario.apellidos}">
                         </option>
                     </select>
                 </div>
 
-                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
                     <a th:href="@{/admin/citas}" class="btn btn-outline"
-                       style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                       style="width:auto; padding:0.5rem 1.3rem;">Cancelar</a>
                     <button type="submit" class="btn btn-primario"
-                            style="flex:1; min-width:130px;">
+                            style="width:auto; padding:0.5rem 1.3rem;">
                         <i class="fa-solid fa-floppy-disk"></i> Guardar cambio
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Cancelar cita (zona de peligro) -->
+        <!-- Zona de peligro -->
         <div th:if="${cita.estado.name() != 'CANCELADA' and
                      cita.estado.name() != 'COMPLETADA' and
                      cita.estado.name() != 'NO_ASISTIO'}"
-             class="tabla-card" style="margin-top:1.5rem; border-left:4px solid var(--rojo);">
-            <h3 style="margin:0 0 0.75rem; font-size:1rem; color:var(--rojo);">Zona de peligro</h3>
-            <p style="margin:0 0 1rem; color:var(--texto-suave); font-size:0.88rem;">
-                Esta acción es irreversible. La cita quedará como <strong>CANCELADA</strong>.
-            </p>
-            <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}" method="post"
-                  onsubmit="return confirm('¿Seguro que deseas cancelar esta cita? Esta acción no puede deshacerse.')">
-                <button type="submit" class="btn btn-rojo">Cancelar esta cita</button>
-            </form>
+             class="tabla-card"
+             style="margin-top:1.5rem; padding:1.5rem 2rem; border-left:4px solid var(--rojo);">
+
+            <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
+                <div>
+                    <h3 style="margin:0 0 0.35rem; font-size:1rem; color:var(--rojo);">
+                        <i class="fa-solid fa-triangle-exclamation" style="margin-right:0.35rem;"></i>
+                        Zona de peligro
+                    </h3>
+                    <p style="margin:0; color:var(--texto-suave); font-size:0.86rem;">
+                        Esta acción es irreversible. La cita quedará como <strong>CANCELADA</strong>.
+                    </p>
+                </div>
+                <form th:action="@{/admin/citas/cancelar/{id}(id=${cita.idCita})}" method="post"
+                      class="form-cancelar-cita"
+                      style="flex-shrink:0;">
+                    <button type="submit" class="btn btn-rojo"
+                            style="width:auto; padding:0.5rem 1.3rem; white-space:nowrap; border:none; cursor:pointer;">
+                        <i class="fa-solid fa-ban"></i> Cancelar esta cita
+                    </button>
+                </form>
+            </div>
         </div>
 
     </div>
@@ -116,6 +192,27 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+document.querySelectorAll('.form-cancelar-cita').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var _form = this;
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción no se puede deshacer y se enviará una notificación a tu correo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar cita',
+            cancelButtonText: 'Mantener cita'
+        }).then(function (result) {
+            if (result.isConfirmed) { _form.submit(); }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

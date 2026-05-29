@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Editar Producto</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Editar Producto</h2>
+            <p>Actualiza los datos del producto. Puedes corregir el stock físico directamente desde este formulario.</p>
+        </div>
+        <a th:href="@{/admin/productos}" class="btn btn-outline">← Inventario</a>
+    </div>
+
+    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+
+    <div class="tabla-card" style="padding: 2rem;">
+        <form th:action="@{/admin/productos/{id}/editar(id=${producto.idProducto})}" method="post">
+
+            <!-- ── Sección 1: Información básica ─────────────────────── -->
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-box-open" style="color:var(--primario);"></i>
+                Información del Producto
+            </p>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="nombre">Nombre *</label>
+                    <input type="text" id="nombre" name="nombre" required maxlength="100"
+                           th:value="${producto.nombre}" placeholder="Ej: Amoxicilina 500mg">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="tipoProducto">Tipo *</label>
+                    <select id="tipoProducto" name="tipoProducto" required>
+                        <option th:each="tipo : ${tipos}"
+                                th:value="${tipo.name()}"
+                                th:text="${tipo.name()}"
+                                th:selected="${producto.tipoProducto == tipo}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grupo">
+                <label for="descripcion">Descripción <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                <textarea id="descripcion" name="descripcion" rows="2" maxlength="500"
+                          placeholder="Descripción breve del producto, indicaciones generales..."
+                          th:text="${producto.descripcion}"></textarea>
+            </div>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="unidadMedida">Unidad de medida <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="text" id="unidadMedida" name="unidadMedida" maxlength="20"
+                           list="unidades-lista" th:value="${producto.unidadMedida}" placeholder="Ej: cápsulas, ml, kg">
+                    <datalist id="unidades-lista">
+                        <option value="cápsulas">
+                        <option value="comprimidos">
+                        <option value="ml">
+                        <option value="litros">
+                        <option value="kg">
+                        <option value="g">
+                        <option value="sobres">
+                        <option value="unidades">
+                        <option value="frascos">
+                        <option value="ampollas">
+                    </datalist>
+                </div>
+
+                <div class="form-grupo" style="display:flex; align-items:center; gap:0.75rem; padding-top:1.75rem;">
+                    <input type="checkbox" id="requiereReceta" name="requiereReceta" value="true"
+                           style="width:auto;"
+                           th:checked="${producto.requiereReceta}">
+                    <label for="requiereReceta" style="margin:0; cursor:pointer;">
+                        Requiere receta médica
+                    </label>
+                </div>
+            </div>
+
+            <hr class="divisor">
+
+            <!-- ── Sección 2: Precios ─────────────────────────────────── -->
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-tag" style="color:var(--primario);"></i>
+                Precios
+            </p>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="precioCompra">Precio de compra (S/) <span class="hint" style="font-weight:400;">(opcional)</span></label>
+                    <input type="number" id="precioCompra" name="precioCompra"
+                           step="0.01" min="0" th:value="${producto.precioCompra}" placeholder="0.00">
+                    <span class="hint">Costo unitario de adquisición.</span>
+                </div>
+
+                <div class="form-grupo">
+                    <label for="precioVenta">Precio de venta (S/) *</label>
+                    <input type="number" id="precioVenta" name="precioVenta" required
+                           step="0.01" min="0.01" th:value="${producto.precioVenta}" placeholder="0.00">
+                </div>
+            </div>
+
+            <hr class="divisor">
+
+            <!-- ── Sección 3: Control de inventario ───────────────────── -->
+            <p class="seccion-titulo" style="margin-bottom:1.25rem;">
+                <i class="fa-solid fa-warehouse" style="color:var(--primario);"></i>
+                Control de Inventario
+            </p>
+
+            <div class="form-fila">
+                <div class="form-grupo">
+                    <label for="stockActual">Stock actual (unidades)</label>
+                    <input type="number" id="stockActual" name="stockActual"
+                           min="0" th:value="${producto.stockActual}" placeholder="0">
+                    <span class="hint">Ingresa la cantidad física actual disponible en almacén.</span>
+                </div>
+
+                <div class="form-grupo">
+                    <label for="stockMinimo">Stock mínimo (unidades)</label>
+                    <input type="number" id="stockMinimo" name="stockMinimo"
+                           min="0" th:value="${producto.stockMinimo}" placeholder="0">
+                    <span class="hint">Se mostrará alerta cuando el stock baje de este valor.</span>
+                </div>
+            </div>
+
+            <hr class="divisor">
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a th:href="@{/admin/productos}" class="btn btn-outline"
+                   style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
+                <button type="submit" class="btn btn-primario"
+                        style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

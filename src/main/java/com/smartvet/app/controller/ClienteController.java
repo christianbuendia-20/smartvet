@@ -13,11 +13,15 @@ import com.smartvet.app.model.Sexo;
 import com.smartvet.app.model.TipoCita;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.security.SmartVetUserDetails;
+import com.smartvet.app.service.CitaPdfService;
 import com.smartvet.app.service.CitaService;
 import com.smartvet.app.service.ConsultaPdfService;
 import com.smartvet.app.service.ConsultaService;
+import com.smartvet.app.service.EmailService;
+import com.smartvet.app.service.FileStorageService;
 import com.smartvet.app.service.MascotaService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -47,19 +51,28 @@ import java.util.Objects;
 @RequestMapping("/cliente")
 public class ClienteController {
 
-    private final CitaService        citaService;
-    private final MascotaService     mascotaService;
-    private final ConsultaService    consultaService;
-    private final ConsultaPdfService consultaPdfService;
+    private final CitaService         citaService;
+    private final MascotaService      mascotaService;
+    private final ConsultaService     consultaService;
+    private final ConsultaPdfService  consultaPdfService;
+    private final CitaPdfService      citaPdfService;
+    private final EmailService        emailService;
+    private final FileStorageService  fileStorageService;
 
     public ClienteController(CitaService citaService,
                               MascotaService mascotaService,
                               ConsultaService consultaService,
-                              ConsultaPdfService consultaPdfService) {
+                              ConsultaPdfService consultaPdfService,
+                              CitaPdfService citaPdfService,
+                              EmailService emailService,
+                              FileStorageService fileStorageService) {
         this.citaService        = citaService;
         this.mascotaService     = mascotaService;
         this.consultaService    = consultaService;
         this.consultaPdfService = consultaPdfService;
+        this.citaPdfService     = citaPdfService;
+        this.emailService       = emailService;
+        this.fileStorageService = fileStorageService;
     }
 
     private SmartVetUserDetails principal() {
@@ -138,6 +151,7 @@ public class ClienteController {
                                     @RequestParam(required = false) String alergias,
                                     @RequestParam(required = false) String enfermedadesCronicas,
                                     @RequestParam(required = false) String notasGenerales,
+                                    @RequestParam(value = "archivo", required = false) MultipartFile archivo,
                                     RedirectAttributes redirectAttributes,
                                     Model model) {
 
@@ -145,6 +159,11 @@ public class ClienteController {
         try {
             MascotaDTO dto = new MascotaDTO(nombre, especie, raza, color, fechaNacimiento, sexo, peso);
             Mascota mascota = mascotaService.registrarMascota(dto, idUsuario);
+
+            if (archivo != null && !archivo.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarFotoMascota(archivo);
+                mascotaService.actualizarFoto(mascota.getIdMascota(), nombreFoto);
+            }
 
             boolean tieneHistoria = (alergias != null && !alergias.isBlank())
                     || (enfermedadesCronicas != null && !enfermedadesCronicas.isBlank())
@@ -210,12 +229,21 @@ public class ClienteController {
                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaNacimiento,
                                  @RequestParam Sexo sexo,
                                  @RequestParam(required = false) BigDecimal peso,
+                                 @RequestParam(value = "archivo", required = false) MultipartFile archivo,
                                  RedirectAttributes redirectAttributes,
                                  Model model) {
         Integer idUsuario = principal().getIdUsuario();
         try {
             MascotaDTO dto = new MascotaDTO(nombre, especie, raza, color, fechaNacimiento, sexo, peso);
             mascotaService.actualizarMascota(id, dto);
+
+            // actualizarMascota solo pisa campos del DTO; rutaFoto queda intacta en BD.
+            // Solo llamamos actualizarFoto cuando el usuario subió una imagen nueva.
+            if (archivo != null && !archivo.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarFotoMascota(archivo);
+                mascotaService.actualizarFoto(id, nombreFoto);
+            }
+
             log.info("Mascota id={} actualizada por cliente usuario_id={}", id, idUsuario);
             redirectAttributes.addFlashAttribute("mensajeExito",
                     "Datos de \"" + nombre + "\" actualizados correctamente.");
@@ -254,6 +282,13 @@ public class ClienteController {
 
         Integer idUsuario = principal().getIdUsuario();
 
+        if (citaService.contarCitasActivasPorPropietario(idUsuario) >= 3) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Límite de citas alcanzado: Ya tienes 3 citas activas programadas. " +
+                    "Para agendar una nueva, debes cancelar una cita existente.");
+            return "redirect:/cliente/citas/nueva";
+        }
+
         if (!fechaHora.toLocalDate().isAfter(LocalDate.now())) {
             recargarForm(idUsuario, model);
             model.addAttribute("errorForm",          "Las citas deben agendarse con al menos un día de anticipación.");
@@ -277,14 +312,43 @@ public class ClienteController {
             return "cliente/nueva-cita";
         }
 
+        LocalDateTime fechaMaxima = LocalDateTime.now().plusDays(15);
+        if (fechaHora.isAfter(fechaMaxima)) {
+            recargarForm(idUsuario, model);
+            model.addAttribute("errorForm",          "No se pueden programar citas con más de 15 días de anticipación.");
+            model.addAttribute("idMascotaPrev",      idMascota);
+            model.addAttribute("idVeterinarioxPrev", idVeterinario);
+            model.addAttribute("tipoCitaPrev",       tipoCita);
+            model.addAttribute("fechaHoraPrev",      fechaHora);
+            model.addAttribute("motivoPrev",         motivo);
+            return "cliente/nueva-cita";
+        }
+
         try {
             CitaAgendamientoDTO dto = new CitaAgendamientoDTO(
                     idMascota, idVeterinario, tipoCita, fechaHora, motivo);
             Cita cita = citaService.programarCita(dto);
             log.info("Cita agendada por cliente usuario_id={}: cita_id={}", idUsuario, cita.getIdCita());
-            redirectAttributes.addFlashAttribute("mensajeExito",
-                    "¡Cita confirmada para el "
-                    + fechaHora.toLocalDate() + " a las " + fechaHora.toLocalTime() + "!");
+
+            try {
+                byte[] pdfBytes = citaPdfService.generarPdf(cita.getIdCita());
+                emailService.enviarComprobanteCita(
+                        principal().getUsername(),
+                        principal().getNombreCompleto(),
+                        pdfBytes,
+                        cita.getIdCita());
+                log.info("Comprobante enviado por email: cita_id={}", cita.getIdCita());
+                redirectAttributes.addFlashAttribute("mensajeExito",
+                        "¡Cita confirmada para el " + fechaHora.toLocalDate()
+                        + " a las " + fechaHora.toLocalTime()
+                        + "! Se ha enviado un comprobante PDF a tu correo electrónico.");
+            } catch (Exception ex) {
+                log.warn("No se pudo enviar el comprobante por email: cita_id={}", cita.getIdCita(), ex);
+                redirectAttributes.addFlashAttribute("mensajeExito",
+                        "¡Cita confirmada para el " + fechaHora.toLocalDate()
+                        + " a las " + fechaHora.toLocalTime() + "!");
+            }
+
             return "redirect:/cliente/dashboard";
 
         } catch (CitaNoDisponibleException ex) {
@@ -308,6 +372,7 @@ public class ClienteController {
 
         citaService.cancelarCita(id);
         log.info("Cita id={} cancelada por cliente usuario_id={}", id, principal().getIdUsuario());
+        emailService.enviarCancelacionCita(id);
         redirectAttributes.addFlashAttribute("mensajeExito", "Cita cancelada correctamente.");
         return "redirect:/cliente/dashboard";
     }

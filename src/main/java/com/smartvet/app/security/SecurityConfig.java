@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -43,6 +45,31 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                            if (auth != null) {
+                                boolean isAdmin = auth.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("admin"));
+                                boolean isVet = auth.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("veterinario"));
+                                boolean isCliente = auth.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("cliente"));
+
+                                if (isAdmin) {
+                                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                                } else if (isVet) {
+                                    response.sendRedirect(request.getContextPath() + "/vet/dashboard");
+                                } else if (isCliente) {
+                                    response.sendRedirect(request.getContextPath() + "/cliente/panel");
+                                } else {
+                                    response.sendRedirect(request.getContextPath() + "/");
+                                }
+                            } else {
+                                response.sendRedirect(request.getContextPath() + "/auth/login");
+                            }
+                        })
                 );
 
         return http.build();

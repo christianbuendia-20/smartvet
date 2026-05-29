@@ -10,6 +10,10 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
           crossorigin="anonymous" referrerpolicy="no-referrer">
 
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <!-- Google Fonts: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -919,6 +923,7 @@
             <nav class="nav-desktop" aria-label="Menú principal">
                 <a class="nav-link" href="#inicio">Inicio</a>
                 <a class="nav-link" href="#conocenos">Conócenos</a>
+                <a class="nav-link" href="#herramientas">Herramientas</a>
                 <a class="nav-link" href="#servicios">Servicios</a>
                 <a class="nav-link" href="#veterinarios">Veterinarios</a>
                 <a class="nav-link" href="#sedes">Sedes</a>
@@ -945,6 +950,7 @@
     <div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
         <a class="nav-link" href="#inicio">Inicio</a>
         <a class="nav-link" href="#conocenos">Conócenos</a>
+        <a class="nav-link" href="#herramientas">Herramientas</a>
         <a class="nav-link" href="#servicios">Servicios</a>
         <a class="nav-link" href="#veterinarios">Veterinarios</a>
         <a class="nav-link" href="#sedes">Sedes</a>
@@ -1097,6 +1103,78 @@
                 <img th:src="@{/img/vet2.png}"
                      alt="Equipo de Veterinaria Santa Victoria"
                      class="conocenos-img">
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     HERRAMIENTAS / BENEFICIOS
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="herramientas">
+    <div class="container">
+        <div class="conocenos-grid">
+
+            <!-- Imagen -->
+            <div class="conocenos-img-wrap">
+                <img th:src="@{/img/dueño_mascota_viendo_pc.avif}"
+                     alt="Dueño de mascota usando SmartVet"
+                     class="conocenos-img">
+            </div>
+
+            <!-- Texto -->
+            <div class="conocenos-text">
+                <div class="section-tag">Portal de Clientes</div>
+                <h2 class="section-title">
+                    Beneficios exclusivos para ti<br>y tu mascota
+                </h2>
+
+                <p>
+                    Queremos hacerte la vida más fácil. Con nuestro portal exclusivo, tendrás el control total
+                    de la salud de tus engreídos. Olvídate de perder las recetas de papel y gestiona todo
+                    desde tu celular o computadora de forma rápida y 100% segura.
+                </p>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="bi bi-clipboard2-pulse text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Historial Médico en Línea</div>
+                            <div class="feature-desc">Accede a las vacunas, diagnósticos, peso y recetas de tus mascotas en cualquier momento y lugar.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="bi bi-calendar-check text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Agendamiento 24/7</div>
+                            <div class="feature-desc">Reserva, revisa o cancela tus citas médicas en segundos, sin necesidad de hacer llamadas ni esperar.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="bi bi-balloon-heart text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Perfiles de tus Mascotas</div>
+                            <div class="feature-desc">Registra a todos tus peludos con su foto y mantén su información siempre actualizada en un solo lugar.</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="bi bi-clock-history text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="feature-title">Control de Consultas</div>
+                            <div class="feature-desc">Lleva un registro transparente de tus próximas visitas y revisa el historial completo de atenciones pasadas.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>

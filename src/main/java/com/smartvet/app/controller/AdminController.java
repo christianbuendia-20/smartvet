@@ -1,10 +1,12 @@
 package com.smartvet.app.controller;
 
 import com.smartvet.app.dto.CitaAgendamientoDTO;
+import com.smartvet.app.dto.PagoFilaDTO;
 import com.smartvet.app.dto.PagoRegistroDTO;
 import com.smartvet.app.dto.PerfilUpdateDTO;
 import com.smartvet.app.dto.ProductoRegistroDTO;
 import com.smartvet.app.dto.UsuarioRegistroDTO;
+import com.smartvet.app.dto.VeterinarioFormDTO;
 import com.smartvet.app.exception.EmailDuplicadoException;
 import com.smartvet.app.exception.EstadoInvalidoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
@@ -87,26 +89,41 @@ public class AdminController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         List<Cita>        citasHoy        = citaService.listarCitasDeHoy();
-        List<Cita>        todasCitas      = citaService.listarTodas();
+        List<Cita>        citasManana     = citaService.listarCitasDeManana();
         List<Producto>    stockBajo       = productoService.listarConStockBajo();
         List<Veterinario> veterinarios    = citaService.listarVeterinariosParaCita();
         int               pagosPendientes = pagoService.listarCitasCompletadasSinPago().size();
 
-        model.addAttribute("citasHoy",            citasHoy);
-        model.addAttribute("todasCitas",          todasCitas);
-        model.addAttribute("totalCitasHoy",       citasHoy.size());
-        model.addAttribute("totalProgramadas",    citaService.contarPorEstado(citasHoy, EstadoCita.PROGRAMADA));
-        model.addAttribute("totalEnCurso",        citaService.contarPorEstado(citasHoy, EstadoCita.EN_CURSO));
-        model.addAttribute("productosStockBajo",  stockBajo);
-        model.addAttribute("totalStockBajo",      stockBajo.size());
-        model.addAttribute("veterinarios",        veterinarios);
-        model.addAttribute("totalVeterinarios",   veterinarios.size());
+        model.addAttribute("citasHoy",             citasHoy);
+        model.addAttribute("citasManana",          citasManana);
+        model.addAttribute("totalCitasHoy",        citasHoy.size());
+        model.addAttribute("totalProgramadas",     citaService.contarPorEstado(citasHoy, EstadoCita.PROGRAMADA));
+        model.addAttribute("totalEnCurso",         citaService.contarPorEstado(citasHoy, EstadoCita.EN_CURSO));
+        model.addAttribute("productosStockBajo",   stockBajo);
+        model.addAttribute("totalStockBajo",       stockBajo.size());
+        model.addAttribute("veterinarios",         veterinarios);
+        model.addAttribute("totalVeterinarios",    veterinarios.size());
         model.addAttribute("totalPagosPendientes", pagosPendientes);
 
         return "admin/dashboard";
     }
 
     // ── Módulo de pagos ───────────────────────────────────────────────────────
+
+    @GetMapping("/pagos")
+    public String listarPagos(Model model) {
+        List<PagoFilaDTO> filas      = pagoService.listarParaVista();
+        long              pendientes = filas.stream()
+                .filter(PagoFilaDTO::isPendiente).count();
+        LocalDateTime inicioMes   = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        BigDecimal    recaudacion = pagoService.calcularRecaudacion(inicioMes, LocalDateTime.now());
+
+        model.addAttribute("pagos",           filas);
+        model.addAttribute("totalPagos",      filas.size());
+        model.addAttribute("totalPendientes", pendientes);
+        model.addAttribute("recaudacionMes",  recaudacion);
+        return "admin/pagos";
+    }
 
     @GetMapping("/pagos/pendientes")
     public String listarPagosPendientes(Model model) {
@@ -145,9 +162,9 @@ public class AdminController {
             log.info("Pago registrado: id={}, cita_id={}, monto={}, metodo={}",
                     pago.getIdPago(), idCita, monto, metodoPago);
             redirectAttributes.addFlashAttribute("mensajeExito",
-                    "Pago registrado. Cita #" + idCita + " · S/ "
+                    "Pago registrado correctamente. Cita #" + idCita + " · S/ "
                     + String.format("%.2f", monto) + " · " + metodoPago.name());
-            return "redirect:/admin/pagos/pendientes";
+            return "redirect:/admin/pagos";
         } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
             log.warn("Error al registrar pago para cita_id={}: {}", idCita, ex.getMessage());
             model.addAttribute("errorForm",        ex.getMessage());
@@ -170,7 +187,7 @@ public class AdminController {
                                     @RequestParam(defaultValue = "0") int page,
                                     Model model) {
         PageRequest pageable = PageRequest.of(page, 10, Sort.by("nombre").ascending());
-        Page<Producto> paginaProductos = productoService.listarActivosPaginado(busqueda, pageable);
+        Page<Producto> paginaProductos = productoService.listarTodosPaginado(busqueda, pageable);
         long countStockBajo = productoService.listarConStockBajo().size();
 
         model.addAttribute("productos",       paginaProductos.getContent());
@@ -238,6 +255,82 @@ public class AdminController {
         }
     }
 
+    @GetMapping("/productos/{id}/editar")
+    public String mostrarFormEditarProducto(@PathVariable Integer id,
+                                             Model model,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("producto", productoService.buscarPorId(id));
+            model.addAttribute("tipos",    TipoProducto.values());
+            return "admin/editar-producto";
+        } catch (RecursoNoEncontradoException ex) {
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/productos";
+        }
+    }
+
+    @PostMapping("/productos/{id}/editar")
+    public String editarProducto(@PathVariable Integer id,
+                                  @RequestParam String nombre,
+                                  @RequestParam(required = false) String descripcion,
+                                  @RequestParam TipoProducto tipoProducto,
+                                  @RequestParam(required = false) BigDecimal precioCompra,
+                                  @RequestParam BigDecimal precioVenta,
+                                  @RequestParam(required = false) Integer stockActual,
+                                  @RequestParam(required = false) Integer stockMinimo,
+                                  @RequestParam(required = false) String unidadMedida,
+                                  @RequestParam(required = false) Boolean requiereReceta,
+                                  RedirectAttributes redirectAttributes,
+                                  Model model) {
+        try {
+            ProductoRegistroDTO dto = new ProductoRegistroDTO(
+                    nombre, descripcion, tipoProducto, precioCompra, precioVenta,
+                    stockActual, stockMinimo, unidadMedida, requiereReceta);
+            productoService.actualizarProducto(id, dto);
+            log.info("Admin editó producto: id={}, nombre='{}'", id, nombre);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Producto \"" + nombre + "\" actualizado correctamente.");
+            return "redirect:/admin/productos";
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al editar producto id={}: {}", id, ex.getMessage());
+            model.addAttribute("errorForm", ex.getMessage());
+            try { model.addAttribute("producto", productoService.buscarPorId(id)); }
+            catch (Exception ignored) {}
+            model.addAttribute("tipos", TipoProducto.values());
+            return "admin/editar-producto";
+        }
+    }
+
+    @PostMapping("/productos/{id}/desactivar")
+    public String desactivarProducto(@PathVariable Integer id,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            productoService.desactivarProducto(id);
+            log.info("Admin desactivó producto: id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Producto #" + id + " desactivado. Ya no aparece en búsquedas activas.");
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al desactivar producto id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/productos";
+    }
+
+    @PostMapping("/productos/{id}/activar")
+    public String activarProducto(@PathVariable Integer id,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            productoService.activarProducto(id);
+            log.info("Admin activó producto: id={}", id);
+            redirectAttributes.addFlashAttribute("mensajeExito",
+                    "Producto #" + id + " reactivado.");
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al activar producto id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+        }
+        return "redirect:/admin/productos";
+    }
+
     @PostMapping("/productos/{id}/reponer")
     public String reponerStock(@PathVariable Integer id,
                                 @RequestParam int cantidad,
@@ -291,6 +384,7 @@ public class AdminController {
         try {
             citaService.cambiarEstado(id, EstadoCita.CANCELADA);
             log.info("Admin canceló cita_id={}", id);
+            emailService.enviarCancelacionCita(id);
             redirectAttributes.addFlashAttribute("mensajeExito", "Cita #" + id + " cancelada.");
         } catch (EstadoInvalidoException | RecursoNoEncontradoException ex) {
             log.warn("Error al cancelar cita_id={}: {}", id, ex.getMessage());
@@ -366,16 +460,26 @@ public class AdminController {
             return "redirect:/admin/usuarios";
         } catch (EmailDuplicadoException ex) {
             log.warn("Admin: email duplicado al crear usuario: {}", email);
-            model.addAttribute("errorForm",     ex.getMessage());
-            model.addAttribute("roles",         List.of("cliente", "veterinario", "admin"));
-            model.addAttribute("emailPrev",     email);
-            model.addAttribute("nombresPrev",   nombres);
-            model.addAttribute("apellidosPrev", apellidos);
-            model.addAttribute("dniPrev",       dni);
-            model.addAttribute("telefonoPrev",  telefono);
-            model.addAttribute("rolPrev",       rol);
-            return "admin/nuevo-usuario";
+            return volverAFormularioNuevoUsuario(model, ex.getMessage(), email, nombres, apellidos, dni, telefono, rol);
+        } catch (Exception ex) {
+            log.error("Error inesperado al crear usuario '{}': {}", email, ex.getMessage());
+            String msg = "No se pudo crear el usuario. Es posible que el correo o el DNI ya estén registrados.";
+            return volverAFormularioNuevoUsuario(model, msg, email, nombres, apellidos, dni, telefono, rol);
         }
+    }
+
+    private String volverAFormularioNuevoUsuario(Model model, String error,
+                                                  String email, String nombres, String apellidos,
+                                                  String dni, String telefono, String rol) {
+        model.addAttribute("errorForm",     error);
+        model.addAttribute("roles",         List.of("cliente", "veterinario", "admin"));
+        model.addAttribute("emailPrev",     email);
+        model.addAttribute("nombresPrev",   nombres);
+        model.addAttribute("apellidosPrev", apellidos);
+        model.addAttribute("dniPrev",       dni);
+        model.addAttribute("telefonoPrev",  telefono);
+        model.addAttribute("rolPrev",       rol);
+        return "admin/nuevo-usuario";
     }
 
     // ── Gestión de veterinarios ───────────────────────────────────────────────
@@ -479,8 +583,23 @@ public class AdminController {
                                     RedirectAttributes redirectAttributes,
                                     Model model) {
         try {
+            if (citaService.contarCitasActivasPorMascota(idMascota) >= 3) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Límite de citas alcanzado: El cliente ya tiene 3 citas activas. " +
+                        "Debe cancelar o finalizar una cita existente antes de registrar una nueva.");
+                return "redirect:/admin/citas/nueva";
+            }
+
             LocalDateTime fechaHoraDT = LocalDateTime.parse(
                     fechaHora.length() == 16 ? fechaHora + ":00" : fechaHora);
+
+            LocalDateTime fechaMaxima = LocalDateTime.now().plusDays(15);
+            if (fechaHoraDT.isAfter(fechaMaxima)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No se pueden programar citas con más de 15 días de anticipación.");
+                return "redirect:/admin/citas/nueva";
+            }
+
             CitaAgendamientoDTO dto = new CitaAgendamientoDTO(idMascota, idVeterinario, tipoCita, fechaHoraDT, motivo);
             Cita guardada = citaService.programarCita(dto);
             log.info("Admin agendó cita: id={}, mascota_id={}, veterinario_id={}",
@@ -514,6 +633,7 @@ public class AdminController {
             Usuario usuario = usuarioService.buscarPorId(id);
             model.addAttribute("usuario",        usuario);
             model.addAttribute("direccionActual", usuarioService.buscarDireccion(id).orElse(null));
+            model.addAttribute("roles",           List.of("cliente", "veterinario", "admin"));
             return "admin/editar-usuario";
         } catch (RecursoNoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
@@ -530,11 +650,15 @@ public class AdminController {
                                  @RequestParam(required = false) String dni,
                                  @RequestParam(required = false) String direccion,
                                  @RequestParam(required = false) String referencia,
+                                 @RequestParam(required = false) String nuevoRol,
                                  RedirectAttributes redirectAttributes,
                                  Model model) {
         try {
             PerfilUpdateDTO dto = new PerfilUpdateDTO(nombres, apellidos, email, telefono, dni, direccion, referencia);
             usuarioService.actualizarPerfil(id, dto);
+            if (nuevoRol != null && !nuevoRol.isBlank()) {
+                usuarioService.cambiarRol(id, nuevoRol);
+            }
             log.info("Admin editó usuario: id={}", id);
             redirectAttributes.addFlashAttribute("mensajeExito",
                     "Datos de " + nombres + " " + apellidos + " actualizados.");
@@ -543,6 +667,7 @@ public class AdminController {
             log.warn("Admin: email duplicado al editar usuario_id={}: {}", id, ex.getMessage());
             model.addAttribute("errorForm",      ex.getMessage());
             model.addAttribute("direccionActual", usuarioService.buscarDireccion(id).orElse(null));
+            model.addAttribute("roles",           List.of("cliente", "veterinario", "admin"));
             try {
                 model.addAttribute("usuario", usuarioService.buscarPorId(id));
             } catch (Exception ignored) { /* no encontrado */ }
@@ -585,36 +710,59 @@ public class AdminController {
     // ── Gestión de veterinarios ───────────────────────────────────────────────
 
     @GetMapping("/veterinarios/nuevo")
-    public String mostrarFormNuevoVet(Model model) {
+    public String mostrarFormPerfilVet(Model model) {
+        model.addAttribute("veterinario",       new VeterinarioFormDTO());
+        model.addAttribute("listaVeterinarios", usuarioService.listarVeterinarios());
         return "admin/nuevo-veterinario";
     }
 
-    @PostMapping("/veterinarios/nuevo")
-    public String crearVeterinario(@RequestParam String email,
-                                    @RequestParam String password,
-                                    @RequestParam String nombres,
-                                    @RequestParam String apellidos,
-                                    @RequestParam(required = false) String dni,
-                                    @RequestParam(required = false) String telefono,
-                                    @RequestParam(required = false) String horarioAtencion,
-                                    RedirectAttributes redirectAttributes,
-                                    Model model) {
+    @GetMapping("/veterinarios/editar/{id}")
+    public String mostrarFormEditarVet(@PathVariable Integer id,
+                                        Model model,
+                                        RedirectAttributes redirectAttributes) {
         try {
-            UsuarioRegistroDTO dto = new UsuarioRegistroDTO(email, password, nombres, apellidos, dni, telefono);
-            Usuario creado = usuarioService.registrarVeterinario(dto, horarioAtencion);
-            log.info("Admin creó veterinario: usuario_id={}, email={}", creado.getIdUsuario(), email);
+            Usuario   usuario = usuarioService.buscarPorId(id);
+            Veterinario vet   = usuarioService.buscarVeterinarioPorIdUsuario(id);
+            VeterinarioFormDTO form = new VeterinarioFormDTO();
+            form.setId(usuario.getIdUsuario());
+            form.setNombres(usuario.getNombres());
+            form.setApellidos(usuario.getApellidos());
+            form.setHorarioAtencion(vet.getHorarioAtencion());
+            model.addAttribute("veterinario",       form);
+            model.addAttribute("listaVeterinarios", usuarioService.listarVeterinarios());
+            return "admin/nuevo-veterinario";
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al cargar perfil veterinario id={}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());
+            return "redirect:/admin/veterinarios/nuevo";
+        }
+    }
+
+    @PostMapping("/veterinarios/nuevo")
+    public String guardarPerfilVeterinario(@RequestParam(required = false) Integer id,
+                                            @RequestParam(required = false) String horarioAtencion,
+                                            RedirectAttributes redirectAttributes,
+                                            Model model) {
+        if (id == null) {
+            model.addAttribute("errorForm", "Debe seleccionar un veterinario de la lista.");
+            model.addAttribute("veterinario",       new VeterinarioFormDTO());
+            model.addAttribute("listaVeterinarios", usuarioService.listarVeterinarios());
+            return "admin/nuevo-veterinario";
+        }
+        try {
+            usuarioService.actualizarHorarioVeterinario(id, horarioAtencion);
+            log.info("Admin actualizó horario de veterinario: usuario_id={}", id);
             redirectAttributes.addFlashAttribute("mensajeExito",
-                    "Veterinario " + nombres + " " + apellidos + " registrado exitosamente.");
+                    "Perfil médico actualizado correctamente.");
             return "redirect:/admin/dashboard";
-        } catch (EmailDuplicadoException ex) {
-            log.warn("Admin: email duplicado al crear veterinario: {}", email);
+        } catch (RecursoNoEncontradoException ex) {
+            log.warn("Error al guardar perfil veterinario id={}: {}", id, ex.getMessage());
             model.addAttribute("errorForm", ex.getMessage());
-            model.addAttribute("emailPrev",    email);
-            model.addAttribute("nombresPrev",  nombres);
-            model.addAttribute("apellidosPrev", apellidos);
-            model.addAttribute("dniPrev",      dni);
-            model.addAttribute("telefonoPrev", telefono);
-            model.addAttribute("horarioPrev",  horarioAtencion);
+            VeterinarioFormDTO form = new VeterinarioFormDTO();
+            form.setId(id);
+            form.setHorarioAtencion(horarioAtencion);
+            model.addAttribute("veterinario",       form);
+            model.addAttribute("listaVeterinarios", usuarioService.listarVeterinarios());
             return "admin/nuevo-veterinario";
         }
     }

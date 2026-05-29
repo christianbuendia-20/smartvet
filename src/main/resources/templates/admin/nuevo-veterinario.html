@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>SmartVet — Registrar Veterinario</title>
+    <title>SmartVet — Gestionar Perfil de Veterinario</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
 </head>
 <body>
@@ -14,87 +14,53 @@
 
     <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h2>Registrar Nuevo Veterinario</h2>
-            <p>Crea la cuenta de acceso y el perfil del veterinario. Los campos con * son obligatorios.</p>
+            <h2>Gestionar Perfil de Veterinario</h2>
+            <p>Selecciona un usuario con rol de veterinario para asignarle o actualizar su horario de atención médico.</p>
         </div>
         <a th:href="@{/admin/dashboard}" class="btn btn-outline">← Dashboard</a>
     </div>
 
-    <!-- Error de validación / email duplicado -->
-    <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"    class="alerta alerta-error"  th:text="${errorForm}"></div>
 
-    <div class="tabla-card" style="padding: 2rem;">
+    <!-- ── Selector de veterinario ─────────────────────────────────────────── -->
+    <div class="tabla-card" style="padding:1.5rem 2rem; margin-bottom:1.5rem;">
+        <p class="seccion-titulo" style="margin-bottom:0.75rem;">
+            <i class="fa-solid fa-list-ul" style="color:var(--primario);"></i>
+            Seleccionar veterinario
+        </p>
+        <div class="form-grupo" style="max-width:500px; margin-bottom:0;">
+            <label for="selectVeterinario">Veterinario registrado</label>
+            <select id="selectVeterinario">
+                <option value="" disabled th:selected="${veterinario.id == null}">-- Seleccione un veterinario --</option>
+                <option th:each="u : ${listaVeterinarios}"
+                        th:value="${u.idUsuario}"
+                        th:text="${u.nombres + ' ' + u.apellidos}"
+                        th:selected="${veterinario.id != null and u.idUsuario == veterinario.id}">
+                </option>
+            </select>
+            <span class="hint">Al seleccionar, se cargará su perfil médico para editar.</span>
+        </div>
+    </div>
+
+    <!-- ── Formulario de perfil médico (visible solo con vet seleccionado) ── -->
+    <div class="tabla-card" style="padding:2rem;" th:if="${veterinario.id != null}">
         <form th:action="@{/admin/veterinarios/nuevo}" method="post">
 
-            <!-- Datos de acceso -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">
-                <i class="fa-solid fa-lock" style="color:var(--primario);"></i>
-                Credenciales de acceso
-            </p>
+            <input type="hidden" name="id" th:value="${veterinario.id}">
 
-            <div class="form-fila">
-                <div class="form-grupo">
-                    <label for="email">Correo electrónico *</label>
-                    <input type="email" id="email" name="email" required maxlength="100"
-                           th:value="${emailPrev}" placeholder="vet@smartvet.com"
-                           autocomplete="off">
-                </div>
-                <div class="form-grupo">
-                    <label for="password">Contraseña temporal *</label>
-                    <input type="password" id="password" name="password" required
-                           minlength="8" placeholder="Mínimo 8 caracteres"
-                           autocomplete="new-password">
-                    <span class="hint">El veterinario deberá cambiarla en su primer acceso.</span>
-                </div>
-            </div>
-
-            <hr class="divisor">
-
-            <!-- Datos personales -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">
-                <i class="fa-solid fa-user" style="color:var(--primario);"></i>
-                Datos personales
-            </p>
-
-            <div class="form-fila">
-                <div class="form-grupo">
-                    <label for="nombres">Nombres *</label>
-                    <input type="text" id="nombres" name="nombres" required maxlength="100"
-                           th:value="${nombresPrev}" placeholder="Ej: Carlos Andrés">
-                </div>
-                <div class="form-grupo">
-                    <label for="apellidos">Apellidos *</label>
-                    <input type="text" id="apellidos" name="apellidos" required maxlength="100"
-                           th:value="${apellidosPrev}" placeholder="Ej: Ramírez Torres">
-                </div>
-            </div>
-
-            <div class="form-fila">
-                <div class="form-grupo">
-                    <label for="dni">DNI <span class="hint" style="font-weight:400;">(opcional)</span></label>
-                    <input type="text" id="dni" name="dni" maxlength="20"
-                           th:value="${dniPrev}" placeholder="Ej: 12345678">
-                </div>
-                <div class="form-grupo">
-                    <label for="telefono">Teléfono <span class="hint" style="font-weight:400;">(opcional)</span></label>
-                    <input type="text" id="telefono" name="telefono" maxlength="20"
-                           th:value="${telefonoPrev}" placeholder="Ej: +51 999 888 777">
-                </div>
-            </div>
-
-            <hr class="divisor">
-
-            <!-- Perfil veterinario -->
-            <p class="seccion-titulo" style="margin-bottom: 1rem;">
+            <p class="seccion-titulo" style="margin-bottom:1rem;">
                 <i class="fa-solid fa-stethoscope" style="color:var(--primario);"></i>
-                Perfil veterinario
+                Perfil veterinario —
+                <span style="font-weight:400; color:var(--texto-suave);"
+                      th:text="${veterinario.nombres + ' ' + veterinario.apellidos}"></span>
             </p>
 
             <div class="form-grupo">
                 <label for="horarioAtencion">Horario de atención <span class="hint" style="font-weight:400;">(opcional)</span></label>
-                <textarea id="horarioAtencion" name="horarioAtencion" rows="2"
+                <textarea id="horarioAtencion" name="horarioAtencion" rows="3"
                           placeholder="Ej: Lunes a Viernes de 08:00 a 17:00"
-                          th:text="${horarioPrev}"></textarea>
+                          th:text="${veterinario.horarioAtencion}"></textarea>
                 <span class="hint">Descripción libre del horario. Se mostrará a los clientes al agendar citas.</span>
             </div>
 
@@ -103,18 +69,34 @@
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
                 <a th:href="@{/admin/dashboard}" class="btn btn-outline"
                    style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
-                <button type="submit" class="btn btn-primario"
-                        style="flex:1; min-width:130px;">
-                    <i class="fa-solid fa-user-doctor"></i> Registrar veterinario
+                <button type="submit" class="btn btn-primario" style="flex:1; min-width:130px;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Perfil Médico
                 </button>
             </div>
 
         </form>
     </div>
 
+    <!-- ── Estado vacío cuando no hay vet seleccionado ─────────────────────── -->
+    <div th:if="${veterinario.id == null}"
+         style="text-align:center; padding:2.5rem 1rem; color:var(--texto-suave);">
+        <div style="font-size:3rem; margin-bottom:0.75rem;">👨‍⚕️</div>
+        <p style="margin:0; font-size:0.95rem;">
+            Selecciona un veterinario del listado para cargar y editar su perfil médico.
+        </p>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+document.getElementById('selectVeterinario').addEventListener('change', function () {
+    if (this.value) {
+        window.location.href = '/admin/veterinarios/editar/' + this.value;
+    }
+});
+</script>
 
 </body>
 </html>

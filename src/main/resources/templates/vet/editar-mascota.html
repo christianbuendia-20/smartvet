@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title th:text="|SmartVet — Editar ${mascota.nombre}|">Editar Mascota</title>
+    <title th:text="|SmartVet — Editar ${mascota.nombre}|">Editar Paciente</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
     <style>
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -26,20 +28,31 @@
 
     <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h2 th:text="'Editar — ' + ${mascota.nombre}">Editar Mascota</h2>
-            <p>Modifica los datos básicos de tu mascota. Los campos marcados con * son obligatorios.</p>
+            <h2 th:text="'Editar Paciente — ' + ${mascota.nombre}">Editar Paciente</h2>
+            <p>Actualiza los datos físicos del paciente. El propietario no puede modificarse.</p>
         </div>
-        <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
-           class="btn btn-outline" style="white-space:nowrap;">
-            ← Volver al Historial
-        </a>
+        <a th:href="@{/vet/historial/{id}(id=${mascota.idMascota})}" class="btn btn-outline">← Volver al Historial</a>
     </div>
 
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
-    <div class="tabla-card" style="padding: 2rem;">
-        <form th:action="@{/cliente/mascotas/{id}/editar(id=${mascota.idMascota})}" method="post"
-              enctype="multipart/form-data">
+    <div class="tabla-card" style="padding:2rem;">
+        <form th:action="@{/vet/mascotas/{id}/editar(id=${mascota.idMascota})}"
+              method="post" enctype="multipart/form-data">
+
+            <!-- Propietario (solo lectura, informativo) -->
+            <div class="form-grupo" style="max-width:360px;">
+                <label>
+                    <i class="fa-solid fa-user-lock" style="color:var(--texto-suave);"></i>
+                    Propietario <span class="hint" style="font-weight:400;">(no modificable)</span>
+                </label>
+                <input type="text"
+                       th:value="${mascota.propietario.nombres + ' ' + mascota.propietario.apellidos}"
+                       readonly disabled
+                       style="background:var(--fondo-suave,#f3f4f6); cursor:not-allowed;">
+            </div>
+
+            <hr class="divisor">
 
             <div class="form-fila">
                 <div class="form-grupo">
@@ -109,34 +122,34 @@
                 </div>
             </div>
 
-            <div class="form-grupo" style="max-width: 280px;">
+            <div class="form-grupo" style="max-width:280px;">
                 <label for="peso">Peso (kg) <span class="hint" style="font-weight:400;">(opcional)</span></label>
                 <input type="number" id="peso" name="peso" step="0.01" min="0" max="999.99"
                        th:value="${mascota.peso}" placeholder="Ej: 12.5">
-                <span class="hint">Ingresa el peso en kilogramos con hasta 2 decimales.</span>
+                <span class="hint">Kilogramos con hasta 2 decimales.</span>
             </div>
 
             <div class="form-grupo" style="max-width:340px;">
                 <label for="archivo">
                     <i class="fa-solid fa-camera" style="color:var(--primario);"></i>
-                    Foto de la mascota <span class="hint" style="font-weight:400;">(opcional)</span>
+                    Foto del paciente <span class="hint" style="font-weight:400;">(opcional)</span>
                 </label>
                 <div th:if="${mascota.rutaFoto != null}" style="margin-bottom:0.6rem;">
                     <img th:src="@{'/uploads/mascotas/' + ${mascota.rutaFoto}}"
                          alt="Foto actual"
-                         style="max-height:150px; border-radius:8px; border:1px solid var(--borde,#e5e7eb);">
+                         style="max-height:130px; border-radius:8px; border:1px solid var(--borde,#e5e7eb);">
                     <span class="hint" style="display:block; margin-top:0.25rem;">Foto actual. Sube una nueva para reemplazarla.</span>
                 </div>
                 <input type="file" id="archivo" name="archivo"
                        accept="image/png, image/jpeg, image/jpg"
                        style="padding:0.4rem;">
-                <span class="hint">Formatos aceptados: JPG, JPEG, PNG. Deja vacío para conservar la foto actual.</span>
+                <span class="hint">JPG, JPEG o PNG. Deja vacío para conservar la foto actual.</span>
             </div>
 
             <hr class="divisor">
 
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                <a th:href="@{/cliente/mascotas/{id}/historial(id=${mascota.idMascota})}"
+                <a th:href="@{/vet/historial/{id}(id=${mascota.idMascota})}"
                    class="btn btn-outline"
                    style="flex:1; min-width:130px; text-align:center;">Cancelar</a>
                 <button type="submit" class="btn btn-primario"

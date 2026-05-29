@@ -70,6 +70,52 @@
         </div>
     </div>
 
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('input[type="date"]').forEach(function (input) {
+            /* Previene el picker nativo antes de que Flatpickr tome el control */
+            input.type = 'text';
+
+            /* Campos de nacimiento no deben aceptar fechas futuras */
+            var idNombre = (input.id || '').toLowerCase();
+            var nameNombre = (input.name || '').toLowerCase();
+            var esNacimiento = idNombre.includes('nacimiento') || nameNombre.includes('nacimiento');
+            var limiteMax = esNacimiento ? 'today' : '2099-12-31';
+
+            /* Capturar los estilos inline antes de que Flatpickr oculte el input */
+            var estilosOriginales = input.getAttribute('style') || '';
+
+            var fp = flatpickr(input, {
+                locale: 'es',
+                dateFormat: 'Y-m-d',  /* formato real → backend Spring Boot */
+                altInput: true,        /* input visual oculta el original    */
+                altFormat: 'd/m/Y',   /* formato latino para el usuario      */
+                altInputClass: input.className, /* hereda las clases del input original */
+                allowInput: true,
+                maxDate: limiteMax,
+                disableMobile: true
+            });
+
+            /* Transferir los estilos inline al alt input para respetar el flex wrapper */
+            if (fp.altInput && estilosOriginales) {
+                fp.altInput.setAttribute('style', estilosOriginales);
+            }
+
+            /* Conectar cualquier span-botón naranja del mismo contenedor */
+            var wrapper = input.parentElement;
+            if (wrapper) {
+                wrapper.querySelectorAll('span').forEach(function (span) {
+                    span.style.cursor = 'pointer';
+                    span.addEventListener('click', function () { fp.open(); });
+                });
+            }
+        });
+    });
+    </script>
+
 </footer>
 
 </body>

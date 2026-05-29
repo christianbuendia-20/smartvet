@@ -23,6 +23,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
     Page<Producto> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre, Pageable pageable);
 
+    Page<Producto> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
+
     List<Producto> findByRequiereRecetaTrue();
 
     @Query("SELECT p FROM Producto p WHERE p.stockActual <= p.stockMinimo AND p.activo = true")

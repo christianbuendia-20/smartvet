@@ -26,5 +26,11 @@ public interface ProductoService {
 
     Producto actualizarStock(Integer idProducto, int cantidad);
 
+    Producto actualizarProducto(Integer id, ProductoRegistroDTO dto);
+
     void desactivarProducto(Integer id);
+
+    void activarProducto(Integer id);
+
+    Page<Producto> listarTodosPaginado(String busqueda, Pageable pageable);
 }

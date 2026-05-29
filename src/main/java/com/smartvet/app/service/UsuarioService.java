@@ -5,6 +5,7 @@ import com.smartvet.app.dto.PerfilUpdateDTO;
 import com.smartvet.app.dto.UsuarioRegistroDTO;
 import com.smartvet.app.model.DireccionUsuario;
 import com.smartvet.app.model.Usuario;
+import com.smartvet.app.model.Veterinario;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,4 +49,11 @@ public interface UsuarioService {
     Usuario cambiarRol(Integer idUsuario, String nuevoRol);
 
     void restablecerContrasena(Integer idUsuario, String nuevaContrasena);
+
+    Veterinario buscarVeterinarioPorIdUsuario(Integer idUsuario);
+
+    void actualizarVeterinario(Integer idUsuario, PerfilUpdateDTO perfilDto,
+                                String horarioAtencion, String nuevaPassword);
+
+    void actualizarHorarioVeterinario(Integer idUsuario, String horarioAtencion);
 }

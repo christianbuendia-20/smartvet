@@ -15,6 +15,13 @@ import java.util.List;
 @Repository
 public interface PagoCitaRepository extends JpaRepository<PagoCita, Integer> {
 
+    @Query("SELECT p FROM PagoCita p " +
+           "JOIN FETCH p.cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "ORDER BY p.fechaPago DESC")
+    List<PagoCita> findAllWithDetalle();
+
     List<PagoCita> findByCita_IdCita(Integer idCita);
 
     List<PagoCita> findByEstado(EstadoPago estado);

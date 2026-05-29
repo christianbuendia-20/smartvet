@@ -5,6 +5,21 @@
 <head>
     <title th:text="|SmartVet — Editar ${mascota.nombre}|">SmartVet — Editar Mascota</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+        .btn-calendario-destacado {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-calendario-destacado:hover { background-color: #e68a00; border-color: #e68a00; }
+        .btn-calendario-destacado i     { font-size: 1.1rem; }
+    </style>
 </head>
 <body>
 
@@ -23,7 +38,7 @@
     <div th:if="${errorForm}" class="alerta alerta-error" th:text="${errorForm}"></div>
 
     <div style="max-width:720px; margin:0 auto;">
-        <form th:action="@{/admin/mascotas/editar/{id}(id=${mascota.idMascota})}" method="post" novalidate>
+        <form th:action="@{/admin/mascotas/editar/{id}(id=${mascota.idMascota})}" method="post" enctype="multipart/form-data" novalidate>
 
             <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
                 <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
@@ -78,8 +93,48 @@
 
                 <div class="form-grupo" style="margin-bottom:0;">
                     <label for="fechaNacimiento">Fecha de nacimiento</label>
-                    <input type="date" id="fechaNacimiento" name="fechaNacimiento"
-                           th:value="${mascota.fechaNacimiento}">
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <span id="btn-fecha-nacimiento"
+                              class="btn-calendario-destacado"
+                              style="position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center;
+                                     padding:0 0.75rem; border-radius:var(--radio,6px) 0 0 var(--radio,6px); z-index:1;">
+                            <i class="bi bi-calendar-date"></i>
+                        </span>
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+                               style="padding-left:3rem; width:100%;"
+                               th:value="${mascota.fechaNacimiento}">
+                    </div>
+                    <span id="error-fecha-nac" style="color:var(--rojo,#dc2626); font-size:0.82rem; display:none;"></span>
+                    <span class="hint">La fecha de nacimiento no puede ser una fecha futura.</span>
+                </div>
+            </div>
+
+            <!-- ── Fotografía ── -->
+            <div class="tabla-card" style="margin-bottom:1.75rem; padding:1.75rem 2rem;">
+                <p class="seccion-titulo" style="margin-top:0; margin-bottom:1.25rem;">
+                    <i class="fa-solid fa-camera" style="color:var(--primario);"></i>
+                    Fotografía
+                </p>
+
+                <div th:if="${mascota.rutaFoto != null}" style="margin-bottom:1.25rem;">
+                    <img th:src="@{/uploads/mascotas/} + ${mascota.rutaFoto}"
+                         alt="Foto actual"
+                         style="width:120px; height:120px; object-fit:cover; border-radius:50%;
+                                border:3px solid var(--borde); display:block;">
+                    <span style="display:block; font-size:0.8rem; color:var(--texto-suave); margin-top:0.5rem;">
+                        Foto actual. Sube una nueva para reemplazarla.
+                    </span>
+                </div>
+
+                <div class="form-grupo" style="margin-bottom:0;">
+                    <label for="foto">
+                        <span th:text="${mascota.rutaFoto != null ? 'Reemplazar fotografía' : 'Seleccionar fotografía'}">
+                            Seleccionar fotografía
+                        </span>
+                        <span style="font-size:0.8rem; font-weight:400; color:var(--texto-suave); margin-left:0.25rem;">(Opcional)</span>
+                    </label>
+                    <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp">
+                    <span class="hint">Formatos admitidos: JPG, PNG, WEBP. Máx. 5 MB.</span>
                 </div>
             </div>
 
@@ -132,6 +187,35 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const hoy         = new Date();
+    const anio        = hoy.getFullYear();
+    const mes         = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia         = String(hoy.getDate()).padStart(2, '0');
+    const fechaActual = `${anio}-${mes}-${dia}`;
+
+    document.querySelectorAll('input[type="date"]').forEach(function (input) {
+        input.setAttribute('max', fechaActual);
+
+        input.addEventListener('change', function () {
+            if (this.value > fechaActual) {
+                alert('La fecha de nacimiento no puede ser una fecha futura. Por favor, selecciona una fecha válida.');
+                this.value = '';
+            }
+        });
+    });
+
+    const btnCal     = document.getElementById('btn-fecha-nacimiento');
+    const inputFecha = document.getElementById('fechaNacimiento');
+    if (btnCal && inputFecha) {
+        btnCal.addEventListener('click', function () {
+            try { inputFecha.showPicker(); } catch (e) { inputFecha.focus(); }
+        });
+    }
+});
+</script>
 
 </body>
 </html>

@@ -238,6 +238,41 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.info("Contraseña restablecida para usuario_id={}", idUsuario);
     }
 
+    @Override
+    @Transactional
+    public void actualizarHorarioVeterinario(Integer idUsuario, String horarioAtencion) {
+        Veterinario vet = veterinarioRepository.findByUsuario_IdUsuario(idUsuario)
+                .orElseGet(() -> {
+                    Veterinario nuevo = new Veterinario();
+                    nuevo.setUsuario(buscarPorId(idUsuario));
+                    return nuevo;
+                });
+        vet.setHorarioAtencion(horarioAtencion);
+        veterinarioRepository.save(vet);
+        log.info("Horario actualizado para veterinario usuario_id={}", idUsuario);
+    }
+
+    @Override
+    public Veterinario buscarVeterinarioPorIdUsuario(Integer idUsuario) {
+        return veterinarioRepository.findByUsuario_IdUsuario(idUsuario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Perfil de veterinario no encontrado para usuario_id=" + idUsuario));
+    }
+
+    @Override
+    @Transactional
+    public void actualizarVeterinario(Integer idUsuario, PerfilUpdateDTO perfilDto,
+                                       String horarioAtencion, String nuevaPassword) {
+        actualizarPerfil(idUsuario, perfilDto);
+        if (nuevaPassword != null && !nuevaPassword.isBlank()) {
+            restablecerContrasena(idUsuario, nuevaPassword);
+        }
+        Veterinario vet = buscarVeterinarioPorIdUsuario(idUsuario);
+        vet.setHorarioAtencion(horarioAtencion);
+        veterinarioRepository.save(vet);
+        log.info("Veterinario actualizado: usuario_id={}", idUsuario);
+    }
+
     // ── helpers de mapeo y validación ────────────────────────────────────────
 
     private Usuario construirUsuario(UsuarioRegistroDTO dto, Rol rol) {

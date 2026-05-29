@@ -32,6 +32,15 @@
   }
   .sv-pdrop-item:hover { background: rgba(255,152,0,0.1); color: var(--primario); text-decoration: none; }
   .sv-pdrop-item i { color: var(--primario); font-size: 0.82rem; width: 1rem; text-align: center; }
+
+  /* Span sec:authorize es inline por defecto → convertirlo a flex
+     para que los nav-link no se envuelvan en pantallas ≥ 1024px */
+  .navbar-nav > span {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
 </style>
 <nav class="navbar">
     <div class="navbar-inner">
@@ -88,17 +97,20 @@
                 <a class="nav-link" th:href="@{/admin/dashboard}">
                     <i class="fa-solid fa-gauge-high"></i> Inicio
                 </a>
-                <a class="nav-link" th:href="@{/admin/productos}">
-                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
-                </a>
-                <a class="nav-link" th:href="@{/admin/pagos/pendientes}">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> Pagos
+                <a class="nav-link" th:href="@{/admin/usuarios}">
+                    <i class="fa-solid fa-users"></i> Usuarios
                 </a>
                 <a class="nav-link" th:href="@{/admin/mascotas}">
                     <i class="fa-solid fa-paw"></i> Mascotas
                 </a>
-                <a class="nav-link" th:href="@{/admin/usuarios}">
-                    <i class="fa-solid fa-users"></i> Usuarios
+                <a class="nav-link" th:href="@{/admin/citas}">
+                    <i class="fa-solid fa-calendar-days"></i> Citas
+                </a>
+                <a class="nav-link" th:href="@{/admin/productos}">
+                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
+                </a>
+                <a class="nav-link" th:href="@{/admin/pagos}">
+                    <i class="fa-solid fa-wallet"></i> Pagos
                 </a>
             </span>
 
@@ -109,6 +121,9 @@
                 </a>
                 <a class="nav-link" th:href="@{/vet/agenda}">
                     <i class="fa-solid fa-calendar-days"></i> Mi Agenda
+                </a>
+                <a class="nav-link" th:href="@{/vet/mascotas}">
+                    <i class="fa-solid fa-paw"></i> Mascotas
                 </a>
             </span>
 
@@ -128,7 +143,7 @@
         </div>
 
         <!-- ── Usuario activo ─────────────────────────────────────────── -->
-        <div class="navbar-usuario">
+        <div class="navbar-usuario" style="flex-shrink:0;">
 
             <div class="sv-pdrop" id="svPdrop">
                 <button type="button" class="sv-pdrop-btn" aria-haspopup="true">
@@ -147,8 +162,8 @@
                 </div>
             </div>
 
-            <form th:action="@{/auth/logout}" method="post" style="margin:0;">
-                <button type="submit" class="btn-logout">
+            <form th:action="@{/auth/logout}" method="post" style="margin:0; flex-shrink:0;">
+                <button type="submit" class="btn-logout" style="white-space:nowrap; flex-shrink:0;">
                     <i class="fa-solid fa-right-from-bracket"></i> Salir
                 </button>
             </form>

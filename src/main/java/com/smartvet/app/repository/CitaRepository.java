@@ -11,9 +11,18 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CitaRepository extends JpaRepository<Cita, Integer> {
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
+           "WHERE c.idCita = :idCita")
+    Optional<Cita> findByIdWithDetalle(@Param("idCita") Integer idCita);
 
     List<Cita> findByEstado(EstadoCita estado);
 
@@ -75,6 +84,17 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin,
             @Param("estadosActivos") Collection<EstadoCita> estadosActivos);
+
+    @Query("SELECT c FROM Cita c WHERE c.veterinario.idVeterinario = :idVet " +
+           "AND c.fechaHora BETWEEN :inicio AND :fin " +
+           "AND c.estado IN :estadosActivos " +
+           "AND c.idCita != :excludeId")
+    List<Cita> findCitasActivasByVeterinarioAndRangoFechaExcluyendo(
+            @Param("idVet") Integer idVet,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin,
+            @Param("estadosActivos") Collection<EstadoCita> estadosActivos,
+            @Param("excludeId") Integer excludeId);
 
     @Query("SELECT c FROM Cita c " +
            "JOIN FETCH c.mascota m " +
@@ -158,6 +178,12 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
                                    @Param("keyword") String keyword,
                                    @Param("inicio") LocalDateTime inicio,
                                    @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT COUNT(c) FROM Cita c " +
+           "WHERE c.mascota.propietario.idUsuario = :idPropietario " +
+           "AND c.estado IN :estados")
+    long countCitasActivasByPropietario(@Param("idPropietario") Integer idPropietario,
+                                         @Param("estados") Collection<EstadoCita> estados);
 
     @Query("SELECT c FROM Cita c " +
            "JOIN FETCH c.mascota m " +

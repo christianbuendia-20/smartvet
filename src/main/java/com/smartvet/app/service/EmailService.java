@@ -7,5 +7,10 @@ public interface EmailService {
     void enviarConsultaPdf(String destinatario, String nombreCompleto,
                             byte[] pdfBytes, Integer idConsulta);
 
+    void enviarComprobanteCita(String destinatario, String nombreCompleto,
+                                byte[] pdfBytes, Integer idCita);
+
+    void enviarCancelacionCita(Integer idCita);
+
     void enviarRecuperacionContrasena(String destinatario, String nombreCompleto, String codigo);
 }

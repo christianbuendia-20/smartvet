@@ -12,12 +12,12 @@
 
 <main class="main-content">
 
-    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
-        <div>
+    <div class="page-header" style="display:flex; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div style="flex:1; min-width:0;">
             <h2>Gestión de Usuarios</h2>
             <p>Consulta y cambia el rol de cada usuario registrado en el sistema.</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap;">
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:nowrap; margin-left:auto;">
             <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primario"
                style="width:auto; font-size:0.875rem; padding:0.55rem 1.3rem; white-space:nowrap;">
                 <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
@@ -59,7 +59,6 @@
                     <th>DNI</th>
                     <th>Estado</th>
                     <th>Rol actual</th>
-                    <th>Cambiar rol</th>
                     <th class="tabla-col-accion">Acciones</th>
                 </tr>
             </thead>
@@ -84,24 +83,6 @@
                                                usuario.rol.nombre == 'veterinario' ? ' badge-en-curso'   :
                                                                                      ' badge-programada'}">
                         </span>
-                    </td>
-                    <td>
-                        <form th:action="@{/admin/usuarios/{id}/rol(id=${usuario.idUsuario})}"
-                              method="post"
-                              style="display:flex; gap:0.5rem; align-items:center;">
-                            <select name="nuevoRol"
-                                    class="campo-input"
-                                    style="padding:0.25rem 0.5rem; font-size:0.82rem; width:auto;">
-                                <option value="cliente"     th:selected="${usuario.rol.nombre == 'cliente'}">cliente</option>
-                                <option value="veterinario" th:selected="${usuario.rol.nombre == 'veterinario'}">veterinario</option>
-                                <option value="admin"       th:selected="${usuario.rol.nombre == 'admin'}">admin</option>
-                            </select>
-                            <button type="submit"
-                                    class="btn btn-verde"
-                                    style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer;">
-                                Guardar
-                            </button>
-                        </form>
                     </td>
                     <td class="tabla-col-accion">
                         <div style="display:flex; flex-direction:column; gap:0.3rem; align-items:flex-start;">

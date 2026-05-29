@@ -37,9 +37,20 @@
         <input type="text" name="keyword" class="form-input busqueda-input"
                th:value="${keyword}"
                placeholder="Buscar por mascota, propietario o motivo…">
-        <input type="date" name="fecha" class="form-input"
-               style="width:auto; min-width:9rem;"
-               th:value="${fecha}">
+        <div style="display:flex; border:2px solid var(--borde, #e5e7eb); border-radius:10px;
+                    overflow:hidden; min-width:11rem; background:#fff; flex-shrink:0;">
+            <span id="btn-abrir-cal-citas"
+                  style="display:flex; align-items:center; padding:0 0.75rem;
+                         background:var(--primario); color:#fff; flex-shrink:0; cursor:pointer;">
+                <i class="bi bi-calendar-event"></i>
+            </span>
+            <input type="date" id="inputFechaCitas" name="fecha" class="form-input"
+                   max="2099-12-31"
+                   th:value="${fecha}"
+                   placeholder="Ej: 24/05/2026"
+                   style="border:none !important; border-radius:0 !important;
+                          flex:1; min-width:0; padding:0.45rem 0.6rem;">
+        </div>
         <button type="submit" class="btn btn-primario">
             <i class="fa-solid fa-magnifying-glass"></i> Filtrar
         </button>
@@ -113,7 +124,7 @@
                                           c.estado.name() != 'NO_ASISTIO'}"
                                   th:action="@{/admin/citas/cancelar/{id}(id=${c.idCita})}"
                                   method="post"
-                                  onsubmit="return confirm('¿Cancelar esta cita?')">
+                                  class="form-cancelar-cita">
                                 <button type="submit"
                                         class="btn btn-rojo"
                                         style="padding:0.25rem 0.75rem; font-size:0.78rem; border:none; cursor:pointer; width:auto;">
@@ -137,6 +148,40 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+/* ── Date picker: abrir el calendario al hacer clic en el ícono naranja ── */
+(function () {
+    var btn   = document.getElementById('btn-abrir-cal-citas');
+    var input = document.getElementById('inputFechaCitas');
+    if (btn && input) {
+        btn.addEventListener('click', function () {
+            try { input.showPicker(); } catch (e) { input.focus(); }
+        });
+    }
+}());
+</script>
+
+<script>
+document.querySelectorAll('.form-cancelar-cita').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var _form = this;
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción no se puede deshacer y se enviará una notificación a tu correo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar cita',
+            cancelButtonText: 'Mantener cita'
+        }).then(function (result) {
+            if (result.isConfirmed) { _form.submit(); }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

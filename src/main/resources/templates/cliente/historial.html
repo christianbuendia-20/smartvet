@@ -5,6 +5,13 @@
 <head>
     <title th:text="|Santa Victoria — Historial de ${mascota.nombre}|">Historial Clínico</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .hc-grid { display:grid; grid-template-columns:1fr; gap:1rem; margin-bottom:2rem; }
+        @media (min-width:992px) { .hc-grid { grid-template-columns:repeat(3,1fr); } }
+        .hc-campo { display:flex; flex-direction:column; }
+        .hc-campo .hc-campo-valor,
+        .hc-campo .hc-campo-vacio { flex:1; }
+    </style>
 </head>
 <body>
 
@@ -32,37 +39,64 @@
         <i class="fa-solid fa-paw" style="color:var(--primario);"></i>
         Datos del Paciente
     </p>
-    <dl class="ficha-grid">
-        <div>
-            <dt>Especie</dt>
-            <dd th:text="${mascota.especie}">-</dd>
+    <div style="display:flex; gap:1.75rem; align-items:flex-start; flex-wrap:wrap; margin-bottom:0.5rem;">
+
+        <!-- Columna izquierda: foto -->
+        <div style="flex-shrink:0; text-align:center; width:130px;">
+            <img th:if="${mascota.rutaFoto != null and !mascota.rutaFoto.isEmpty()}"
+                 th:src="@{'/uploads/mascotas/' + ${mascota.rutaFoto}}"
+                 th:alt="${mascota.nombre}"
+                 style="width:120px; height:120px; object-fit:cover;
+                        border-radius:50%; border:3px solid var(--primario,#f97316);
+                        box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+            <div th:unless="${mascota.rutaFoto != null and !mascota.rutaFoto.isEmpty()}"
+                 style="width:120px; height:120px; border-radius:50%;
+                        background:var(--fondo-suave,#f3f4f6);
+                        border:3px solid var(--borde,#e5e7eb);
+                        display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-paw" style="font-size:3rem; color:var(--texto-suave,#9ca3af);"></i>
+            </div>
+            <span style="display:block; margin-top:0.5rem; font-size:0.78rem;
+                         color:var(--texto-suave); font-weight:600;"
+                  th:text="${mascota.nombre}">-</span>
         </div>
-        <div>
-            <dt>Raza</dt>
-            <dd th:text="${mascota.raza ?: '—'}">—</dd>
+
+        <!-- Columna derecha: datos -->
+        <div style="flex:1; min-width:0;">
+            <dl class="ficha-grid">
+                <div>
+                    <dt>Especie</dt>
+                    <dd th:text="${mascota.especie}">-</dd>
+                </div>
+                <div>
+                    <dt>Raza</dt>
+                    <dd th:text="${mascota.raza ?: '—'}">—</dd>
+                </div>
+                <div>
+                    <dt>Sexo</dt>
+                    <dd th:text="${mascota.sexo}">-</dd>
+                </div>
+                <div>
+                    <dt>Color</dt>
+                    <dd th:text="${mascota.color ?: '—'}">—</dd>
+                </div>
+                <div th:if="${mascota.fechaNacimiento != null}">
+                    <dt>Fecha de nacimiento</dt>
+                    <dd th:text="${#temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy')}">-</dd>
+                </div>
+                <div th:if="${mascota.peso != null}">
+                    <dt>Último peso registrado</dt>
+                    <dd th:text="${mascota.peso} + ' kg'">-</dd>
+                </div>
+                <div>
+                    <dt>Historia abierta el</dt>
+                    <dd th:text="${historia.fechaApertura != null ?
+                                   #temporals.format(historia.fechaApertura, 'dd/MM/yyyy') : '—'}">—</dd>
+                </div>
+            </dl>
         </div>
-        <div>
-            <dt>Sexo</dt>
-            <dd th:text="${mascota.sexo}">-</dd>
-        </div>
-        <div>
-            <dt>Color</dt>
-            <dd th:text="${mascota.color ?: '—'}">—</dd>
-        </div>
-        <div th:if="${mascota.fechaNacimiento != null}">
-            <dt>Fecha de nacimiento</dt>
-            <dd th:text="${#temporals.format(mascota.fechaNacimiento, 'dd/MM/yyyy')}">-</dd>
-        </div>
-        <div th:if="${mascota.peso != null}">
-            <dt>Último peso registrado</dt>
-            <dd th:text="${mascota.peso} + ' kg'">-</dd>
-        </div>
-        <div>
-            <dt>Historia abierta el</dt>
-            <dd th:text="${historia.fechaApertura != null ?
-                           #temporals.format(historia.fechaApertura, 'dd/MM/yyyy') : '—'}">—</dd>
-        </div>
-    </dl>
+
+    </div>
 
     <div style="display:flex; justify-content:flex-end; margin-top:0.75rem; margin-bottom:1.75rem;">
         <a th:href="@{/cliente/mascotas/{id}/editar(id=${mascota.idMascota})}"
@@ -77,7 +111,7 @@
         <i class="fa-solid fa-folder-open" style="color:var(--primario);"></i>
         Historia Clínica
     </p>
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-bottom:2rem;">
+    <div class="hc-grid">
 
         <div class="hc-campo" th:classappend="${historia.alergias != null and !historia.alergias.isBlank() ? ' alerta-campo' : ''}">
             <div class="hc-campo-titulo">⚠ Alergias</div>
@@ -95,7 +129,7 @@
                  class="hc-campo-vacio">Sin enfermedades crónicas registradas</div>
         </div>
 
-        <div class="hc-campo" style="grid-column: 1 / -1;">
+        <div class="hc-campo">
             <div class="hc-campo-titulo">📝 Notas generales</div>
             <div th:if="${historia.notasGenerales != null and !historia.notasGenerales.isBlank()}"
                  class="hc-campo-valor" th:text="${historia.notasGenerales}">-</div>
