@@ -65,4 +65,6 @@ public interface CitaService {
     long contarCitasActivasPorPropietario(Integer idPropietario);
 
     long contarCitasActivasPorMascota(Integer idMascota);
+
+    List<Cita> listarCitasPendientesPagoPorPropietario(Integer idPropietario);
 }

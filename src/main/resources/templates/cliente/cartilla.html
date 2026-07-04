@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Cartilla de Vacunación</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <style>
+        .cartilla-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .cartilla-grid-bottom {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 768px) {
+            .cartilla-grid,
+            .cartilla-grid-bottom { grid-template-columns: 1fr; }
+        }
+
+        .info-card {
+            background: var(--surface);
+            border-radius: 14px;
+            box-shadow: var(--sombra);
+            border: 1px solid var(--borde);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .info-card:hover { box-shadow: var(--sombra-hover); }
+
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #fff;
+            letter-spacing: 0.01em;
+        }
+        .info-card-header i { font-size: 1.1rem; flex-shrink: 0; }
+
+        .info-card-body { padding: 1.15rem 1.25rem; }
+        .info-card-body ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .info-card-body li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.55rem;
+            font-size: 0.875rem;
+            line-height: 1.55;
+        }
+        .li-bullet { flex-shrink: 0; margin-top: 0.22rem; }
+
+        .edad-badge {
+            display: inline-block;
+            border-radius: 20px;
+            padding: 0.08rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 0.35rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .edad-badge-azul  { background: #E3F2FD; color: #1565C0; }
+        .edad-badge-cian  { background: #E0F7FA; color: #00695C; }
+
+        .refuerzo-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 8px;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            border: 1.5px solid currentColor;
+        }
+
+        .hdr-azul    { background: linear-gradient(90deg, #1565C0 0%, #1976D2 100%); }
+        .hdr-cian    { background: linear-gradient(90deg, #00695C 0%, #00897B 100%); }
+        .hdr-verde   { background: linear-gradient(90deg, #2E7D32 0%, #43A047 100%); }
+        .hdr-naranja { background: linear-gradient(90deg, #E65100 0%, #F57C00 100%); }
+
+        /* ── Historial Médico Oficial ─────────────────────────────────────── */
+
+        .hc-divider {
+            border: none;
+            border-top: 2px dashed var(--borde);
+            margin: 2.5rem 0;
+        }
+        .hc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 768px) { .hc-grid { grid-template-columns: 1fr; } }
+
+        /* Card de tabla */
+        .hc-card {
+            background: var(--surface);
+            border-radius: 14px;
+            box-shadow: var(--sombra);
+            border: 1px solid var(--borde);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .hc-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.2rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .hc-card-body { padding: 0; display: flex; flex-direction: column; flex: 1; }
+
+        /* Tabla (replica table-bordered + table-hover de Bootstrap) */
+        .hc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+        .hc-table { width: 100%; border-collapse: collapse; min-width: 320px; }
+        .hc-table thead th {
+            background: #FAFAFA;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--texto-suave);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            text-align: left;
+            border-bottom: 2px solid var(--borde);
+            border-right: 1px solid var(--borde);
+            white-space: nowrap;
+        }
+        .hc-table thead th:last-child { border-right: none; }
+        .hc-table tbody td {
+            padding: 0.72rem 0.9rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #F0F0F0;
+            border-right: 1px solid #F5F5F5;
+            vertical-align: middle;
+        }
+        .hc-table tbody td:last-child { border-right: none; }
+        .hc-table tbody tr:last-child td { border-bottom: none; }
+        .hc-table tbody tr:hover td { background: var(--primario-xclaro); }
+
+        /* Nota al pie de tabla */
+        .hc-nota {
+            margin: 0;
+            padding: 0.65rem 1rem;
+            background: #FFFBF2;
+            border-top: 1px solid var(--borde);
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: #BF360C;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+            line-height: 1.5;
+            letter-spacing: 0.01em;
+        }
+
+        /* Estado vacío */
+        .hc-empty { text-align: center; color: var(--texto-suave); font-size: 0.85rem; padding: 2rem 1rem; }
+        .hc-empty i { display: block; font-size: 1.6rem; margin-bottom: 0.45rem; opacity: 0.5; }
+
+        /* Botón "Añadir" en cabecera */
+        .hc-btn-add {
+            background: rgba(255,255,255,0.18);
+            border: 1.5px solid rgba(255,255,255,0.55);
+            border-radius: 7px;
+            color: #fff;
+            font-size: 0.77rem;
+            font-weight: 700;
+            padding: 0.28rem 0.65rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        .hc-btn-add:hover { background: rgba(255,255,255,0.32); }
+
+        /* Botones icono (Editar / Eliminar) */
+        .hc-btn-icon {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            padding: 0.28rem 0.38rem;
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: background 0.12s, color 0.12s;
+            line-height: 1;
+        }
+        .hc-btn-edit { color: #1565C0; }
+        .hc-btn-edit:hover { background: #E3F2FD; }
+        .hc-btn-del  { color: var(--rojo); }
+        .hc-btn-del:hover  { background: var(--rojo-claro); }
+
+        /* ── Modal ────────────────────────────────────────────────────────── */
+        .hc-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.48);
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .hc-modal {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.28);
+            width: 100%;
+            max-width: 430px;
+            overflow: hidden;
+            animation: hc-in 0.18s ease;
+        }
+        @keyframes hc-in {
+            from { opacity: 0; transform: translateY(-14px) scale(0.98); }
+            to   { opacity: 1; transform: none; }
+        }
+        .hc-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+        .hc-modal-close {
+            background: rgba(255,255,255,0.18);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.95rem;
+            width: 1.7rem;
+            height: 1.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.12s;
+        }
+        .hc-modal-close:hover { background: rgba(255,255,255,0.32); }
+        .hc-modal-body { padding: 1.4rem 1.25rem; }
+        .hc-form-grupo { margin-bottom: 1rem; }
+        .hc-form-grupo label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--texto);
+        }
+        /* Selector de mascota */
+        .hc-mascota-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .hc-mascota-selector label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--texto);
+        }
+    </style>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <!-- ── Encabezado ──────────────────────────────────────────────────────── -->
+    <div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Información Médica y Programas de Vacunación</h2>
+            <p>Guía de salud preventiva para las mascotas de
+               <strong sec:authentication="principal.nombreCompleto">Cliente</strong>.</p>
+        </div>
+        <a th:href="@{/cliente/dashboard}" class="btn btn-outline">← Mi Panel</a>
+    </div>
+
+    <!-- ── Aviso ───────────────────────────────────────────────────────────── -->
+    <div class="alerta alerta-aviso" style="display:flex; align-items:center; gap:0.65rem; margin-bottom:1.75rem;">
+        <i class="fa-solid fa-circle-info" style="flex-shrink:0; font-size:1rem;"></i>
+        Esta cartilla es de carácter informativo. Consulte siempre a su médico veterinario antes de aplicar cualquier tratamiento.
+    </div>
+
+    <!-- ── Fila 1: Vacunación Canina + Felina ─────────────────────────────── -->
+    <div class="cartilla-grid">
+
+        <!-- SECCIÓN 1 — Vacunación Canina -->
+        <div class="info-card">
+            <div class="info-card-header hdr-azul">
+                <i class="fa-solid fa-shield-dog"></i>
+                Programa de Vacunación Canina
+            </div>
+            <div class="info-card-body">
+                <ul>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#1565C0; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-azul">1 – 1½ meses</span>
+                            Dp Puppy (Distemper y Parvovirus)
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#1565C0; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-azul">1½ – 2 meses</span>
+                            DHPPI+CV (Distemper, Hepatitis, Parvovirus, Parainfluenza y Coronavirus)
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#1565C0; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-azul">2 – 3 meses</span>
+                            DHPPI+L (Distemper, Hepatitis, Parvovirus, Parainfluenza y Leptospirosis)
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#1565C0; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-azul">3 – 4 meses</span>
+                            DHPPI+LR (Distemper, Hepatitis, Parvovirus, Parainfluenza, Leptospirosis y Rabia)
+                        </span>
+                    </li>
+                </ul>
+                <div class="refuerzo-tag" style="color:#1565C0;">
+                    <i class="fa-solid fa-rotate"></i> Refuerzo anual: Vacuna DHPPI+LR
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2 — Vacunación Felina -->
+        <div class="info-card">
+            <div class="info-card-header hdr-cian">
+                <i class="fa-solid fa-shield-cat"></i>
+                Programa de Vacunación Felina
+            </div>
+            <div class="info-card-body">
+                <ul>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#00695C; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-cian">2 meses</span>
+                            Triple Felina (Panleucopenica, Calicivirus, Rinotraqueitis)
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#00695C; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-cian">2 – 3 meses</span>
+                            Triple Felina — Refuerzo
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-chevron-right li-bullet" style="color:#00695C; font-size:0.75rem;"></i>
+                        <span>
+                            <span class="edad-badge edad-badge-cian">3 – 4 meses</span>
+                            Rabia
+                        </span>
+                    </li>
+                </ul>
+                <div class="refuerzo-tag" style="color:#00695C;">
+                    <i class="fa-solid fa-rotate"></i> Refuerzo anual: Triple Felina + Rabia
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.cartilla-grid -->
+
+    <!-- ── Fila 2: Desparasitaciones + Recomendaciones ───────────────────── -->
+    <div class="cartilla-grid-bottom">
+
+        <!-- SECCIÓN 3 — Desparasitaciones -->
+        <div class="info-card">
+            <div class="info-card-header hdr-verde">
+                <i class="fa-solid fa-shield-virus"></i>
+                Desparasitaciones
+            </div>
+            <div class="info-card-body">
+                <ul>
+                    <li>
+                        <i class="bi bi-circle-fill li-bullet"
+                           style="color:var(--verde); font-size:0.45rem; margin-top:0.6rem;"></i>
+                        <span>
+                            <strong>Endoparásitos:</strong> A partir de las 3 semanas de vida,
+                            se repite una vez por semana durante 3 semanas consecutivas.
+                            Luego cada 2 meses a lo largo de toda su vida.
+                        </span>
+                    </li>
+                    <li>
+                        <i class="bi bi-circle-fill li-bullet"
+                           style="color:var(--verde); font-size:0.45rem; margin-top:0.6rem;"></i>
+                        <span>
+                            <strong>Ectoparásitos:</strong> Control de garrapatas, pulgas y ácaros
+                            desde el 1.er mes de vida con spray. Luego una vez al mes con
+                            pipetas, pastillas y collares antipulgas.
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4 — Recomendaciones -->
+        <div class="info-card">
+            <div class="info-card-header hdr-naranja">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Recomendaciones Generales
+            </div>
+            <div class="info-card-body">
+                <ul>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>Las vacunas permiten a su mascota resistir el ataque de enfermedades graves.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>Todo propietario responsable debe vacunar a su perro contra las principales enfermedades infecciosas y parasitarias.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>El refuerzo de las primeras vacunas del cachorro es indispensable para asegurar una inmunidad adecuada.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>El baño debe realizarse en promedio una vez al mes. No se recomienda bañar al cachorro antes de completar su programa de vacunación.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>No trate de curar por su cuenta al animal con recetas caseras; la automedicación suele provocar más daño que beneficio.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>Lleve a su mascota al veterinario ante cualquier cambio en su conducta, y una vez al año para sus refuerzos de vacunas (Hexadog o séxtuple).</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>Recuerde que su mascota es como un miembro más de la familia; su salud depende de usted.</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-check2-circle li-bullet" style="color:var(--primario-hover); font-size:0.9rem;"></i>
+                        <span>Los médicos veterinarios no solo cuidan la salud de su engreído: también protegen la salud de toda la familia.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div><!-- /.cartilla-grid-bottom -->
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- ── HISTORIAL MÉDICO OFICIAL ─────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <hr class="hc-divider">
+
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+        <div>
+            <p class="seccion-titulo" style="margin-bottom:0.25rem;">
+                <i class="fa-solid fa-file-medical"></i> Historial Médico Oficial
+            </p>
+            <p style="font-size:0.82rem; color:var(--texto-suave); margin:0;">
+                Registros clínicos actualizados por el equipo veterinario.
+            </p>
+        </div>
+        <!-- Selector de mascota (solo cliente) -->
+        <span sec:authorize="hasAuthority('cliente')">
+            <form th:action="@{/cliente/vacunas}" method="get" class="hc-mascota-selector">
+                <label for="idMascota">Mascota:</label>
+                <select id="idMascota" name="idMascota"
+                        class="form-input" style="width:auto; min-width:10rem;"
+                        onchange="this.form.submit()">
+                    <option th:each="m : ${mascotas}"
+                            th:value="${m.idMascota}"
+                            th:text="${m.nombre}"
+                            th:selected="${m.idMascota == idMascotaSeleccionada}">
+                    </option>
+                </select>
+            </form>
+        </span>
+    </div>
+
+    <!--
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║  MAPA DE VISIBILIDAD POR ROL — leer antes de editar                    ║
+    ║  ✅ TODOS (cliente + veterinario):                                      ║
+    ║     • Contenedor .hc-grid y ambas .hc-card                             ║
+    ║     • Cabeceras de tabla <th> de datos                                 ║
+    ║     • Filas de datos <tr th:each> y sus <td> de datos                  ║
+    ║     • Estado vacío <tr th:if>                                           ║
+    ║     • Nota al pie .hc-nota                                             ║
+    ║  🔒 SOLO veterinario (sec:authorize="hasAuthority('veterinario')"):     ║
+    ║     • Botón "Añadir" en cada cabecera de tarjeta                       ║
+    ║     • <th>Acciones</th>                                                ║
+    ║     • <td> con botones Editar / Eliminar                               ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
+    -->
+    <div class="hc-grid">
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- TABLA 1 — Tratamiento Antiparasitario   [visible para TODOS]   -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="hc-card">
+
+            <!-- Cabecera: título visible para todos / botón solo para veterinario -->
+            <div class="hc-card-header"
+                 style="background:linear-gradient(90deg,#E65100 0%,#FF9800 100%);">
+                <div style="display:flex;align-items:center;gap:0.65rem;">
+                    <i class="fa-solid fa-shield-virus"></i>
+                    Tratamiento Antiparasitario
+                </div>
+                <!-- 🔒 SOLO VETERINARIO -->
+                <th:block sec:authorize="hasAuthority('veterinario')">
+                    <button type="button" class="hc-btn-add"
+                            onclick="hcAbrirModal('hcModalTratamiento','nuevo')">
+                        <i class="fa-solid fa-plus"></i> Añadir
+                    </button>
+                </th:block>
+            </div>
+
+            <!-- Cuerpo: tabla SIEMPRE visible -->
+            <div class="hc-card-body">
+                <div class="hc-table-wrap">
+                    <table class="hc-table">
+                        <thead>
+                            <tr>
+                                <!-- ✅ Columnas visibles para todos -->
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Peso</th>
+                                <!-- 🔒 Columna Acciones: solo veterinario -->
+                                <th sec:authorize="hasAuthority('veterinario')"
+                                    style="width:84px;text-align:center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ✅ Filas de datos: visibles para todos los roles -->
+                            <tr th:each="t : ${tratamientos}"
+                                th:if="${tratamientos != null and not #lists.isEmpty(tratamientos)}">
+                                <td th:text="${#temporals.format(t.fecha,'dd/MM/yyyy')}">—</td>
+                                <td th:text="${t.producto}">—</td>
+                                <!-- ✅ Expresión condicional correcta dentro de un solo ${} -->
+                                <td th:text="${t.peso != null ? #numbers.formatDecimal(t.peso,1,1)+' kg' : '—'}">—</td>
+                                <!-- 🔒 Celda Acciones: solo veterinario -->
+                                <td sec:authorize="hasAuthority('veterinario')"
+                                    style="text-align:center;white-space:nowrap;">
+                                    <button type="button"
+                                            class="hc-btn-icon hc-btn-edit"
+                                            title="Editar"
+                                            th:data-id="${t.idTratamiento}"
+                                            th:data-fecha="${#temporals.format(t.fecha,'yyyy-MM-dd')}"
+                                            th:data-producto="${t.producto}"
+                                            th:data-peso="${t.peso}"
+                                            onclick="hcEditarTratamiento(this)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <form th:action="@{/vet/tratamientos/{id}/eliminar(id=${t.idTratamiento})}"
+                                          method="post" style="display:inline;"
+                                          class="hc-form-eliminar">
+                                        <button type="submit" class="hc-btn-icon hc-btn-del"
+                                                title="Eliminar">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <!-- ✅ Estado vacío: visible para todos -->
+                            <tr th:if="${tratamientos == null or #lists.isEmpty(tratamientos)}">
+                                <td colspan="4" class="hc-empty">
+                                    <i class="fa-solid fa-inbox"></i>
+                                    Sin tratamientos registrados aún.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- ✅ Nota visible para todos -->
+                <p class="hc-nota">
+                    <i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:0.1rem;"></i>
+                    NOTA: REPETIR EL TRATAMIENTO ANTIPARASITARIO CADA 2 MESES — BAÑOS MENSUALES.
+                </p>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- TABLA 2 — Control de Vacunas            [visible para TODOS]   -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="hc-card">
+
+            <!-- Cabecera: título visible para todos / botón solo para veterinario -->
+            <div class="hc-card-header"
+                 style="background:linear-gradient(90deg,#B71C1C 0%,#E53935 100%);">
+                <div style="display:flex;align-items:center;gap:0.65rem;">
+                    <i class="fa-solid fa-syringe"></i>
+                    Control de Vacunas
+                </div>
+                <!-- 🔒 SOLO VETERINARIO -->
+                <th:block sec:authorize="hasAuthority('veterinario')">
+                    <button type="button" class="hc-btn-add"
+                            onclick="hcAbrirModal('hcModalVacuna','nuevo')">
+                        <i class="fa-solid fa-plus"></i> Añadir
+                    </button>
+                </th:block>
+            </div>
+
+            <!-- Cuerpo: tabla SIEMPRE visible -->
+            <div class="hc-card-body">
+                <div class="hc-table-wrap">
+                    <table class="hc-table">
+                        <thead>
+                            <tr>
+                                <!-- ✅ Columnas visibles para todos -->
+                                <th>Fecha de Aplicación</th>
+                                <th>Vacuna Aplicada</th>
+                                <!-- 🔒 Columna Acciones: solo veterinario -->
+                                <th sec:authorize="hasAuthority('veterinario')"
+                                    style="width:84px;text-align:center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ✅ Filas de datos: visibles para todos los roles -->
+                            <tr th:each="v : ${vacunas}"
+                                th:if="${vacunas != null and not #lists.isEmpty(vacunas)}">
+                                <td th:text="${#temporals.format(v.fechaAplicacion,'dd/MM/yyyy')}">—</td>
+                                <td th:text="${v.vacuna}">—</td>
+                                <!-- 🔒 Celda Acciones: solo veterinario -->
+                                <td sec:authorize="hasAuthority('veterinario')"
+                                    style="text-align:center;white-space:nowrap;">
+                                    <button type="button"
+                                            class="hc-btn-icon hc-btn-edit"
+                                            title="Editar"
+                                            th:data-id="${v.idVacuna}"
+                                            th:data-fecha="${#temporals.format(v.fechaAplicacion,'yyyy-MM-dd')}"
+                                            th:data-vacuna="${v.vacuna}"
+                                            onclick="hcEditarVacuna(this)">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <form th:action="@{/vet/vacunas/{id}/eliminar(id=${v.idVacuna})}"
+                                          method="post" style="display:inline;"
+                                          class="hc-form-eliminar">
+                                        <button type="submit" class="hc-btn-icon hc-btn-del"
+                                                title="Eliminar">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <!-- ✅ Estado vacío: visible para todos -->
+                            <tr th:if="${vacunas == null or #lists.isEmpty(vacunas)}">
+                                <td colspan="3" class="hc-empty">
+                                    <i class="fa-solid fa-inbox"></i>
+                                    Sin vacunas registradas aún.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- ✅ Nota visible para todos -->
+                <p class="hc-nota">
+                    <i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:0.1rem;"></i>
+                    NOTA: REVACUNAR ANUALMENTE TODAS LAS VACUNAS.
+                </p>
+            </div>
+        </div>
+
+    </div><!-- /.hc-grid -->
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- ── MODALES (renderizados solo para veterinario) ─────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <th:block sec:authorize="hasAuthority('veterinario')">
+
+        <!-- URLs base para JS (Thymeleaf las resuelve en servidor) -->
+        <span id="hcUrlTratamientoNueva"
+              th:data-url="@{/vet/mascotas/{id}/tratamientos/guardar(id=${idMascotaSeleccionada})}"
+              style="display:none;"></span>
+        <span id="hcUrlVacunaNueva"
+              th:data-url="@{/vet/mascotas/{id}/vacunas/guardar(id=${idMascotaSeleccionada})}"
+              style="display:none;"></span>
+
+        <!-- ── Modal: Tratamiento Antiparasitario ──────────────────────── -->
+        <div id="hcModalTratamiento" class="hc-modal-overlay" style="display:none;"
+             onclick="hcClickOverlay(event,'hcModalTratamiento')">
+            <div class="hc-modal">
+                <div class="hc-modal-header"
+                     style="background:linear-gradient(90deg,#E65100,#FF9800);">
+                    <span id="hcTituloTratamiento">
+                        <i class="fa-solid fa-plus"></i> Nuevo Tratamiento
+                    </span>
+                    <button type="button" class="hc-modal-close"
+                            onclick="hcCerrarModal('hcModalTratamiento')">✕</button>
+                </div>
+                <form id="hcFormTratamiento" method="post" class="hc-modal-body">
+                    <input type="hidden" id="hcTratamientoId" name="idTratamiento">
+                    <div class="hc-form-grupo">
+                        <label for="hcTratamientoFecha">Fecha</label>
+                        <input type="date" id="hcTratamientoFecha" name="fecha"
+                               class="form-input" required>
+                    </div>
+                    <div class="hc-form-grupo">
+                        <label for="hcTratamientoProducto">Producto</label>
+                        <input type="text" id="hcTratamientoProducto" name="producto"
+                               class="form-input"
+                               placeholder="Ej. Milbemicina + Praziquantel" required>
+                    </div>
+                    <div class="hc-form-grupo">
+                        <label for="hcTratamientoPeso">Peso al momento (kg)</label>
+                        <input type="number" id="hcTratamientoPeso" name="peso"
+                               class="form-input" step="0.1" min="0"
+                               placeholder="Ej. 5.2">
+                    </div>
+                    <div style="display:flex; gap:0.65rem; justify-content:flex-end; margin-top:1.25rem;">
+                        <button type="button" class="btn btn-gris"
+                                onclick="hcCerrarModal('hcModalTratamiento')">Cancelar</button>
+                        <button type="submit" class="btn btn-verde">
+                            <i class="fa-solid fa-floppy-disk"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Modal: Control de Vacunas ──────────────────────────────── -->
+        <div id="hcModalVacuna" class="hc-modal-overlay" style="display:none;"
+             onclick="hcClickOverlay(event,'hcModalVacuna')">
+            <div class="hc-modal">
+                <div class="hc-modal-header"
+                     style="background:linear-gradient(90deg,#B71C1C,#E53935);">
+                    <span id="hcTituloVacuna">
+                        <i class="fa-solid fa-plus"></i> Nueva Vacuna
+                    </span>
+                    <button type="button" class="hc-modal-close"
+                            onclick="hcCerrarModal('hcModalVacuna')">✕</button>
+                </div>
+                <form id="hcFormVacuna" method="post" class="hc-modal-body">
+                    <input type="hidden" id="hcVacunaId" name="idVacuna">
+                    <div class="hc-form-grupo">
+                        <label for="hcVacunaFecha">Fecha de Aplicación</label>
+                        <input type="date" id="hcVacunaFecha" name="fechaAplicacion"
+                               class="form-input" required>
+                    </div>
+                    <div class="hc-form-grupo">
+                        <label for="hcVacunaSelect">Vacuna Aplicada</label>
+                        <select id="hcVacunaSelect" name="vacuna"
+                                class="form-input" required>
+                            <option value="" disabled selected>— Seleccionar —</option>
+                            <option value="Parvovirus">Parvovirus</option>
+                            <option value="Coronavirus">Coronavirus</option>
+                            <option value="Distemper">Distemper</option>
+                            <option value="Hepatitis">Hepatitis</option>
+                            <option value="Parainfluenza">Parainfluenza</option>
+                            <option value="Leptospirosis">Leptospirosis</option>
+                            <option value="Rabia">Rabia</option>
+                            <option value="Triple Felina (P.R.C.)">Triple Felina (P.R.C.)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:0.65rem; justify-content:flex-end; margin-top:1.25rem;">
+                        <button type="button" class="btn btn-gris"
+                                onclick="hcCerrarModal('hcModalVacuna')">Cancelar</button>
+                        <button type="submit" class="btn btn-verde">
+                            <i class="fa-solid fa-floppy-disk"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </th:block>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+!function () {
+    'use strict';
+
+    /* ── URLs base (inyectadas por Thymeleaf en los spans hidden) ──────── */
+    function urlBase(id) {
+        var el = document.getElementById(id);
+        return el ? el.dataset.url : '';
+    }
+
+    /* ── Modal genérico ─────────────────────────────────────────────────── */
+    window.hcAbrirModal = function (modalId, modo) {
+        var overlay = document.getElementById(modalId);
+        if (!overlay) return;
+        /* Resetear formulario al abrir en modo "nuevo" */
+        if (modo === 'nuevo') {
+            var form = overlay.querySelector('form');
+            if (form) {
+                form.reset();
+                /* Restaurar action al endpoint de creación */
+                if (modalId === 'hcModalTratamiento') {
+                    form.action = urlBase('hcUrlTratamientoNueva');
+                    document.getElementById('hcTituloTratamiento').innerHTML =
+                        '<i class="fa-solid fa-plus"></i> Nuevo Tratamiento';
+                    document.getElementById('hcTratamientoId').value = '';
+                } else if (modalId === 'hcModalVacuna') {
+                    form.action = urlBase('hcUrlVacunaNueva');
+                    document.getElementById('hcTituloVacuna').innerHTML =
+                        '<i class="fa-solid fa-plus"></i> Nueva Vacuna';
+                    document.getElementById('hcVacunaId').value = '';
+                }
+            }
+        }
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.hcCerrarModal = function (modalId) {
+        var overlay = document.getElementById(modalId);
+        if (overlay) overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    };
+
+    /* Cerrar al hacer clic en el fondo oscuro */
+    window.hcClickOverlay = function (e, modalId) {
+        if (e.target === e.currentTarget) hcCerrarModal(modalId);
+    };
+
+    /* Cerrar con Escape */
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            ['hcModalTratamiento', 'hcModalVacuna'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && el.style.display !== 'none') hcCerrarModal(id);
+            });
+        }
+    });
+
+    /* ── Prellenar modal de edición: Tratamiento ────────────────────────── */
+    window.hcEditarTratamiento = function (btn) {
+        var id      = btn.dataset.id;
+        var fecha   = btn.dataset.fecha;
+        var prod    = btn.dataset.producto;
+        var peso    = btn.dataset.peso;
+
+        document.getElementById('hcTratamientoId').value      = id;
+        document.getElementById('hcTratamientoFecha').value   = fecha;
+        document.getElementById('hcTratamientoProducto').value = prod;
+        document.getElementById('hcTratamientoPeso').value    = peso !== 'null' ? peso : '';
+
+        /* Apuntar al endpoint de edición */
+        document.getElementById('hcFormTratamiento').action =
+            '/vet/tratamientos/' + id + '/editar';
+        document.getElementById('hcTituloTratamiento').innerHTML =
+            '<i class="fa-solid fa-pen-to-square"></i> Editar Tratamiento';
+
+        hcAbrirModal('hcModalTratamiento', 'editar');
+    };
+
+    /* ── Prellenar modal de edición: Vacuna ─────────────────────────────── */
+    window.hcEditarVacuna = function (btn) {
+        var id     = btn.dataset.id;
+        var fecha  = btn.dataset.fecha;
+        var vacuna = btn.dataset.vacuna;
+
+        document.getElementById('hcVacunaId').value    = id;
+        document.getElementById('hcVacunaFecha').value = fecha;
+        var sel = document.getElementById('hcVacunaSelect');
+        for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === vacuna) { sel.selectedIndex = i; break; }
+        }
+
+        /* Apuntar al endpoint de edición */
+        document.getElementById('hcFormVacuna').action =
+            '/vet/vacunas/' + id + '/editar';
+        document.getElementById('hcTituloVacuna').innerHTML =
+            '<i class="fa-solid fa-pen-to-square"></i> Editar Vacuna';
+
+        hcAbrirModal('hcModalVacuna', 'editar');
+    };
+
+    /* ── Confirmación SweetAlert2 para eliminar ─────────────────────────── */
+    document.querySelectorAll('.hc-form-eliminar').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var _f = this;
+            Swal.fire({
+                title: '¿Eliminar registro?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E53935',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(function (r) { if (r.isConfirmed) _f.submit(); });
+        });
+    });
+}();
+</script>
+
+</body>
+</html>

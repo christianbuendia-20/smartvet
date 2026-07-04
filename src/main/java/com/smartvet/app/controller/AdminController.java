@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -65,6 +66,7 @@ public class AdminController {
     private final ConsultaService    consultaService;
     private final ConsultaPdfService consultaPdfService;
     private final EmailService       emailService;
+    private final String             mpPublicKey;
 
     public AdminController(CitaService citaService,
                            MascotaService mascotaService,
@@ -73,7 +75,8 @@ public class AdminController {
                            UsuarioService usuarioService,
                            ConsultaService consultaService,
                            ConsultaPdfService consultaPdfService,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           @Value("${mercadopago.public-key}") String mpPublicKey) {
         this.citaService        = citaService;
         this.mascotaService     = mascotaService;
         this.pagoService        = pagoService;
@@ -82,6 +85,7 @@ public class AdminController {
         this.consultaService    = consultaService;
         this.consultaPdfService = consultaPdfService;
         this.emailService       = emailService;
+        this.mpPublicKey        = mpPublicKey;
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -139,8 +143,9 @@ public class AdminController {
                                             RedirectAttributes redirectAttributes) {
         try {
             Cita cita = citaService.buscarPorId(idCita);
-            model.addAttribute("cita",    cita);
-            model.addAttribute("metodos", MetodoPago.values());
+            model.addAttribute("cita",       cita);
+            model.addAttribute("metodos",    MetodoPago.values());
+            model.addAttribute("mpPublicKey", mpPublicKey);
             return "admin/registrar-pago";
         } catch (RecursoNoEncontradoException ex) {
             redirectAttributes.addFlashAttribute("errorForm", ex.getMessage());

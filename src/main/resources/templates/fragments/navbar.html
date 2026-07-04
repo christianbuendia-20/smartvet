@@ -1,217 +1,233 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head><title></title></head>
 <body>
 
 <header th:fragment="navbar">
-<style>
-  .sv-pdrop { position: relative; }
-  .sv-pdrop-btn {
-    display: flex; align-items: center; gap: 0.45rem;
-    background: none; border: 1px solid transparent; border-radius: 8px;
-    cursor: pointer; padding: 0.28rem 0.55rem;
-    font-family: inherit; transition: border-color 0.15s, background 0.15s;
-  }
-  .sv-pdrop-btn:hover { border-color: rgba(255,152,0,0.35); background: rgba(255,152,0,0.07); }
-  .sv-pdrop-chevron { font-size: 0.58rem; color: var(--texto-suave); transition: transform 0.2s; }
-  .sv-pdrop.open .sv-pdrop-chevron { transform: rotate(180deg); }
-  .sv-pdrop-menu {
-    position: absolute; right: 0; top: calc(100% + 6px);
-    background: #fff; border: 1px solid #E5E7EB;
-    border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.11);
-    min-width: 164px; padding: 0.35rem; z-index: 1000;
-    opacity: 0; visibility: hidden; transform: translateY(-6px);
-    transition: opacity 0.16s, transform 0.16s, visibility 0.16s;
-  }
-  .sv-pdrop.open .sv-pdrop-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-  .sv-pdrop-item {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.55rem 0.9rem; border-radius: 7px;
-    color: #1a1a1a; text-decoration: none; font-size: 0.875rem; font-weight: 500;
-    transition: background 0.12s, color 0.12s;
-  }
-  .sv-pdrop-item:hover { background: rgba(255,152,0,0.1); color: var(--primario); text-decoration: none; }
-  .sv-pdrop-item i { color: var(--primario); font-size: 0.82rem; width: 1rem; text-align: center; }
 
-  /* Span sec:authorize es inline por defecto → convertirlo a flex
-     para que los nav-link no se envuelvan en pantallas ≥ 1024px */
-  .navbar-nav > span {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 0;
-  }
-</style>
-<nav class="navbar">
-    <div class="navbar-inner">
+<!-- ════════════════════════════════════════════════════════════════════════
+     SIDEBAR — Veterinaria Santa Victoria
+     sec:authorize controla QUÉ sección de enlaces se renderiza por rol.
+     La detección del enlace activo se resuelve en el cliente (JS).
+     ════════════════════════════════════════════════════════════════════════ -->
 
-        <!-- ── Logo / Marca ──────────────────────────────────────────── -->
+<aside class="sv-sidebar" id="svSidebar" aria-label="Menú principal">
 
-        <a class="navbar-brand"
+    <!-- ── 1. CABECERA: Logo / Marca ───────────────────────────────────── -->
+    <div class="sv-sidebar-brand">
+
+        <a class="sv-brand-link"
            sec:authorize="hasAuthority('admin')"
            th:href="@{/admin/dashboard}">
             <img th:src="@{/img/logo.jpg}"
                  class="navbar-logo-img"
                  alt="Santa Victoria"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <span class="navbar-logo-fallback" style="display:none;">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </span>
             <div class="navbar-brand-text">
                 <span class="navbar-brand-name">Santa Victoria</span>
                 <span class="navbar-brand-sub">Veterinaria</span>
             </div>
         </a>
 
-        <a class="navbar-brand"
+        <a class="sv-brand-link"
            sec:authorize="hasAuthority('veterinario')"
            th:href="@{/vet/dashboard}">
             <img th:src="@{/img/logo.jpg}"
                  class="navbar-logo-img"
                  alt="Santa Victoria"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <span class="navbar-logo-fallback" style="display:none;">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </span>
             <div class="navbar-brand-text">
                 <span class="navbar-brand-name">Santa Victoria</span>
                 <span class="navbar-brand-sub">Veterinaria</span>
             </div>
         </a>
 
-        <a class="navbar-brand"
+        <a class="sv-brand-link"
            sec:authorize="hasAuthority('cliente')"
            th:href="@{/cliente/dashboard}">
             <img th:src="@{/img/logo.jpg}"
                  class="navbar-logo-img"
                  alt="Santa Victoria"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <span class="navbar-logo-fallback" style="display:none;">🐾</span>
+            <span class="navbar-logo-fallback" style="display:none;">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </span>
             <div class="navbar-brand-text">
                 <span class="navbar-brand-name">Santa Victoria</span>
                 <span class="navbar-brand-sub">Veterinaria</span>
             </div>
         </a>
 
-        <!-- ── Navegación por rol ─────────────────────────────────────── -->
-        <div class="navbar-nav" id="svNavMenu">
+    </div>
 
-            <!-- Admin -->
-            <span sec:authorize="hasAuthority('admin')">
-                <a class="nav-link" th:href="@{/admin/dashboard}">
-                    <i class="fa-solid fa-gauge-high"></i> Inicio
-                </a>
-                <a class="nav-link" th:href="@{/admin/usuarios}">
-                    <i class="fa-solid fa-users"></i> Usuarios
-                </a>
-                <a class="nav-link" th:href="@{/admin/mascotas}">
-                    <i class="fa-solid fa-paw"></i> Mascotas
-                </a>
-                <a class="nav-link" th:href="@{/admin/citas}">
-                    <i class="fa-solid fa-calendar-days"></i> Citas
-                </a>
-                <a class="nav-link" th:href="@{/admin/productos}">
-                    <i class="fa-solid fa-boxes-stacked"></i> Inventario
-                </a>
-                <a class="nav-link" th:href="@{/admin/pagos}">
-                    <i class="fa-solid fa-wallet"></i> Pagos
-                </a>
-            </span>
+    <!-- ── 2. CUERPO: Navegación por rol ───────────────────────────────── -->
+    <nav class="sv-sidebar-nav" id="svNav">
 
-            <!-- Veterinario -->
-            <span sec:authorize="hasAuthority('veterinario')">
-                <a class="nav-link" th:href="@{/vet/dashboard}">
-                    <i class="fa-solid fa-gauge-high"></i> Inicio
-                </a>
-                <a class="nav-link" th:href="@{/vet/agenda}">
-                    <i class="fa-solid fa-calendar-days"></i> Mi Agenda
-                </a>
-                <a class="nav-link" th:href="@{/vet/mascotas}">
-                    <i class="fa-solid fa-paw"></i> Mascotas
-                </a>
-            </span>
+        <!-- ·· ADMINISTRADOR ·············································· -->
+        <span sec:authorize="hasAuthority('admin')">
+            <p class="sv-nav-label">Administración</p>
 
-            <!-- Cliente -->
-            <span sec:authorize="hasAuthority('cliente')">
-                <a class="nav-link" th:href="@{/cliente/dashboard}">
-                    <i class="fa-solid fa-gauge-high"></i> Inicio
-                </a>
-                <a class="nav-link" th:href="@{/cliente/mascotas}">
-                    <i class="fa-solid fa-paw"></i> Mis Mascotas
-                </a>
-                <a class="nav-link" th:href="@{/cliente/citas}">
-                    <i class="fa-solid fa-calendar-check"></i> Mis Citas
-                </a>
-            </span>
+            <a class="nav-link" th:href="@{/admin/dashboard}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Inicio</span>
+            </a>
+            <a class="nav-link" th:href="@{/admin/usuarios}">
+                <i class="bi bi-people-fill"></i>
+                <span>Usuarios</span>
+            </a>
+            <a class="nav-link" th:href="@{/admin/mascotas}">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Mascotas</span>
+            </a>
+            <a class="nav-link" th:href="@{/admin/citas}">
+                <i class="bi bi-calendar-check"></i>
+                <span>Citas</span>
+            </a>
+            <a class="nav-link" th:href="@{/admin/productos}">
+                <i class="bi bi-boxes"></i>
+                <span>Inventario</span>
+            </a>
+            <a class="nav-link" th:href="@{/admin/pagos}">
+                <i class="bi bi-wallet2"></i>
+                <span>Pagos</span>
+            </a>
+        </span>
 
+        <!-- ·· VETERINARIO ················································ -->
+        <span sec:authorize="hasAuthority('veterinario')">
+            <p class="sv-nav-label">Veterinario</p>
+
+            <a class="nav-link" th:href="@{/vet/dashboard}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Inicio</span>
+            </a>
+            <a class="nav-link" th:href="@{/vet/agenda}">
+                <i class="bi bi-calendar-week"></i>
+                <span>Mi Agenda</span>
+            </a>
+            <a class="nav-link" th:href="@{/vet/mascotas}">
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Pacientes</span>
+            </a>
+            <a class="nav-link" th:href="@{/vet/historial}">
+                <i class="bi bi-journal-medical"></i>
+                <span>Historial Clínico</span>
+            </a>
+        </span>
+
+        <!-- ·· CLIENTE ···················································· -->
+        <span sec:authorize="hasAuthority('cliente')">
+            <p class="sv-nav-label">Mi Portal</p>
+
+            <a class="nav-link" th:href="@{/cliente/dashboard}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Inicio</span>
+            </a>
+            <a class="nav-link" th:href="@{/cliente/mascotas}">
+                <i class="bi bi-heart-pulse"></i>
+                <span>Mis Mascotas</span>
+            </a>
+            <a class="nav-link" th:href="@{/cliente/citas}">
+                <i class="bi bi-calendar-check"></i>
+                <span>Mis Citas</span>
+            </a>
+            <a class="nav-link" th:href="@{/cliente/vacunas}">
+                <i class="bi bi-shield-plus"></i>
+                <span>Cartilla de Vacunación</span>
+            </a>
+            <a class="nav-link" th:href="@{/cliente/mis-pagos}">
+                <i class="bi bi-credit-card"></i>
+                <span>Mis Pagos</span>
+            </a>
+        </span>
+
+    </nav>
+
+    <!-- ── 3. PIE: Perfil y cierre de sesión ───────────────────────────── -->
+    <div class="sv-sidebar-footer">
+
+        <div class="sv-user-row">
+            <i class="bi bi-person-circle sv-user-avatar"></i>
+            <div class="sv-user-info">
+                <span class="sv-user-name"
+                      sec:authentication="principal.nombreCompleto">Usuario</span>
+                <span class="badge-rol"
+                      sec:authentication="principal.rolNombre">rol</span>
+            </div>
         </div>
 
-        <!-- ── Usuario activo ─────────────────────────────────────────── -->
-        <div class="navbar-usuario" style="flex-shrink:0;">
-
-            <div class="sv-pdrop" id="svPdrop">
-                <button type="button" class="sv-pdrop-btn" aria-haspopup="true">
-                    <i class="fa-regular fa-circle-user" style="font-size:1.05rem; color:var(--primario);"></i>
-                    <div style="display:flex; flex-direction:column; align-items:flex-start; line-height:1.25;">
-                        <span class="nombre" sec:authentication="principal.nombreCompleto">Usuario</span>
-                        <span class="badge-rol" sec:authentication="principal.rolNombre">rol</span>
-                    </div>
-                    <i class="fa-solid fa-chevron-down sv-pdrop-chevron"></i>
-                </button>
-                <div class="sv-pdrop-menu">
-                    <a th:href="@{/perfil}" class="sv-pdrop-item">
-                        <i class="fa-solid fa-user-pen"></i>
-                        Mi Perfil
-                    </a>
-                </div>
-            </div>
-
-            <form th:action="@{/auth/logout}" method="post" style="margin:0; flex-shrink:0;">
-                <button type="submit" class="btn-logout" style="white-space:nowrap; flex-shrink:0;">
-                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+        <div class="sv-footer-actions">
+            <a th:href="@{/perfil}" class="sv-perfil-link">
+                <i class="bi bi-person-gear"></i> Mi Perfil
+            </a>
+            <form th:action="@{/auth/logout}" method="post" style="flex:1; margin:0;">
+                <button type="submit" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i> Salir
                 </button>
             </form>
-
         </div>
 
-        <!-- ── Hamburguesa (móvil) — al final para quedar en row-1 derecha ── -->
-        <button class="navbar-hamburger" id="svHamburger"
-                aria-label="Abrir menú" aria-expanded="false">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-
     </div>
-</nav>
+
+</aside>
+
+<!-- Overlay oscuro para cerrar el sidebar en móvil -->
+<div class="sv-overlay" id="svOverlay" onclick="svCerrar()"></div>
+
+<!-- Botón hamburguesa (solo visible en móvil) -->
+<button class="sv-hamburger" id="svHamburger"
+        onclick="svToggle()" aria-label="Abrir menú" aria-expanded="false">
+    <i class="bi bi-list" id="svHamIcon"></i>
+</button>
+
 <script>
-!function(){
-  /* ── Dropdown de perfil ────────────────────────────────── */
-  var d=document.getElementById('svPdrop');
-  if(d){
-    d.querySelector('.sv-pdrop-btn').addEventListener('click',function(e){
-      e.stopPropagation(); d.classList.toggle('open');
-    });
-  }
+!function () {
+    var sidebar = document.getElementById('svSidebar');
+    var overlay = document.getElementById('svOverlay');
+    var hamBtn  = document.getElementById('svHamburger');
+    var hamIcon = document.getElementById('svHamIcon');
 
-  /* ── Menú hamburguesa ──────────────────────────────────── */
-  var ham=document.getElementById('svHamburger');
-  var nav=document.getElementById('svNavMenu');
-  if(ham&&nav){
-    ham.addEventListener('click',function(e){
-      e.stopPropagation();
-      var abierto=nav.classList.toggle('abierto');
-      ham.setAttribute('aria-expanded',abierto);
-      ham.querySelector('i').className=abierto?'fa-solid fa-xmark':'fa-solid fa-bars';
-    });
-  }
-
-  /* ── Cierra todo al hacer click fuera ──────────────────── */
-  document.addEventListener('click',function(){
-    if(d) d.classList.remove('open');
-    if(ham&&nav){
-      nav.classList.remove('abierto');
-      ham.setAttribute('aria-expanded',false);
-      var ic=ham.querySelector('i');
-      if(ic) ic.className='fa-solid fa-bars';
+    function svAbrir() {
+        sidebar.classList.add('abierto');
+        overlay.classList.add('visible');
+        hamBtn.setAttribute('aria-expanded', 'true');
+        hamIcon.className = 'bi bi-x-lg';
     }
-  });
+
+    window.svCerrar = function () {
+        sidebar.classList.remove('abierto');
+        overlay.classList.remove('visible');
+        hamBtn.setAttribute('aria-expanded', 'false');
+        hamIcon.className = 'bi bi-list';
+    };
+
+    window.svToggle = function () {
+        sidebar.classList.contains('abierto') ? svCerrar() : svAbrir();
+    };
+
+    /* Cerrar con tecla Escape */
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('abierto')) svCerrar();
+    });
+
+    /* Marcar enlace activo según URL actual */
+    var path = window.location.pathname;
+    document.querySelectorAll('#svNav .nav-link').forEach(function (link) {
+        if (link.pathname && link.pathname !== '/' && path.startsWith(link.pathname)) {
+            link.classList.add('activo');
+        }
+    });
 }();
 </script>
+
 </header>
 
 </body>

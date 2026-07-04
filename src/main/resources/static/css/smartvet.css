@@ -34,6 +34,9 @@
     --sombra:          0 2px 14px rgba(0, 0, 0, 0.07);
     --sombra-hover:    0 4px 20px rgba(0, 0, 0, 0.12);
     --sombra-naranja:  0 4px 16px rgba(255, 152, 0, 0.35);
+
+    /* ── Sidebar ────────────────────────────────────────────── */
+    --sidebar-w:       260px;
 }
 
 /* ── Reset ───────────────────────────────────────────────── */
@@ -48,6 +51,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    padding-left: var(--sidebar-w);
 }
 
 a { color: var(--primario); text-decoration: none; }
@@ -274,36 +278,38 @@ a:hover { text-decoration: underline; }
     margin: 1.4rem 0;
 }
 
-/* ── Navegación ──────────────────────────────────────────── */
+/* ── Sidebar de navegación ────────────────────────────────── */
 
-.navbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--borde);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    position: sticky;
+/* Sidebar: posicionado fijo a la izquierda, altura completa */
+.sv-sidebar {
+    position: fixed;
+    left: 0;
     top: 0;
-    z-index: 100;
-}
-.navbar-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    height: 64px;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--borde);
+    box-shadow: 2px 0 16px rgba(0,0,0,0.06);
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    flex-direction: column;
+    z-index: 200;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
 
-/* Logo / Brand */
-.navbar-brand {
+/* ── Cabecera: logo ────────────────────────────────────────── */
+.sv-sidebar-brand {
+    padding: 1.15rem 1rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    flex-shrink: 0;
+}
+.sv-brand-link {
     display: flex;
     align-items: center;
     gap: 0.55rem;
     text-decoration: none;
-    flex-shrink: 0;
 }
-.navbar-brand:hover { text-decoration: none; }
+.sv-brand-link:hover { text-decoration: none; }
 
 .navbar-logo-img {
     width: 38px;
@@ -338,67 +344,206 @@ a:hover { text-decoration: underline; }
     letter-spacing: 0.08em;
 }
 
-/* Nav links */
-.navbar-nav {
+/* ── Cuerpo: enlaces de navegación ────────────────────────── */
+.sv-sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.9rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--borde) transparent;
+}
+.sv-sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sv-sidebar-nav::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 4px; }
+
+/* Los <span sec:authorize> no deben interrumpir el flujo flex */
+.sv-sidebar-nav > span { display: contents; }
+
+/* Etiqueta de grupo (opcional) */
+.sv-nav-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--texto-suave);
+    padding: 0.7rem 0.85rem 0.2rem;
+    margin-top: 0.25rem;
+}
+
+/* nav-link en contexto sidebar */
+.nav-link {
     display: flex;
     align-items: center;
-    gap: 0.2rem;
-}
-.nav-link {
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.845rem;
+    gap: 0.7rem;
+    padding: 0.68rem 0.85rem;
+    border-radius: 9px;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--texto-suave);
     text-decoration: none;
-    transition: background 0.12s, color 0.12s;
+    transition: background 0.13s, color 0.13s;
+    width: 100%;
+    position: relative;
 }
 .nav-link:hover {
     background: var(--primario-claro);
     color: var(--primario-deep);
     text-decoration: none;
 }
-
-/* Usuario info */
-.navbar-usuario {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    font-size: 0.845rem;
+.nav-link.activo {
+    background: var(--primario-claro);
+    color: var(--primario-deep);
+    font-weight: 600;
+    text-decoration: none;
+}
+.nav-link.activo::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 18%;
+    bottom: 18%;
+    width: 3px;
+    background: var(--primario);
+    border-radius: 0 3px 3px 0;
+}
+.nav-link i {
+    width: 1.1rem;
+    text-align: center;
+    font-size: 0.88rem;
     flex-shrink: 0;
 }
-.navbar-usuario .nombre { color: var(--texto); font-weight: 600; }
 
+/* ── Pie: perfil de usuario ────────────────────────────────── */
+.sv-sidebar-footer {
+    flex-shrink: 0;
+    padding: 0.85rem 1rem;
+    border-top: 1px solid var(--borde);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.sv-user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+.sv-user-avatar {
+    font-size: 1.35rem;
+    color: var(--primario);
+    flex-shrink: 0;
+    line-height: 1;
+}
+.sv-user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+}
+.sv-user-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--texto);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .badge-rol {
     background: var(--primario-claro);
     color: var(--primario-deep);
     border-radius: 20px;
-    padding: 0.18rem 0.65rem;
-    font-size: 0.7rem;
+    padding: 0.12rem 0.55rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border: 1px solid rgba(255,152,0,0.25);
+    align-self: flex-start;
 }
-
+.sv-footer-actions {
+    display: flex;
+    gap: 0.45rem;
+}
+.sv-perfil-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.77rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: 7px;
+    border: 1.5px solid var(--borde);
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.sv-perfil-link:hover {
+    border-color: var(--primario);
+    color: var(--primario-deep);
+    text-decoration: none;
+}
 .btn-logout {
-    font-size: 0.8rem;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 0.77rem;
+    font-weight: 600;
     color: var(--texto-suave);
     border: 1.5px solid var(--borde);
-    border-radius: 6px;
-    padding: 0.3rem 0.75rem;
+    border-radius: 7px;
+    padding: 0.35rem 0.6rem;
     transition: all 0.15s;
-    text-decoration: none;
     background: transparent;
     cursor: pointer;
     font-family: inherit;
-    line-height: inherit;
+    line-height: 1;
+    white-space: nowrap;
 }
 .btn-logout:hover {
     color: var(--rojo);
     border-color: var(--rojo);
     background: var(--rojo-claro);
     text-decoration: none;
+}
+
+/* ── Overlay (móvil) ───────────────────────────────────────── */
+.sv-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.42);
+    z-index: 190;
+}
+.sv-overlay.visible { display: block; }
+
+/* ── Botón hamburguesa (móvil) ─────────────────────────────── */
+.sv-hamburger {
+    display: none;
+    position: fixed;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 150;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--surface);
+    border: 1.5px solid var(--borde);
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--texto);
+    box-shadow: var(--sombra);
+    transition: border-color 0.15s, background 0.15s;
+}
+.sv-hamburger:hover {
+    border-color: var(--primario);
+    background: var(--primario-claro);
+    color: var(--primario-deep);
 }
 
 /* ── Layout principal ────────────────────────────────────── */
@@ -1058,80 +1203,21 @@ a:hover { text-decoration: underline; }
     }
 }
 
-/* ── Navbar: botón hamburguesa ───────────────────────────── */
-/* Breakpoint en 1023px: con 5 enlaces de admin el navbar necesita
-   colapsar antes de que los links se desborden en pantallas medianas */
-.navbar-hamburger {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    background: none;
-    border: 1.5px solid var(--borde);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    color: var(--texto);
-    flex-shrink: 0;
-    transition: border-color 0.15s, background 0.15s;
-}
-.navbar-hamburger:hover {
-    border-color: var(--primario);
-    background: var(--primario-claro);
-    color: var(--primario-deep);
-}
+/* ── Sidebar responsive (móvil ≤ 768px) ─────────────────── */
+@media (max-width: 768px) {
+    /* El body no necesita espacio para el sidebar en móvil */
+    body { padding-left: 0; }
 
-@media (max-width: 1023px) {
-    .navbar-hamburger { display: flex; }
+    /* Sidebar se oculta fuera de pantalla */
+    .sv-sidebar { transform: translateX(-100%); }
+    .sv-sidebar.abierto { transform: translateX(0); }
 
-    .navbar-inner {
-        flex-wrap: wrap;
-        height: auto;
-        min-height: 64px;
-        padding: 0 1rem;
-        justify-content: flex-start;
-        gap: 0.5rem;
-        align-items: center;
-    }
+    /* Botón hamburguesa visible */
+    .sv-hamburger { display: flex; }
 
-    .navbar-nav {
-        display: none;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.15rem;
-        width: 100%;
-        order: 10;
-        padding: 0.5rem 0 0.75rem;
-        border-top: 1px solid var(--borde);
-        margin-top: 0.25rem;
-        background: var(--surface);
-    }
-    .navbar-nav.abierto { display: flex; }
-
-    /* Los <span sec:authorize> son inline por defecto — convertirlos a
-       columna flex para que los nav-link se apilen verticalmente */
-    .navbar-nav > span {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .nav-link {
-        width: 100%;
-        padding: 0.65rem 0.75rem;   /* área táctil cómoda */
-        font-size: 0.9rem;
-        border-radius: 6px;
-    }
-
-    .navbar-usuario {
-        margin-left: auto;
-        gap: 0.5rem;
-    }
-    .navbar-usuario .nombre,
-    .navbar-usuario .badge-rol {
-        display: none;
-    }
+    /* El contenido principal tiene padding-top para no quedar bajo el ham */
+    .main-content { padding-top: 4.5rem; }
+    .auth-page    { padding-top: 4rem; }
 }
 
 /* ============================================================

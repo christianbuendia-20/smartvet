@@ -114,6 +114,18 @@ public class VeterinarioController {
 
     // ── Historial clínico ─────────────────────────────────────────────────────
 
+    @GetMapping("/historial")
+    public String historialIndex(@RequestParam(value = "keyword", required = false) String keyword,
+                                  Model model) {
+        List<Mascota> mascotas = (keyword != null && !keyword.isBlank())
+                ? mascotaService.listarTodas(keyword)
+                : mascotaService.listarTodas();
+        model.addAttribute("mascotas", mascotas);
+        model.addAttribute("keyword",  keyword != null ? keyword : "");
+        model.addAttribute("modoHistorial", true);
+        return "vet/mascotas";
+    }
+
     @GetMapping("/historial/{idMascota}")
     public String verHistorial(@PathVariable Integer idMascota,
                                 RedirectAttributes redirectAttributes,

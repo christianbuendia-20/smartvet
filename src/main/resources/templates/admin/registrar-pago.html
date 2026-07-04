@@ -5,6 +5,8 @@
 <head>
     <title>SmartVet — Registrar Pago</title>
     <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <style>
         .pago-label {
             display: block;
@@ -227,9 +229,121 @@
 
     </div>
 
+    <!-- ── Pagar con Mercado Pago ─────────────────────────────────────────── -->
+    <div style="max-width:820px; margin:1.25rem auto 0;">
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem;">
+            <hr style="flex:1; border:none; border-top:1px solid var(--borde, #e5e7eb);">
+            <span style="font-size:0.78rem; font-weight:600; color:var(--texto-suave);
+                         text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap;">
+                o pagar con plataforma digital
+            </span>
+            <hr style="flex:1; border:none; border-top:1px solid var(--borde, #e5e7eb);">
+        </div>
+
+        <div class="tabla-card"
+             style="padding:1.75rem 2rem; border-left:4px solid #009ee3;">
+
+            <p style="margin:0 0 0.4rem; font-size:0.72rem; font-weight:700;
+                      letter-spacing:0.07em; text-transform:uppercase; color:var(--texto-suave);">
+                Pago Digital Seguro
+            </p>
+            <p style="margin:0 0 1.5rem; font-size:0.88rem; color:var(--texto-suave); line-height:1.5;">
+                Ingresa el monto arriba y haz clic en el botón para abrir el checkout seguro.
+                El pago se registrará automáticamente al completarse.
+            </p>
+
+            <button id="btnPagarMP" type="button"
+                    style="background:#009ee3; color:#fff; border:none;
+                           padding:0.78rem 2rem; font-size:0.95rem; font-weight:700;
+                           border-radius:10px; cursor:pointer; display:inline-flex;
+                           align-items:center; gap:0.65rem; transition:opacity 0.2s;">
+                <svg width="22" height="22" viewBox="0 0 32 32" fill="none"
+                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="16" cy="16" r="16" fill="#fff"/>
+                    <path d="M8 13.5h16M8 18.5h10" stroke="#009ee3" stroke-width="2.2"
+                          stroke-linecap="round"/>
+                </svg>
+                Pagar con Mercado Pago
+            </button>
+
+            <p id="mp-error-msg"
+               style="display:none; margin-top:0.85rem; color:var(--rojo, #dc2626);
+                      font-size:0.85rem; font-weight:500;"></p>
+        </div>
+    </div>
+
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- SDK de Mercado Pago v2 -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+(function () {
+    var MP_PUBLIC_KEY = /*[[${mpPublicKey}]]*/ 'TEST-fallback-key';
+    var CITA_ID       = /*[[${cita.idCita}]]*/ 0;
+
+    var mp        = new MercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
+    var btn       = document.getElementById('btnPagarMP');
+    var errorMsg  = document.getElementById('mp-error-msg');
+    var csrfMeta  = document.querySelector('meta[name="_csrf"]');
+    var headerMeta = document.querySelector('meta[name="_csrf_header"]');
+
+    var originalHTML = btn.innerHTML;
+
+    btn.addEventListener('click', function () {
+        var montoInput = document.getElementById('monto');
+        var monto = montoInput ? parseFloat(montoInput.value) : 0;
+
+        if (!monto || monto <= 0) {
+            errorMsg.textContent = 'Ingresa un monto válido en el formulario antes de continuar.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.textContent = 'Procesando...';
+
+        fetch('/admin/pagos/mp/crear-preferencia', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [headerMeta.content]: csrfMeta.content
+            },
+            body: JSON.stringify({ idCita: CITA_ID, monto: monto })
+        })
+        .then(function (resp) {
+            if (!resp.ok) {
+                return resp.text().then(function (msg) {
+                    throw new Error(msg || 'Error del servidor (' + resp.status + ')');
+                });
+            }
+            return resp.json();
+        })
+        .then(function (data) {
+            var checkout = mp.checkout({
+                preference: { id: data.preferenceId },
+                autoOpen: false
+            });
+            checkout.open();
+            /* El botón permanece deshabilitado — la página navegará
+               a la URL de retorno de MP al completar el pago.       */
+        })
+        .catch(function (e) {
+            errorMsg.textContent = 'No se pudo iniciar el pago: ' + e.message;
+            errorMsg.style.display = 'block';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = originalHTML;
+        });
+    });
+}());
+/*]]>*/
+</script>
 
 </body>
 </html>

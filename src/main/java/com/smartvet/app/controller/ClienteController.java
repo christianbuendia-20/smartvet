@@ -1,5 +1,7 @@
 package com.smartvet.app.controller;
 
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
 import com.smartvet.app.dto.CitaAgendamientoDTO;
 import com.smartvet.app.dto.HistoriaClinicaUpdateDTO;
 import com.smartvet.app.dto.MascotaDTO;
@@ -20,7 +22,9 @@ import com.smartvet.app.service.ConsultaService;
 import com.smartvet.app.service.EmailService;
 import com.smartvet.app.service.FileStorageService;
 import com.smartvet.app.service.MascotaService;
+import com.smartvet.app.service.MercadoPagoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +62,8 @@ public class ClienteController {
     private final CitaPdfService      citaPdfService;
     private final EmailService        emailService;
     private final FileStorageService  fileStorageService;
+    private final MercadoPagoService  mercadoPagoService;
+    private final String              mpPublicKey;
 
     public ClienteController(CitaService citaService,
                               MascotaService mascotaService,
@@ -65,7 +71,9 @@ public class ClienteController {
                               ConsultaPdfService consultaPdfService,
                               CitaPdfService citaPdfService,
                               EmailService emailService,
-                              FileStorageService fileStorageService) {
+                              FileStorageService fileStorageService,
+                              MercadoPagoService mercadoPagoService,
+                              @Value("${mercadopago.public-key}") String mpPublicKey) {
         this.citaService        = citaService;
         this.mascotaService     = mascotaService;
         this.consultaService    = consultaService;
@@ -73,6 +81,8 @@ public class ClienteController {
         this.citaPdfService     = citaPdfService;
         this.emailService       = emailService;
         this.fileStorageService = fileStorageService;
+        this.mercadoPagoService = mercadoPagoService;
+        this.mpPublicKey        = mpPublicKey;
     }
 
     private SmartVetUserDetails principal() {
@@ -101,6 +111,18 @@ public class ClienteController {
         model.addAttribute("totalProximas",   proximasCitas.size());
         model.addAttribute("totalHistoricas", historicas);
         return "cliente/dashboard";
+    }
+
+    // ── Pagos pendientes del cliente ─────────────────────────────────────────
+
+    @GetMapping("/mis-pagos")
+    public String misPagosPendientes(Model model) {
+        Integer idUsuario = principal().getIdUsuario();
+        List<Cita> citasPendientes =
+                citaService.listarCitasPendientesPagoPorPropietario(idUsuario);
+        model.addAttribute("citasPendientes", citasPendientes);
+        model.addAttribute("mpPublicKey",     mpPublicKey);
+        return "cliente/mis-pagos";
     }
 
     // ── Historial completo de citas ───────────────────────────────────────────
@@ -471,6 +493,30 @@ public class ClienteController {
             log.error("Error al generar PDF consulta_id={}", id, ex);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    // ── Cartilla de vacunación ────────────────────────────────────────────────
+
+    @GetMapping("/vacunas")
+    public String cartillaVacunacion(
+            @RequestParam(required = false) Integer idMascota,
+            Model model) {
+        Integer idUsuario = principal().getIdUsuario();
+        List<Mascota> mascotas = Objects.requireNonNullElse(
+                mascotaService.listarPorPropietario(idUsuario), Collections.emptyList());
+
+        // Si no se seleccionó mascota, usar la primera de la lista
+        Integer idSeleccionada = idMascota;
+        if (idSeleccionada == null && !mascotas.isEmpty()) {
+            idSeleccionada = mascotas.get(0).getIdMascota();
+        }
+
+        model.addAttribute("mascotas",              mascotas);
+        model.addAttribute("idMascotaSeleccionada", idSeleccionada);
+        // Las listas vacías evitan NullPointerException en Thymeleaf
+        model.addAttribute("tratamientos", Collections.emptyList());
+        model.addAttribute("vacunas",      Collections.emptyList());
+        return "cliente/cartilla";
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

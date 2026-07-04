@@ -6,6 +6,7 @@ import com.smartvet.app.exception.EstadoInvalidoException;
 import com.smartvet.app.exception.RecursoNoEncontradoException;
 import com.smartvet.app.model.Cita;
 import com.smartvet.app.model.EstadoCita;
+import com.smartvet.app.model.EstadoPago;
 import com.smartvet.app.model.Mascota;
 import com.smartvet.app.model.Veterinario;
 import com.smartvet.app.repository.CitaRepository;
@@ -319,6 +320,13 @@ public class CitaServiceImpl implements CitaService {
         return citaRepository.countCitasActivasByPropietario(
                 mascota.getPropietario().getIdUsuario(),
                 Set.of(EstadoCita.PROGRAMADA, EstadoCita.CONFIRMADA));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cita> listarCitasPendientesPagoPorPropietario(Integer idPropietario) {
+        return citaRepository.findCitasPendientesPagoPorPropietario(
+                idPropietario, EstadoCita.COMPLETADA, EstadoPago.COMPLETADO);
     }
 
     @Override

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>SmartVet — Mis Pagos Pendientes</title>
+    <th:block th:insert="~{fragments/head :: head_content}"></th:block>
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <style>
+        .btn-pagar-mp {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: #009ee3;
+            color: #fff;
+            border: none;
+            padding: 0.38rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.18s;
+            white-space: nowrap;
+        }
+        .btn-pagar-mp:hover:not(:disabled) { opacity: 0.85; }
+        .btn-pagar-mp:disabled { opacity: 0.55; cursor: not-allowed; }
+        .monto-col {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--verde, #16a34a);
+        }
+        .mp-error-fila {
+            display: none;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--rojo, #dc2626);
+            margin-top: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+
+<header th:replace="~{fragments/navbar :: navbar}"></header>
+
+<main class="main-content">
+
+    <!-- ── Cabecera ────────────────────────────────────────────────────────── -->
+    <div class="page-header"
+         style="display:flex; align-items:flex-start; justify-content:space-between;
+                flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h2>Mis Pagos Pendientes</h2>
+            <p>Citas completadas que aún no han sido cobradas.</p>
+        </div>
+        <a th:href="@{/cliente/citas}" class="btn btn-outline"
+           style="white-space:nowrap;">← Mis Citas</a>
+    </div>
+
+    <!-- ── Mensajes flash ──────────────────────────────────────────────────── -->
+    <div th:if="${mensajeExito}" class="alerta alerta-exito" th:text="${mensajeExito}"></div>
+    <div th:if="${errorForm}"   class="alerta alerta-error"  th:text="${errorForm}"></div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         CONDICIÓN A — Lista vacía: estado feliz
+         ════════════════════════════════════════════════════════════════ -->
+    <div th:if="${#lists.isEmpty(citasPendientes)}"
+         style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                text-align:center; padding:3.5rem 1rem; background:#fff;
+                border-radius:14px; border:1px solid var(--borde, #e5e7eb);
+                box-shadow:0 1px 4px rgba(0,0,0,.05); margin-top:0.5rem;">
+
+        <span style="font-size:3rem; margin-bottom:0.75rem;">✅</span>
+        <h3 style="margin:0 0 0.4rem; font-size:1.05rem; color:var(--texto-principal);">
+            ¡Todo al día!
+        </h3>
+        <p style="margin:0; font-size:0.9rem; color:var(--texto-suave); max-width:340px;">
+            No tienes pagos pendientes en este momento. Cuando una cita sea marcada como completada,
+            aparecerá aquí para que puedas abonarla en línea.
+        </p>
+        <a th:href="@{/cliente/dashboard}"
+           class="btn btn-outline"
+           style="margin-top:1.5rem; width:auto; padding:0.55rem 1.4rem;">
+            Ir al Panel Principal
+        </a>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         CONDICIÓN B — Hay citas pendientes: tabla + botones de pago
+         ════════════════════════════════════════════════════════════════ -->
+    <th:block th:unless="${#lists.isEmpty(citasPendientes)}">
+
+        <!-- Aviso informativo -->
+        <div style="display:flex; align-items:center; gap:0.65rem; background:#eff9ff;
+                    border:1px solid #bae6fd; border-radius:10px; padding:0.85rem 1.1rem;
+                    margin-bottom:1.5rem;">
+            <span style="font-size:1.2rem; flex-shrink:0;">💳</span>
+            <p style="margin:0; font-size:0.87rem; color:#0369a1; line-height:1.45;">
+                Haz clic en <strong>Pagar Cita</strong> para completar el pago de forma segura a través
+                de Mercado Pago. El registro se realizará automáticamente al aprobarse.
+            </p>
+        </div>
+
+        <div class="tabla-swipe-hint">
+            <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver más columnas
+        </div>
+        <div class="tabla-card">
+            <div class="tabla-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y hora</th>
+                            <th>Mascota</th>
+                            <th>Veterinario</th>
+                            <th>Tipo</th>
+                            <th>Motivo</th>
+                            <th>Monto (S/)</th>
+                            <th class="tabla-col-accion">Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cita : ${citasPendientes}">
+
+                            <!-- Fecha -->
+                            <td>
+                                <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">-</strong>
+                                <span style="color:var(--texto-suave); font-size:0.82rem;"
+                                      th:text="${' ' + #temporals.format(cita.fechaHora, 'HH:mm')}"></span>
+                            </td>
+
+                            <!-- Mascota -->
+                            <td>
+                                <strong th:text="${cita.mascota.nombre}">-</strong>
+                                <span style="color:var(--texto-suave); font-size:0.8rem;"
+                                      th:text="' (' + ${cita.mascota.especie} + ')'"></span>
+                            </td>
+
+                            <!-- Veterinario -->
+                            <td th:text="${cita.veterinario.usuario.nombres
+                                          + ' ' + cita.veterinario.usuario.apellidos}">-</td>
+
+                            <!-- Tipo -->
+                            <td th:text="${cita.tipoCita}">-</td>
+
+                            <!-- Motivo -->
+                            <td style="max-width:150px; white-space:nowrap;
+                                       overflow:hidden; text-overflow:ellipsis;"
+                                th:text="${cita.motivo ?: '—'}">—</td>
+
+                            <!-- Monto (tarifa estándar de consulta) -->
+                            <td>
+                                <span class="monto-col">S/ 60.00</span>
+                            </td>
+
+                            <!-- Acción: botón de pago + mensaje de error por fila -->
+                            <td class="tabla-col-accion">
+                                <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                                    <button class="btn-pagar-mp"
+                                            th:data-cita-id="${cita.idCita}"
+                                            data-monto="60.00">
+                                        <svg width="15" height="15" viewBox="0 0 24 24"
+                                             fill="none" xmlns="http://www.w3.org/2000/svg"
+                                             aria-hidden="true">
+                                            <rect x="2" y="5" width="20" height="14" rx="3"
+                                                  stroke="#fff" stroke-width="2"/>
+                                            <path d="M2 10h20" stroke="#fff" stroke-width="2"/>
+                                        </svg>
+                                        Pagar Cita
+                                    </button>
+                                    <span class="mp-error-fila"
+                                          th:id="'err-' + ${cita.idCita}"></span>
+                                </div>
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- /.tabla-scroll -->
+        </div>
+
+    </th:block>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+(function () {
+    /* CSRF requerido por Spring Security en peticiones POST */
+    var csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+    var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    document.querySelectorAll('.btn-pagar-mp').forEach(function (btn) {
+
+        btn.addEventListener('click', function () {
+            var idCita       = parseInt(btn.dataset.citaId, 10);
+            var monto        = parseFloat(btn.dataset.monto);
+            var errorSpan    = document.getElementById('err-' + idCita);
+            var htmlOriginal = btn.innerHTML;
+
+            errorSpan.style.display = 'none';
+            errorSpan.textContent   = '';
+            btn.disabled            = true;
+            btn.textContent         = 'Procesando...';
+
+            /* PASO 1 — Solicitar la URL de checkout al backend */
+            fetch('/cliente/pagos/mp/crear-preferencia', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify({ idCita: idCita, monto: monto })
+            })
+            .then(function (resp) {
+                if (!resp.ok) {
+                    return resp.text().then(function (msg) {
+                        throw new Error(msg || 'Error del servidor (' + resp.status + ')');
+                    });
+                }
+                return resp.json();
+            })
+
+            /* PASO 2 — Redirección dura a Mercado Pago en la misma pestaña */
+            .then(function (data) {
+                if (!data.url) {
+                    throw new Error('El servidor no devolvió una URL de pago válida.');
+                }
+                /* Navegar en la misma pestaña garantiza que back_url.success
+                   se ejecute y el backend registre el pago correctamente. */
+                window.location.href = data.url;
+            })
+
+            /* PASO 3 — Error de red o del servidor */
+            .catch(function (err) {
+                errorSpan.textContent   = err.message;
+                errorSpan.style.display = 'block';
+                btn.disabled            = false;
+                btn.innerHTML           = htmlOriginal;
+            });
+        });
+    });
+
+}());
+</script>
+
+</body>
+</html>

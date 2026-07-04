@@ -122,6 +122,22 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
            "JOIN FETCH m.propietario " +
            "JOIN FETCH c.veterinario v " +
            "JOIN FETCH v.usuario " +
+           "WHERE m.propietario.idUsuario = :idPropietario " +
+           "AND c.estado = :estadoCita " +
+           "AND NOT EXISTS (" +
+           "    SELECT p FROM PagoCita p WHERE p.cita = c AND p.estado = :estadoPago" +
+           ") " +
+           "ORDER BY c.fechaHora DESC")
+    List<Cita> findCitasPendientesPagoPorPropietario(
+            @Param("idPropietario") Integer idPropietario,
+            @Param("estadoCita")    EstadoCita estadoCita,
+            @Param("estadoPago")    EstadoPago estadoPago);
+
+    @Query("SELECT c FROM Cita c " +
+           "JOIN FETCH c.mascota m " +
+           "JOIN FETCH m.propietario " +
+           "JOIN FETCH c.veterinario v " +
+           "JOIN FETCH v.usuario " +
            "WHERE LOWER(m.nombre) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(m.propietario.nombres) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(m.propietario.apellidos) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
