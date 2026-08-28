@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SmartVet — Documentación API</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f4f6f9;color:#1e293b;line-height:1.55}
+a{color:#2563eb;text-decoration:none}
+/* ─── Layout ─── */
+.sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;overflow-y:auto;background:#1e293b;padding:0 0 2rem}
+.main{margin-left:260px;padding:2rem 2.5rem;max-width:1100px}
+/* ─── Sidebar ─── */
+.sb-logo{padding:1.4rem 1.4rem 1rem;border-bottom:1px solid #334155}
+.sb-logo h1{font-size:1.1rem;font-weight:700;color:#f1f5f9}
+.sb-logo p{font-size:.75rem;color:#94a3b8;margin-top:.2rem}
+.sb-section{padding:.6rem 1rem .25rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-top:.5rem}
+.sb-link{display:block;padding:.38rem 1.25rem;font-size:.8rem;color:#94a3b8;border-left:3px solid transparent;transition:all .15s}
+.sb-link:hover{color:#f1f5f9;border-left-color:#3b82f6;background:rgba(255,255,255,.04)}
+/* ─── Header ─── */
+.page-header{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;border-radius:14px;padding:2rem 2.5rem;margin-bottom:2rem}
+.page-header h1{font-size:1.9rem;font-weight:800;margin-bottom:.4rem}
+.page-header p{font-size:.95rem;opacity:.85;max-width:620px}
+.meta-row{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.2rem}
+.badge-meta{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:.3rem .8rem;font-size:.78rem;font-weight:600}
+/* ─── Section titles ─── */
+.tag-section{margin-bottom:2.5rem}
+.tag-title{font-size:1.15rem;font-weight:700;color:#1e293b;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:.6rem}
+.tag-title span{background:#eff6ff;color:#2563eb;border-radius:5px;font-size:.72rem;padding:.2rem .6rem;font-weight:600}
+/* ─── Endpoint card ─── */
+.ep{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:.9rem;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ep-head{display:flex;align-items:center;gap:.9rem;padding:.85rem 1.2rem;cursor:pointer;user-select:none}
+.ep-head:hover{background:#f8fafc}
+.method{display:inline-block;font-size:.72rem;font-weight:800;padding:.25rem .65rem;border-radius:5px;min-width:54px;text-align:center;letter-spacing:.04em;flex-shrink:0}
+.GET{background:#dcfce7;color:#166534}
+.POST{background:#fef9c3;color:#854d0e}
+.PUT{background:#dbeafe;color:#1e40af}
+.PATCH{background:#ede9fe;color:#5b21b6}
+.DELETE{background:#fee2e2;color:#991b1b}
+.ep-path{font-family:'Cascadia Code','Fira Code',monospace;font-size:.85rem;font-weight:600;color:#0f172a;flex:1}
+.ep-summary{font-size:.82rem;color:#64748b;flex:2}
+.ep-arrow{margin-left:auto;font-size:.9rem;color:#94a3b8;transition:transform .2s;flex-shrink:0}
+.ep-body{display:none;padding:1rem 1.4rem 1.2rem;border-top:1px solid #f1f5f9;background:#fafafa}
+.ep-body.open{display:block}
+.ep-desc{font-size:.84rem;color:#475569;margin-bottom:.9rem;line-height:1.6}
+/* ─── Tables ─── */
+.param-table{width:100%;border-collapse:collapse;font-size:.8rem;margin:.5rem 0 1rem}
+.param-table th{background:#f1f5f9;font-weight:600;text-align:left;padding:.45rem .7rem;color:#475569;border:1px solid #e2e8f0}
+.param-table td{padding:.4rem .7rem;border:1px solid #e2e8f0;vertical-align:top;color:#334155}
+.param-table td code{font-family:monospace;background:#f0f4f8;padding:.1rem .3rem;border-radius:3px;font-size:.78rem}
+.param-table td.type{color:#6366f1;font-family:monospace;font-size:.78rem}
+.req-badge{display:inline-block;font-size:.65rem;background:#fef3c7;color:#92400e;border-radius:3px;padding:.1rem .35rem;font-weight:700;margin-left:.3rem}
+/* ─── Sub-headers ─── */
+.sub-h{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin:.8rem 0 .4rem}
+/* ─── Response pills ─── */
+.resp-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem}
+.resp-pill{display:flex;align-items:center;gap:.4rem;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.3rem .7rem;font-size:.78rem}
+.resp-code{font-family:monospace;font-weight:700}
+.r200{color:#16a34a}.r302{color:#2563eb}.r400{color:#d97706}.r403{color:#dc2626}.r404{color:#9333ea}.r500{color:#6b7280}
+/* ─── Security ─── */
+.sec-box{display:inline-flex;align-items:center;gap:.4rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:.3rem .75rem;font-size:.78rem;color:#1d4ed8;margin-bottom:.8rem}
+.sec-box svg{flex-shrink:0}
+/* ─── Content type ─── */
+.ct-tag{display:inline-block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:4px;font-size:.72rem;padding:.15rem .5rem;font-family:monospace;margin:.15rem .15rem .15rem 0}
+/* ─── TOC info ─── */
+.info-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+.info-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;text-align:center}
+.info-card .num{font-size:2rem;font-weight:800;color:#2563eb}
+.info-card .lbl{font-size:.8rem;color:#64748b;margin-top:.2rem}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <h1>🐾 SmartVet API</h1>
+    <p>Veterinaria Santa Victoria · v1.0</p>
+  </div>
+  <div class="sb-section">Acceso</div>
+  <a class="sb-link" href="#auth">Autenticación</a>
+  <a class="sb-link" href="#recuperacion">Recuperación de contraseña</a>
+  <a class="sb-link" href="#perfil">Perfil</a>
+  <div class="sb-section">Cliente</div>
+  <a class="sb-link" href="#cliente-dashboard">Dashboard</a>
+  <a class="sb-link" href="#cliente-citas">Citas</a>
+  <a class="sb-link" href="#cliente-mascotas">Mascotas</a>
+  <a class="sb-link" href="#cliente-historial">Historial / Consultas</a>
+  <a class="sb-link" href="#cliente-pagos">Pagos · Mercado Pago</a>
+  <div class="sb-section">Veterinario</div>
+  <a class="sb-link" href="#vet-agenda">Agenda</a>
+  <a class="sb-link" href="#vet-consultas">Consultas</a>
+  <a class="sb-link" href="#vet-mascotas">Mascotas</a>
+  <div class="sb-section">Administrador</div>
+  <a class="sb-link" href="#admin-dashboard">Dashboard</a>
+  <a class="sb-link" href="#admin-citas">Citas</a>
+  <a class="sb-link" href="#admin-pagos">Pagos</a>
+  <a class="sb-link" href="#admin-mp">Mercado Pago</a>
+  <a class="sb-link" href="#admin-productos">Productos</a>
+  <a class="sb-link" href="#admin-usuarios">Usuarios</a>
+  <a class="sb-link" href="#admin-mascotas">Mascotas</a>
+  <a class="sb-link" href="#admin-veterinarios">Veterinarios</a>
+  <div class="sb-section">Compartidos</div>
+  <a class="sb-link" href="#legacy-citas">Citas (legacy)</a>
+  <a class="sb-link" href="#legacy-mascotas">Mascotas (legacy)</a>
+  <a class="sb-link" href="#legacy-historial">Historial (legacy)</a>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>SmartVet — Documentación API</h1>
+    <p>Plataforma de gestión veterinaria con roles de administrador, veterinario y cliente. Autenticación por sesión HTTP (cookie <code>JSESSIONID</code>).</p>
+    <div class="meta-row">
+      <span class="badge-meta">OpenAPI 3.1</span>
+      <span class="badge-meta">Base URL: http://localhost:8080</span>
+      <span class="badge-meta">Auth: Session Cookie (JSESSIONID)</span>
+      <span class="badge-meta">Framework: Spring Boot + Thymeleaf</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="info-cards">
+    <div class="info-card"><div class="num">70+</div><div class="lbl">Endpoints</div></div>
+    <div class="info-card"><div class="num">3</div><div class="lbl">Roles de usuario</div></div>
+    <div class="info-card"><div class="num">14</div><div class="lbl">Controladores</div></div>
+    <div class="info-card"><div class="num">2</div><div class="lbl">Flujos Mercado Pago</div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       AUTH
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="auth">
+    <div class="tag-title">Autenticación <span>Público</span></div>
+
+    <!-- GET / -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/</span>
+        <span class="ep-summary">Página de inicio / redirección por rol</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">Si no hay sesión activa muestra la landing page. Con sesión redirige según rol: <code>admin→/admin/dashboard</code> · <code>veterinario→/vet/dashboard</code> · <code>cliente→/cliente/dashboard</code>.</p>
+        <div class="sub-h">Respuestas</div>
+        <div class="resp-row">
+          <div class="resp-pill"><span class="resp-code r200">200</span> HTML landing page</div>
+          <div class="resp-pill"><span class="resp-code r302">302</span> Redirect según rol</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /auth/login -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/auth/login</span>
+        <span class="ep-summary">Formulario de inicio de sesión</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML formulario</div></div>
+      </div>
+    </div>
+
+    <!-- POST /auth/login -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/auth/login</span>
+        <span class="ep-summary">Procesar login (Spring Security)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">Manejado por Spring Security. En éxito crea JSESSIONID y redirige según rol. En fallo redirige a <code>/auth/login?error</code>.</p>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>username <span class="req-badge">REQ</span></td><td class="type">string</td><td>Email del usuario</td></tr>
+          <tr><td>password <span class="req-badge">REQ</span></td><td class="type">string (password)</td><td></td></tr>
+          <tr><td>_csrf <span class="req-badge">REQ</span></td><td class="type">string</td><td>Token CSRF de Spring Security</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> Redirect al dashboard o a /auth/login?error</div></div>
+      </div>
+    </div>
+
+    <!-- POST /auth/logout -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/auth/logout</span>
+        <span class="ep-summary">Cerrar sesión (Spring Security)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Requiere JSESSIONID</div>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>_csrf <span class="req-badge">REQ</span></td><td class="type">string</td><td>Token CSRF</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> Redirige a /auth/login?logout</div></div>
+      </div>
+    </div>
+
+    <!-- GET /auth/registro -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/auth/registro</span>
+        <span class="ep-summary">Formulario de registro de cliente</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML formulario</div></div>
+      </div>
+    </div>
+
+    <!-- POST /auth/registro -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/auth/registro</span>
+        <span class="ep-summary">Registrar nuevo usuario cliente</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">Crea el usuario, envía código OTP de verificación por email y redirige a <code>/auth/verificar</code>.</p>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>nombres <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+          <tr><td>apellidos <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+          <tr><td>email <span class="req-badge">REQ</span></td><td class="type">string (email)</td><td></td></tr>
+          <tr><td>password <span class="req-badge">REQ</span></td><td class="type">string (password)</td><td></td></tr>
+          <tr><td>telefono</td><td class="type">string</td><td>Opcional</td></tr>
+          <tr><td>dni</td><td class="type">string</td><td>Opcional</td></tr>
+        </table>
+        <div class="resp-row">
+          <div class="resp-pill"><span class="resp-code r302">302</span> Redirige a /auth/verificar</div>
+          <div class="resp-pill"><span class="resp-code r200">200</span> Formulario con errores</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /auth/verificar -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/auth/verificar</span>
+        <span class="ep-summary">Formulario de verificación OTP de email</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML formulario</div></div>
+      </div>
+    </div>
+
+    <!-- POST /auth/verificar -->
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/auth/verificar</span>
+        <span class="ep-summary">Verificar código OTP enviado al email</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>codigo <span class="req-badge">REQ</span></td><td class="type">string</td><td>Código OTP de 6 dígitos</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> En éxito → /auth/login</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       RECUPERACIÓN
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="recuperacion">
+    <div class="tag-title">Recuperación de Contraseña</div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/recuperar-password</span><span class="ep-summary">Paso 1 — Formulario de solicitud</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/recuperar-password</span>
+        <span class="ep-summary">Paso 1 — Enviar OTP al email</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">Siempre redirige a <code>/verificar-recuperacion</code> independientemente de si el email existe, para no revelar datos.</p>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table"><tr><th>Campo</th><th>Tipo</th></tr><tr><td>email <span class="req-badge">REQ</span></td><td class="type">string (email)</td></tr></table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /verificar-recuperacion</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/verificar-recuperacion</span><span class="ep-summary">Paso 2 — Formulario OTP de recuperación</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r302">302</span> → /recuperar-password si no hay sesión</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/verificar-recuperacion</span>
+        <span class="ep-summary">Paso 2 — Verificar código OTP</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table"><tr><th>Campo</th><th>Tipo</th></tr><tr><td>codigo <span class="req-badge">REQ</span></td><td class="type">string</td></tr></table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> En éxito → /restablecer-password</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/restablecer-password</span><span class="ep-summary">Paso 3 — Formulario nueva contraseña</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r302">302</span> → /recuperar-password si el flujo no está completo</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/restablecer-password</span>
+        <span class="ep-summary">Paso 3 — Guardar nueva contraseña</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table"><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr><tr><td>nuevaContrasena <span class="req-badge">REQ</span></td><td class="type">string (password)</td><td>Mínimo 8 caracteres</td></tr></table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> En éxito → /auth/login</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PERFIL
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="perfil">
+    <div class="tag-title">Perfil <span>Cualquier rol autenticado</span></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/perfil</span><span class="ep-summary">Ver perfil del usuario autenticado</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Requiere JSESSIONID</div><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML perfil con datos y dirección</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/perfil/actualizar</span>
+        <span class="ep-summary">Actualizar datos personales y dirección</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Requiere JSESSIONID</div>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>nombres <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>apellidos <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>email <span class="req-badge">REQ</span></td><td class="type">string (email)</td></tr>
+          <tr><td>telefono</td><td class="type">string</td></tr>
+          <tr><td>dni</td><td class="type">string</td></tr>
+          <tr><td>direccion</td><td class="type">string</td></tr>
+          <tr><td>referencia</td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /perfil</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con error email duplicado</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CLIENTE — DASHBOARD
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="cliente-dashboard">
+    <div class="tag-title">Cliente — Dashboard <span>ROLE_CLIENTE</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/dashboard</span><span class="ep-summary">Panel principal: mascotas, próximas citas, estadísticas</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div><p class="ep-desc">Modelo: <code>mascotas</code>, <code>proximasCitas</code>, <code>totalMascotas</code>, <code>totalProximas</code>, <code>totalHistoricas</code>.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML dashboard</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CLIENTE — CITAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="cliente-citas">
+    <div class="tag-title">Cliente — Citas <span>ROLE_CLIENTE</span></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/cliente/citas</span>
+        <span class="ep-summary">Historial completo de citas del cliente</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div>
+        <div class="sub-h">Query params</div>
+        <table class="param-table">
+          <tr><th>Parámetro</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>keyword</td><td class="type">string</td><td>Búsqueda por texto</td></tr>
+          <tr><td>fecha</td><td class="type">string (date)</td><td>Filtro por fecha ISO 8601</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML lista</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/citas/nueva</span><span class="ep-summary">Formulario para agendar nueva cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div><p class="ep-desc">Carga listas de mascotas, veterinarios disponibles y tipos de cita.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML formulario</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/cliente/citas/nueva</span>
+        <span class="ep-summary">Agendar nueva cita</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div>
+        <p class="ep-desc">Validaciones: límite de 3 citas activas, horario 09:00–19:00, máximo 15 días de anticipación, mínimo 1 día. Envía comprobante PDF por email.</p>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>idMascota <span class="req-badge">REQ</span></td><td class="type">integer</td><td></td></tr>
+          <tr><td>idVeterinario <span class="req-badge">REQ</span></td><td class="type">integer</td><td></td></tr>
+          <tr><td>tipoCita <span class="req-badge">REQ</span></td><td class="type">enum</td><td>CONSULTA · VACUNACION · CIRUGIA · URGENCIA · CONTROL · OTRO</td></tr>
+          <tr><td>fechaHora <span class="req-badge">REQ</span></td><td class="type">string</td><td>Formato: <code>yyyy-MM-dd'T'HH:mm</code></td></tr>
+          <tr><td>motivo <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/dashboard</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con errores</div></div>
+      </div>
+    </div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/cliente/citas/{id}/cancelar</span>
+        <span class="ep-summary">Cancelar una cita propia</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div>
+        <div class="sub-h">Path params</div>
+        <table class="param-table"><tr><th>Parámetro</th><th>Tipo</th></tr><tr><td>id</td><td class="type">integer</td></tr></table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/dashboard con flash</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CLIENTE — MASCOTAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="cliente-mascotas">
+    <div class="tag-title">Cliente — Mascotas <span>ROLE_CLIENTE</span></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/mascotas</span><span class="ep-summary">Lista paginada de mascotas (8 por página)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div><div class="sub-h">Query params</div><table class="param-table"><tr><th>Parámetro</th><th>Tipo</th><th>Default</th></tr><tr><td>page</td><td class="type">integer</td><td>0</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML lista paginada</div></div></div></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/mascotas/nueva</span><span class="ep-summary">Formulario para registrar nueva mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/cliente/mascotas/nueva</span>
+        <span class="ep-summary">Registrar nueva mascota con foto e historia clínica</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div>
+        <div class="sub-h">Content-Type</div><span class="ct-tag">multipart/form-data</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>nombre <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+          <tr><td>especie <span class="req-badge">REQ</span></td><td class="type">string</td><td>Ej: Perro, Gato</td></tr>
+          <tr><td>sexo <span class="req-badge">REQ</span></td><td class="type">enum</td><td>MACHO · HEMBRA</td></tr>
+          <tr><td>raza</td><td class="type">string</td><td>Opcional</td></tr>
+          <tr><td>color</td><td class="type">string</td><td>Opcional</td></tr>
+          <tr><td>fechaNacimiento</td><td class="type">string (date)</td><td>ISO 8601</td></tr>
+          <tr><td>peso</td><td class="type">number</td><td>En kg</td></tr>
+          <tr><td>alergias</td><td class="type">string</td><td>Historia clínica</td></tr>
+          <tr><td>enfermedadesCronicas</td><td class="type">string</td><td>Historia clínica</td></tr>
+          <tr><td>notasGenerales</td><td class="type">string</td><td>Historia clínica</td></tr>
+          <tr><td>archivo</td><td class="type">binary</td><td>Foto de la mascota</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/dashboard</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con error</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/mascotas/{id}/editar</span><span class="ep-summary">Formulario para editar mascota propia</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mascotas si no tiene permiso</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/cliente/mascotas/{id}/editar</span>
+        <span class="ep-summary">Actualizar datos de mascota propia (con foto opcional)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">multipart/form-data</span>
+        <div class="sub-h">Parámetros principales</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>nombre <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>especie <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>sexo <span class="req-badge">REQ</span></td><td class="type">enum</td></tr>
+          <tr><td>raza · color · fechaNacimiento · peso</td><td class="type">varios</td></tr>
+          <tr><td>archivo</td><td class="type">binary</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mascotas/{id}/historial</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CLIENTE — HISTORIAL
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="cliente-historial">
+    <div class="tag-title">Cliente — Historial / Consultas <span>ROLE_CLIENTE</span></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/mascotas/{idMascota}/historial</span><span class="ep-summary">Historial clínico y consultas de una mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><p class="ep-desc">Verifica que la mascota pertenezca al cliente autenticado.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mascotas si no tiene permiso</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/consultas/por-cita/{idCita}</span><span class="ep-summary">Redirige a la consulta médica de una cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/consultas/{id}</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/consultas/{id}</span><span class="ep-summary">Ver detalle de consulta médica propia</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r403">403</span> Sin permiso</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/cliente/consultas/{id}/pdf/descargar</span>
+        <span class="ep-summary">Descargar PDF de consulta médica</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">Devuelve el PDF con nombre <code>Consulta_{id}.pdf</code>. Verifica propiedad antes de generar.</p>
+        <div class="resp-row">
+          <div class="resp-pill"><span class="resp-code r200">200</span> <span class="ct-tag">application/pdf</span></div>
+          <div class="resp-pill"><span class="resp-code r403">403</span> Sin permiso</div>
+          <div class="resp-pill"><span class="resp-code r404">404</span> No encontrado</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/vacunas</span><span class="ep-summary">Cartilla de vacunación</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Query params</div><table class="param-table"><tr><th>Parámetro</th><th>Notas</th></tr><tr><td>idMascota</td><td>Si se omite, usa la primera mascota del cliente</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML cartilla</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CLIENTE — PAGOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="cliente-pagos">
+    <div class="tag-title">Cliente — Pagos · Mercado Pago <span>ROLE_CLIENTE</span></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/mis-pagos</span><span class="ep-summary">Citas completadas sin pago registrado</span><span class="ep-arrow">▼</span></div><div class="ep-body"><p class="ep-desc">Muestra citas con estado COMPLETADA donde no existe un <code>PagoCita</code> con estado COMPLETADO. Incluye botón "Pagar Cita" por Mercado Pago.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML tabla de pagos pendientes</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/cliente/pagos/mp/crear-preferencia</span>
+        <span class="ep-summary">🔵 JSON — Crear preferencia de pago en Mercado Pago</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sec-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>ROLE_CLIENTE</div>
+        <p class="ep-desc">Único endpoint JSON del flujo cliente. Verifica que la cita pertenezca al usuario autenticado. Crea una preferencia MP con <code>externalReference=idCita</code>. Monto fijo: <strong>S/ 60.00</strong>. El frontend redirige a la URL devuelta en la misma pestaña.</p>
+        <div class="sub-h">Headers requeridos</div>
+        <table class="param-table">
+          <tr><th>Header</th><th>Valor</th></tr>
+          <tr><td>Content-Type</td><td class="type">application/json</td></tr>
+          <tr><td>X-CSRF-TOKEN (o nombre dinámico)</td><td>Token CSRF del meta tag</td></tr>
+        </table>
+        <div class="sub-h">Request body (JSON)</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>idCita <span class="req-badge">REQ</span></td><td class="type">integer</td><td>ID de la cita a pagar</td></tr>
+          <tr><td>monto</td><td class="type">number</td><td>Informativo; el backend fija S/ 60.00</td></tr>
+        </table>
+        <div class="sub-h">Respuesta 200 (JSON)</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>url</td><td class="type">string (uri)</td><td>sandbox_init_point de Mercado Pago</td></tr>
+        </table>
+        <div class="resp-row">
+          <div class="resp-pill"><span class="resp-code r200">200</span> <code>{"url":"https://sandbox.mercadopago..."}</code></div>
+          <div class="resp-pill"><span class="resp-code r400">400</span> Error API MP o cita no encontrada</div>
+          <div class="resp-pill"><span class="resp-code r403">403</span> Cita no pertenece al cliente</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/cliente/pagos/exito</span>
+        <span class="ep-summary">Callback: pago exitoso de Mercado Pago</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">MP redirige aquí tras pago aprobado. Inserta un registro <code>PagoCita</code> con <code>EstadoPago.COMPLETADO</code>. Incluye verificación de idempotencia (no duplica si ya existe un pago COMPLETADO para la cita).</p>
+        <div class="sub-h">Query params (enviados por Mercado Pago)</div>
+        <table class="param-table">
+          <tr><th>Parámetro</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>collection_id</td><td class="type">string</td><td>ID del pago MP → se guarda como referencia <code>MP-{id}</code></td></tr>
+          <tr><td>collection_status</td><td class="type">string</td><td>approved · rejected · etc.</td></tr>
+          <tr><td>status</td><td class="type">string</td><td>Fallback si collection_status es null</td></tr>
+          <tr><td>external_reference</td><td class="type">string</td><td>ID de la cita (definido al crear la preferencia)</td></tr>
+          <tr><td>preference_id</td><td class="type">string</td><td>Solo para log</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mis-pagos con mensaje flash</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/pagos/fallo</span><span class="ep-summary">Callback: pago fallido o cancelado</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mis-pagos con mensaje de error</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/cliente/pagos/pendiente</span><span class="ep-summary">Callback: pago pendiente de confirmación</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /cliente/mis-pagos con aviso de pago en proceso</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       VETERINARIO — AGENDA
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="vet-agenda">
+    <div class="tag-title">Veterinario — Agenda <span>ROLE_VETERINARIO</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/dashboard</span><span class="ep-summary">Panel principal del veterinario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML dashboard</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/agenda</span><span class="ep-summary">Agenda de citas del veterinario autenticado</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML agenda</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/historial</span><span class="ep-summary">Listado general de historiales clínicos</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/historial/{idMascota}</span><span class="ep-summary">Historial clínico detallado de una mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       VETERINARIO — CONSULTAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="vet-consultas">
+    <div class="tag-title">Veterinario — Consultas <span>ROLE_VETERINARIO</span></div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/consulta/{idCita}</span><span class="ep-summary">Formulario para registrar consulta de una cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML formulario con datos de la cita, productos disponibles</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/vet/consulta/{idCita}</span>
+        <span class="ep-summary">Guardar consulta clínica (puede incluir receta)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros de cuerpo</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>diagnostico <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+          <tr><td>tratamiento <span class="req-badge">REQ</span></td><td class="type">string</td><td></td></tr>
+          <tr><td>observaciones</td><td class="type">string</td><td></td></tr>
+          <tr><td>incluirReceta</td><td class="type">string</td><td>Flag: si está presente, se crea receta</td></tr>
+          <tr><td>instrucciones</td><td class="type">string</td><td>Instrucciones generales de la receta</td></tr>
+          <tr><td>vigenciaDias</td><td class="type">integer</td><td>Vigencia de la receta en días</td></tr>
+          <tr><td>idProducto[]</td><td class="type">integer[]</td><td>IDs de productos de la receta</td></tr>
+          <tr><td>cantidad[]</td><td class="type">integer[]</td><td>Cantidad por producto</td></tr>
+          <tr><td>dosis[]</td><td class="type">string[]</td><td>Ej: "5mg"</td></tr>
+          <tr><td>frecuencia[]</td><td class="type">string[]</td><td>Ej: "Cada 8 horas"</td></tr>
+          <tr><td>duracionDias[]</td><td class="type">integer[]</td><td>Días de tratamiento</td></tr>
+          <tr><td>instruccionesAdicionales[]</td><td class="type">string[]</td><td>Por ítem de receta</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /vet/consultas/{id}</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/consultas/{id}</span><span class="ep-summary">Ver detalle de una consulta</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/consultas/{id}/editar</span><span class="ep-summary">Formulario para editar consulta existente</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/vet/consultas/{id}/editar</span><span class="ep-summary">Actualizar consulta clínica</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /vet/consultas/{id}</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/vet/consultas/{id}/pdf/descargar</span>
+        <span class="ep-summary">Descargar PDF de consulta</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="resp-row">
+          <div class="resp-pill"><span class="resp-code r200">200</span> <span class="ct-tag">application/pdf</span></div>
+          <div class="resp-pill"><span class="resp-code r404">404</span> No encontrado</div>
+          <div class="resp-pill"><span class="resp-code r400">500</span> Error al generar PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/vet/consultas/{id}/pdf/enviar</span><span class="ep-summary">Enviar PDF al propietario por email</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /vet/consultas/{id} con flash de éxito o error</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       VETERINARIO — MASCOTAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="vet-mascotas">
+    <div class="tag-title">Veterinario — Mascotas <span>ROLE_VETERINARIO</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/mascotas</span><span class="ep-summary">Directorio de mascotas con búsqueda</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Query params</div><table class="param-table"><tr><th>Parámetro</th><th>Tipo</th></tr><tr><td>keyword</td><td class="type">string</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/vet/mascotas/{id}/editar</span><span class="ep-summary">Formulario para editar datos físicos de mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/vet/mascotas/{id}/editar</span><span class="ep-summary">Actualizar datos de mascota + foto opcional</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Content-Type</div><span class="ct-tag">multipart/form-data</span><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /vet/historial/{id}</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — DASHBOARD
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-dashboard">
+    <div class="tag-title">Admin — Dashboard <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/dashboard</span><span class="ep-summary">Panel principal del administrador</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — CITAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-citas">
+    <div class="tag-title">Admin — Citas <span>ROLE_ADMIN</span></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/admin/citas</span>
+        <span class="ep-summary">Lista de todas las citas con filtros</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Query params</div>
+        <table class="param-table">
+          <tr><th>Parámetro</th><th>Tipo</th></tr>
+          <tr><td>keyword</td><td class="type">string</td></tr>
+          <tr><td>fecha</td><td class="type">string (date)</td></tr>
+          <tr><td>estado</td><td class="type">enum (EstadoCita)</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/citas/{id}</span><span class="ep-summary">Ver detalle de cita con consulta asociada</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/citas/nueva</span><span class="ep-summary">Formulario para agendar cita (en nombre del cliente)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/citas/nueva</span>
+        <span class="ep-summary">Agendar cita en nombre de un cliente</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>idMascota <span class="req-badge">REQ</span></td><td class="type">integer</td></tr>
+          <tr><td>idVeterinario <span class="req-badge">REQ</span></td><td class="type">integer</td></tr>
+          <tr><td>tipoCita <span class="req-badge">REQ</span></td><td class="type">enum TipoCita</td></tr>
+          <tr><td>fechaHora <span class="req-badge">REQ</span></td><td class="type">string (yyyy-MM-dd'T'HH:mm)</td></tr>
+          <tr><td>motivo <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/citas</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/citas/editar/{id}</span><span class="ep-summary">Formulario para editar cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/citas/editar/{id}</span><span class="ep-summary">Actualizar datos de una cita (estado, fecha, motivo)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/citas</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/citas/cancelar/{id}</span><span class="ep-summary">Cancelar una cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/citas</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/consultas/{id}/pdf/descargar</span><span class="ep-summary">Descargar PDF de consulta (admin)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> <span class="ct-tag">application/pdf</span></div><div class="resp-pill"><span class="resp-code r404">404</span></div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/consultas/{id}/pdf/enviar</span><span class="ep-summary">Enviar PDF de consulta al propietario por email</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/citas/{citaId}</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — PAGOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-pagos">
+    <div class="tag-title">Admin — Pagos <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos</span><span class="ep-summary">Vista general de pagos registrados</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos/pendientes</span><span class="ep-summary">Citas completadas sin pago registrado</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos/registrar/{idCita}</span><span class="ep-summary">Formulario para registrar pago manual</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/pagos/registrar/{idCita}</span>
+        <span class="ep-summary">Registrar pago manual para una cita</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <div class="sub-h">Parámetros</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>monto <span class="req-badge">REQ</span></td><td class="type">number</td></tr>
+          <tr><td>metodoPago <span class="req-badge">REQ</span></td><td class="type">enum (EFECTIVO · TARJETA · TRANSFERENCIA · OTRO)</td></tr>
+          <tr><td>referencia</td><td class="type">string</td></tr>
+          <tr><td>observaciones</td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/pagos con flash</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — MERCADO PAGO
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-mp">
+    <div class="tag-title">Admin — Mercado Pago <span>ROLE_ADMIN</span></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/pagos/mp/crear-preferencia</span>
+        <span class="ep-summary">🔵 JSON — Crear preferencia MP (flujo admin)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/json</span>
+        <div class="sub-h">Request body</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>idCita <span class="req-badge">REQ</span></td><td class="type">integer</td></tr>
+          <tr><td>monto</td><td class="type">number</td></tr>
+        </table>
+        <div class="sub-h">Respuesta 200 (JSON)</div>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>preferenceId</td><td class="type">string</td></tr>
+          <tr><td>sandboxInitPoint</td><td class="type">string (uri)</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> JSON</div><div class="resp-pill"><span class="resp-code r400">400</span> Error API MP</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos/mp/exito</span><span class="ep-summary">Callback pago exitoso MP (admin)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><p class="ep-desc">Verifica <code>collection_status=approved</code>. Llama a <code>MercadoPagoService.registrarPagoDesdeMP()</code> que consulta la Payment API de MP para obtener el método de pago real.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/pagos</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos/mp/pendiente</span><span class="ep-summary">Callback pago pendiente (admin)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/pagos</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/pagos/mp/fallo</span><span class="ep-summary">Callback pago fallido (admin)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/pagos</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — PRODUCTOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-productos">
+    <div class="tag-title">Admin — Productos / Inventario <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/productos</span><span class="ep-summary">Lista de todos los productos</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/productos/{id}</span><span class="ep-summary">Ver detalle de producto</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/productos/nuevo</span><span class="ep-summary">Formulario crear producto</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/productos/nuevo</span>
+        <span class="ep-summary">Crear nuevo producto</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>nombre <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>precio <span class="req-badge">REQ</span></td><td class="type">number</td></tr>
+          <tr><td>stock <span class="req-badge">REQ</span></td><td class="type">integer</td></tr>
+          <tr><td>descripcion</td><td class="type">string</td></tr>
+          <tr><td>categoria</td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/productos</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/productos/{id}/editar</span><span class="ep-summary">Formulario editar producto</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/productos/{id}/editar</span><span class="ep-summary">Actualizar producto</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/productos</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/productos/{id}/desactivar</span><span class="ep-summary">Desactivar producto del inventario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/productos</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/productos/{id}/activar</span><span class="ep-summary">Reactivar producto</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/productos</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/productos/{id}/reponer</span>
+        <span class="ep-summary">Reponer stock de un producto</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <table class="param-table"><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr><tr><td>cantidad <span class="req-badge">REQ</span></td><td class="type">integer</td><td>Mínimo 1</td></tr></table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/productos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — USUARIOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-usuarios">
+    <div class="tag-title">Admin — Usuarios <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/usuarios</span><span class="ep-summary">Lista de todos los usuarios con búsqueda</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Query params</div><table class="param-table"><tr><th>Parámetro</th><th>Tipo</th></tr><tr><td>keyword</td><td class="type">string</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/usuarios/{id}</span><span class="ep-summary">Ver detalle de un usuario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/usuarios/nuevo</span><span class="ep-summary">Formulario crear usuario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/usuarios/nuevo</span>
+        <span class="ep-summary">Crear nuevo usuario con cualquier rol</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>nombres <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>apellidos <span class="req-badge">REQ</span></td><td class="type">string</td></tr>
+          <tr><td>email <span class="req-badge">REQ</span></td><td class="type">string (email)</td></tr>
+          <tr><td>password <span class="req-badge">REQ</span></td><td class="type">string (password)</td></tr>
+          <tr><td>rol <span class="req-badge">REQ</span></td><td class="type">enum (cliente · veterinario · admin)</td></tr>
+          <tr><td>telefono · dni</td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/usuarios</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/usuarios/{id}/editar</span><span class="ep-summary">Formulario editar usuario + cambio de rol</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/usuarios/{id}/editar</span><span class="ep-summary">Actualizar datos y rol de un usuario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/usuarios</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/usuarios/{id}/rol</span><span class="ep-summary">Cambiar rol de usuario (endpoint rápido)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Body</div><table class="param-table"><tr><th>Campo</th><th>Tipo</th></tr><tr><td>rol <span class="req-badge">REQ</span></td><td class="type">enum (cliente · veterinario · admin)</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/usuarios</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/usuarios/{id}/desactivar</span><span class="ep-summary">Desactivar cuenta de usuario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/usuarios</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/usuarios/{id}/activar</span><span class="ep-summary">Reactivar cuenta de usuario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/usuarios</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — MASCOTAS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-mascotas">
+    <div class="tag-title">Admin — Mascotas <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/mascotas</span><span class="ep-summary">Listado de todas las mascotas con búsqueda</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Query params</div><table class="param-table"><tr><th>Parámetro</th><th>Tipo</th></tr><tr><td>keyword</td><td class="type">string</td></tr></table><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/mascotas/{id}/historial</span><span class="ep-summary">Historial clínico de mascota (admin)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/mascotas/nueva</span><span class="ep-summary">Formulario registrar mascota con propietario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/mascotas/nueva</span>
+        <span class="ep-summary">Registrar mascota asignada a un cliente</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">multipart/form-data</span>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>idPropietario <span class="req-badge">REQ</span></td><td class="type">integer</td></tr>
+          <tr><td>nombre · especie · sexo <span class="req-badge">REQ</span></td><td class="type">string / enum</td></tr>
+          <tr><td>raza · color · fechaNacimiento · peso</td><td class="type">varios</td></tr>
+          <tr><td>alergias · enfermedadesCronicas · notasGenerales</td><td class="type">string</td></tr>
+          <tr><td>foto</td><td class="type">binary</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/mascotas</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/mascotas/editar/{id}</span><span class="ep-summary">Formulario editar mascota + historia clínica</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/mascotas/editar/{id}</span><span class="ep-summary">Actualizar mascota e historia clínica</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="sub-h">Content-Type</div><span class="ct-tag">multipart/form-data</span><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/mascotas</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/mascotas/{id}/baja</span><span class="ep-summary">Dar de baja una mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/mascotas</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/admin/mascotas/{id}/activar</span><span class="ep-summary">Reactivar mascota dada de baja</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/mascotas</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN — VETERINARIOS
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="admin-veterinarios">
+    <div class="tag-title">Admin — Veterinarios <span>ROLE_ADMIN</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/veterinarios/nuevo</span><span class="ep-summary">Formulario para asignar / editar perfil médico</span><span class="ep-arrow">▼</span></div><div class="ep-body"><p class="ep-desc">Carga lista de usuarios con rol veterinario para seleccionar.</p><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/admin/veterinarios/nuevo</span>
+        <span class="ep-summary">Guardar horario de atención del veterinario</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+          <tr><td>id <span class="req-badge">REQ</span></td><td class="type">integer</td><td>ID del usuario veterinario</td></tr>
+          <tr><td>horarioAtencion</td><td class="type">string</td><td>Ej: "Lun–Vie 09:00–17:00"</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /admin/dashboard</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con error</div></div>
+      </div>
+    </div>
+
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/admin/veterinarios/editar/{id}</span><span class="ep-summary">Formulario editar perfil veterinario existente</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       CONTROLADORES COMPARTIDOS (LEGACY)
+  ══════════════════════════════════════════════════════ -->
+  <div class="tag-section" id="legacy-citas">
+    <div class="tag-title">Citas (legacy — /citas) <span>Cliente · Veterinario</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/citas</span><span class="ep-summary">Lista de citas del usuario autenticado (cliente o veterinario)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/citas/nueva</span><span class="ep-summary">Formulario agendar cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/citas/nueva</span><span class="ep-summary">Agendar cita (valida límite 3 activas, 15 días anticipación)</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /citas</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con error</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/citas/{id}/comprobante</span><span class="ep-summary">Descargar comprobante PDF de la cita</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> <span class="ct-tag">application/pdf</span></div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/citas/{id}/cancelar</span><span class="ep-summary">Cancelar cita y enviar email de cancelación</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /citas</div></div></div></div>
+  </div>
+
+  <div class="tag-section" id="legacy-mascotas">
+    <div class="tag-title">Mascotas (legacy — /mascotas) <span>ROLE_CLIENTE</span></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/mascotas</span><span class="ep-summary">Lista de mascotas del propietario</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method GET">GET</span><span class="ep-path">/mascotas/nueva</span><span class="ep-summary">Formulario registrar mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div></div></div></div>
+    <div class="ep"><div class="ep-head" onclick="toggle(this)"><span class="method POST">POST</span><span class="ep-path">/mascotas/nueva</span><span class="ep-summary">Registrar mascota</span><span class="ep-arrow">▼</span></div><div class="ep-body"><div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> → /mascotas</div><div class="resp-pill"><span class="resp-code r200">200</span> Formulario con error</div></div></div></div>
+  </div>
+
+  <div class="tag-section" id="legacy-historial">
+    <div class="tag-title">Historial (legacy — /mascota/historial) <span>Veterinario · Cliente</span></div>
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method GET">GET</span>
+        <span class="ep-path">/mascota/historial/editar/{idMascota}</span>
+        <span class="ep-summary">Formulario editar historia clínica (rol-aware)</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <p class="ep-desc">El <code>returnUrl</code> se determina por el rol: veterinario → <code>/vet/historial/{id}</code> · cliente → <code>/cliente/mascotas/{id}/historial</code>.</p>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r200">200</span> HTML</div><div class="resp-pill"><span class="resp-code r302">302</span> Si no tiene acceso</div></div>
+      </div>
+    </div>
+    <div class="ep">
+      <div class="ep-head" onclick="toggle(this)">
+        <span class="method POST">POST</span>
+        <span class="ep-path">/mascota/historial/editar/{idMascota}</span>
+        <span class="ep-summary">Guardar historia clínica</span>
+        <span class="ep-arrow">▼</span>
+      </div>
+      <div class="ep-body">
+        <div class="sub-h">Content-Type</div><span class="ct-tag">application/x-www-form-urlencoded</span>
+        <table class="param-table">
+          <tr><th>Campo</th><th>Tipo</th></tr>
+          <tr><td>alergias</td><td class="type">string</td></tr>
+          <tr><td>enfermedadesCronicas</td><td class="type">string</td></tr>
+          <tr><td>notasGenerales</td><td class="type">string</td></tr>
+        </table>
+        <div class="resp-row"><div class="resp-pill"><span class="resp-code r302">302</span> Redirige al historial según rol</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="margin-top:3rem;padding:1.5rem;background:#f1f5f9;border-radius:10px;text-align:center;font-size:.82rem;color:#94a3b8;">
+    SmartVet — Veterinaria Santa Victoria · API v1.0 · Spring Boot 4.0.6 · Java 26 · Mercado Pago SDK v2.1.7
+  </div>
+</main>
+
+<script>
+function toggle(head) {
+  var body = head.nextElementSibling;
+  var arrow = head.querySelector('.ep-arrow');
+  body.classList.toggle('open');
+  arrow.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+// Smooth scroll for sidebar links
+document.querySelectorAll('.sb-link').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    var href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      var el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,2224 @@
+openapi: 3.1.0
+info:
+  title: SmartVet — Veterinaria Santa Victoria
+  description: >
+    API de la plataforma SmartVet, sistema de gestión veterinaria con roles
+    de administrador, veterinario y cliente. Autenticación por sesión HTTP
+    (cookie JSESSIONID). La mayoría de endpoints devuelven HTML (Thymeleaf);
+    los endpoints JSON se indican explícitamente.
+  version: "1.0.0"
+  contact:
+    name: SmartVet Dev
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Público
+    description: Acceso sin autenticación
+  - name: Auth
+    description: Registro, login y verificación de cuenta
+  - name: Recuperación
+    description: Flujo de restablecimiento de contraseña por OTP
+  - name: Perfil
+    description: Gestión del perfil propio (cualquier rol autenticado)
+  - name: Cliente – Dashboard
+    description: Panel principal del cliente
+  - name: Cliente – Citas
+    description: Agendamiento y gestión de citas del cliente
+  - name: Cliente – Mascotas
+    description: Registro y edición de mascotas del cliente
+  - name: Cliente – Historial
+    description: Historial clínico y consultas (lectura del cliente)
+  - name: Cliente – Pagos
+    description: Pagos pendientes y flujo Mercado Pago (cliente)
+  - name: Veterinario – Agenda
+    description: Panel y agenda del veterinario
+  - name: Veterinario – Consultas
+    description: Registro y edición de consultas clínicas
+  - name: Veterinario – Mascotas
+    description: Directorio de mascotas (vista veterinario)
+  - name: Admin – Dashboard
+    description: Panel principal del administrador
+  - name: Admin – Citas
+    description: Gestión de citas por el administrador
+  - name: Admin – Pagos
+    description: Registro y control de pagos
+  - name: Admin – Mercado Pago
+    description: Flujo de pago MP iniciado por el administrador
+  - name: Admin – Productos
+    description: Inventario y gestión de productos / medicamentos
+  - name: Admin – Usuarios
+    description: Gestión de usuarios (clientes, veterinarios, admins)
+  - name: Admin – Mascotas
+    description: Gestión de mascotas por el administrador
+  - name: Admin – Veterinarios
+    description: Perfiles y horarios de veterinarios
+  - name: Citas (legacy)
+    description: Controlador de citas compartido (clientes y veterinarios)
+  - name: Mascotas (legacy)
+    description: Controlador de mascotas compartido
+  - name: Historial (legacy)
+    description: Edición de historia clínica (rol-aware)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Seguridad global: sesión HTTP
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: Sesión gestionada por Spring Security. Se obtiene al hacer POST /auth/login.
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    PathIdMascota:
+      name: idMascota
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    PathIdCita:
+      name: idCita
+      in: path
+      required: true
+      schema:
+        type: integer
+
+    QueryKeyword:
+      name: keyword
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Texto de búsqueda
+
+    QueryFecha:
+      name: fecha
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Filtro por fecha (ISO 8601)
+
+    QueryPage:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+
+  schemas:
+    # ── Enumeraciones ────────────────────────────────────────────────────────
+    TipoCita:
+      type: string
+      enum: [CONSULTA, VACUNACION, CIRUGIA, URGENCIA, CONTROL, OTRO]
+
+    EstadoCita:
+      type: string
+      enum: [PROGRAMADA, COMPLETADA, CANCELADA, NO_ASISTIO]
+
+    EstadoPago:
+      type: string
+      enum: [PENDIENTE, COMPLETADO, RECHAZADO]
+
+    MetodoPago:
+      type: string
+      enum: [EFECTIVO, TARJETA, TRANSFERENCIA, OTRO]
+
+    Sexo:
+      type: string
+      enum: [MACHO, HEMBRA]
+
+    RolUsuario:
+      type: string
+      enum: [cliente, veterinario, admin]
+
+    # ── Solicitudes JSON ─────────────────────────────────────────────────────
+    PreferenciaMPRequest:
+      type: object
+      required: [idCita]
+      properties:
+        idCita:
+          type: integer
+          description: ID de la cita a pagar
+        monto:
+          type: number
+          format: double
+          description: Monto (informativo; el backend fija S/ 60.00)
+
+    PreferenciaMPResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL de sandbox_init_point de Mercado Pago
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+  responses:
+    HtmlOk:
+      description: Página HTML renderizada por Thymeleaf
+      content:
+        text/html:
+          schema:
+            type: string
+
+    Redirect:
+      description: Redirección HTTP 302
+
+    Unauthorized:
+      description: No autenticado — redirige a /auth/login
+
+    Forbidden:
+      description: Sin permiso para acceder al recurso
+
+    NotFound:
+      description: Recurso no encontrado
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PÚBLICO
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /:
+    get:
+      tags: [Público]
+      summary: Página de inicio / redirección por rol
+      description: >
+        Si no hay sesión, muestra la landing page. Si hay sesión activa,
+        redirige según el rol: admin → /admin/dashboard, veterinario →
+        /vet/dashboard, cliente → /cliente/dashboard.
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          $ref: "#/components/responses/Redirect"
+
+  /dashboard:
+    get:
+      tags: [Público]
+      summary: Alias legacy de / (redirige a /)
+      responses:
+        "302":
+          $ref: "#/components/responses/Redirect"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AUTH
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /auth/login:
+    get:
+      tags: [Auth]
+      summary: Formulario de inicio de sesión
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Auth]
+      summary: Procesar login (Spring Security)
+      description: >
+        Manejado por Spring Security. En éxito crea sesión y redirige según
+        rol. En fallo redirige a /auth/login?error.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  description: Email del usuario
+                password:
+                  type: string
+                  format: password
+                _csrf:
+                  type: string
+      responses:
+        "302":
+          $ref: "#/components/responses/Redirect"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesión (Spring Security)
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /auth/login?logout
+
+  /auth/registro:
+    get:
+      tags: [Auth]
+      summary: Formulario de registro de cliente
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario cliente
+      description: >
+        Crea el usuario, envía código OTP de verificación por email y
+        redirige a /auth/verificar.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombres, apellidos, email, password]
+              properties:
+                nombres:
+                  type: string
+                apellidos:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                telefono:
+                  type: string
+                dni:
+                  type: string
+      responses:
+        "302":
+          $ref: "#/components/responses/Redirect"
+        "200":
+          description: Formulario con errores de validación
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /auth/verificar:
+    get:
+      tags: [Auth]
+      summary: Formulario de verificación OTP de email
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Auth]
+      summary: Verificar código OTP enviado al email
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [codigo]
+              properties:
+                codigo:
+                  type: string
+                  description: Código OTP de 6 dígitos
+      responses:
+        "302":
+          description: En éxito redirige a /auth/login
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RECUPERACIÓN DE CONTRASEÑA
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /recuperar-password:
+    get:
+      tags: [Recuperación]
+      summary: Paso 1 — Formulario de solicitud de recuperación
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Recuperación]
+      summary: Paso 1 — Enviar OTP de recuperación al email
+      description: >
+        Siempre redirige a /verificar-recuperacion para no revelar si el
+        email existe en el sistema.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "302":
+          $ref: "#/components/responses/Redirect"
+
+  /verificar-recuperacion:
+    get:
+      tags: [Recuperación]
+      summary: Paso 2 — Formulario de verificación OTP de recuperación
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige a /recuperar-password si no hay sesión de recuperación
+    post:
+      tags: [Recuperación]
+      summary: Paso 2 — Verificar código OTP de recuperación
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [codigo]
+              properties:
+                codigo:
+                  type: string
+      responses:
+        "302":
+          description: En éxito redirige a /restablecer-password
+
+  /restablecer-password:
+    get:
+      tags: [Recuperación]
+      summary: Paso 3 — Formulario para nueva contraseña
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige a /recuperar-password si el flujo no está completo
+    post:
+      tags: [Recuperación]
+      summary: Paso 3 — Guardar nueva contraseña
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nuevaContrasena]
+              properties:
+                nuevaContrasena:
+                  type: string
+                  format: password
+                  minLength: 8
+      responses:
+        "302":
+          description: En éxito redirige a /auth/login
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PERFIL (cualquier rol)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /perfil:
+    get:
+      tags: [Perfil]
+      summary: Ver perfil del usuario autenticado
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /perfil/actualizar:
+    post:
+      tags: [Perfil]
+      summary: Actualizar datos personales y dirección
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombres, apellidos, email]
+              properties:
+                nombres:
+                  type: string
+                apellidos:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                telefono:
+                  type: string
+                dni:
+                  type: string
+                direccion:
+                  type: string
+                referencia:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /perfil con mensaje flash
+        "200":
+          description: Formulario con error de email duplicado
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CLIENTE — DASHBOARD
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cliente/dashboard:
+    get:
+      tags: [Cliente – Dashboard]
+      summary: Panel principal del cliente
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CLIENTE — CITAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cliente/citas:
+    get:
+      tags: [Cliente – Citas]
+      summary: Historial completo de citas del cliente
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryKeyword"
+        - $ref: "#/components/parameters/QueryFecha"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /cliente/citas/nueva:
+    get:
+      tags: [Cliente – Citas]
+      summary: Formulario para agendar nueva cita
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Cliente – Citas]
+      summary: Agendar nueva cita
+      description: >
+        Valida límite de 3 citas activas, horario de atención (09:00–19:00),
+        y máximo 15 días de anticipación. Envía comprobante PDF por email.
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [idMascota, idVeterinario, tipoCita, fechaHora, motivo]
+              properties:
+                idMascota:
+                  type: integer
+                idVeterinario:
+                  type: integer
+                tipoCita:
+                  $ref: "#/components/schemas/TipoCita"
+                fechaHora:
+                  type: string
+                  description: "Formato: yyyy-MM-dd'T'HH:mm"
+                  example: "2026-07-10T14:30"
+                motivo:
+                  type: string
+      responses:
+        "302":
+          description: En éxito redirige a /cliente/dashboard
+        "200":
+          description: Formulario con error (conflicto de agenda, límite, etc.)
+
+  /cliente/citas/{id}/cancelar:
+    post:
+      tags: [Cliente – Citas]
+      summary: Cancelar una cita propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /cliente/dashboard con mensaje flash
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CLIENTE — MASCOTAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cliente/mascotas:
+    get:
+      tags: [Cliente – Mascotas]
+      summary: Lista paginada de mascotas del cliente (8 por página)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryPage"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /cliente/mascotas/nueva:
+    get:
+      tags: [Cliente – Mascotas]
+      summary: Formulario para registrar nueva mascota
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Cliente – Mascotas]
+      summary: Registrar nueva mascota con foto opcional e historia clínica
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nombre, especie, sexo]
+              properties:
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+                alergias:
+                  type: string
+                enfermedadesCronicas:
+                  type: string
+                notasGenerales:
+                  type: string
+                archivo:
+                  type: string
+                  format: binary
+                  description: Foto de la mascota
+      responses:
+        "302":
+          description: En éxito redirige a /cliente/dashboard
+        "200":
+          description: Formulario con error
+
+  /cliente/mascotas/{id}/editar:
+    get:
+      tags: [Cliente – Mascotas]
+      summary: Formulario para editar mascota propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige a /cliente/mascotas si no tiene permiso
+    post:
+      tags: [Cliente – Mascotas]
+      summary: Actualizar datos de mascota propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nombre, especie, sexo]
+              properties:
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+                archivo:
+                  type: string
+                  format: binary
+      responses:
+        "302":
+          description: Redirige a /cliente/mascotas/{id}/historial
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CLIENTE — HISTORIAL / CONSULTAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cliente/mascotas/{idMascota}/historial:
+    get:
+      tags: [Cliente – Historial]
+      summary: Ver historial clínico y consultas de una mascota propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdMascota"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige a /cliente/mascotas si no tiene permiso
+
+  /cliente/consultas/por-cita/{idCita}:
+    get:
+      tags: [Cliente – Historial]
+      summary: Redirige a la consulta asociada a una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdCita"
+      responses:
+        "302":
+          description: Redirige a /cliente/consultas/{id}
+
+  /cliente/consultas/{id}:
+    get:
+      tags: [Cliente – Historial]
+      summary: Ver detalle de una consulta médica propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige si no tiene permiso
+
+  /cliente/consultas/{id}/pdf/descargar:
+    get:
+      tags: [Cliente – Historial]
+      summary: Descargar PDF de consulta médica propia
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Archivo PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /cliente/vacunas:
+    get:
+      tags: [Cliente – Historial]
+      summary: Cartilla de vacunación de mascotas del cliente
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: idMascota
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Mascota seleccionada (por defecto la primera)
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CLIENTE — PAGOS Y MERCADO PAGO
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cliente/mis-pagos:
+    get:
+      tags: [Cliente – Pagos]
+      summary: Lista de citas completadas pendientes de pago
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /cliente/pagos/mp/crear-preferencia:
+    post:
+      tags: [Cliente – Pagos]
+      summary: Crear preferencia de pago en Mercado Pago
+      description: >
+        Devuelve JSON con la URL de sandbox_init_point. El frontend redirige
+        al usuario a esa URL (misma pestaña). Monto fijo: S/ 60.00.
+        Requiere cabecera CSRF.
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenciaMPRequest"
+            example:
+              idCita: 48
+              monto: 60.0
+      responses:
+        "200":
+          description: URL de checkout generada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreferenciaMPResponse"
+              example:
+                url: "https://sandbox.mercadopago.com.pe/checkout/v1/redirect?pref_id=..."
+        "400":
+          description: Error de validación o de la API de Mercado Pago
+          content:
+            text/plain:
+              schema:
+                type: string
+        "403":
+          description: La cita no pertenece al cliente autenticado
+          content:
+            text/plain:
+              schema:
+                type: string
+        "500":
+          description: Error de conexión con Mercado Pago
+
+  /cliente/pagos/exito:
+    get:
+      tags: [Cliente – Pagos]
+      summary: Callback de pago exitoso de Mercado Pago
+      description: >
+        Mercado Pago redirige aquí con los parámetros del pago. Si el estado
+        es "approved", inserta un registro PagoCita y redirige a
+        /cliente/mis-pagos. Incluye verificación de idempotencia.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ID del pago en Mercado Pago
+        - name: collection_status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Estado de la colección (approved, rejected, etc.)
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ID de la cita (definido al crear la preferencia)
+        - name: preference_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /cliente/mis-pagos con mensaje flash de éxito o error
+
+  /cliente/pagos/fallo:
+    get:
+      tags: [Cliente – Pagos]
+      summary: Callback de pago fallido o cancelado de Mercado Pago
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /cliente/mis-pagos con mensaje de error
+
+  /cliente/pagos/pendiente:
+    get:
+      tags: [Cliente – Pagos]
+      summary: Callback de pago pendiente de Mercado Pago
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /cliente/mis-pagos con aviso de pago en proceso
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # VETERINARIO — AGENDA Y DASHBOARD
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /vet/dashboard:
+    get:
+      tags: [Veterinario – Agenda]
+      summary: Panel principal del veterinario
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /vet/agenda:
+    get:
+      tags: [Veterinario – Agenda]
+      summary: Agenda de citas del veterinario autenticado
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # VETERINARIO — HISTORIAL
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /vet/historial:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Listado general de historiales clínicos
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /vet/historial/{idMascota}:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Historial clínico detallado de una mascota
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdMascota"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # VETERINARIO — CONSULTAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /vet/consulta/{idCita}:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Formulario para registrar consulta de una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdCita"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Veterinario – Consultas]
+      summary: Guardar consulta clínica (puede incluir receta)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdCita"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [diagnostico, tratamiento]
+              properties:
+                diagnostico:
+                  type: string
+                tratamiento:
+                  type: string
+                observaciones:
+                  type: string
+                incluirReceta:
+                  type: string
+                  description: Flag para incluir receta médica
+                instrucciones:
+                  type: string
+                vigenciaDias:
+                  type: integer
+                idProducto:
+                  type: array
+                  items:
+                    type: integer
+                cantidad:
+                  type: array
+                  items:
+                    type: integer
+                dosis:
+                  type: array
+                  items:
+                    type: string
+                frecuencia:
+                  type: array
+                  items:
+                    type: string
+                duracionDias:
+                  type: array
+                  items:
+                    type: integer
+                instruccionesAdicionales:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "302":
+          description: Redirige a /vet/consultas/{id}
+
+  /vet/consultas/{id}:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Ver detalle de una consulta clínica
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /vet/consultas/{id}/editar:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Formulario para editar consulta existente
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Veterinario – Consultas]
+      summary: Actualizar consulta clínica
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                diagnostico:
+                  type: string
+                tratamiento:
+                  type: string
+                observaciones:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /vet/consultas/{id}
+
+  /vet/consultas/{id}/pdf/descargar:
+    get:
+      tags: [Veterinario – Consultas]
+      summary: Descargar PDF de la consulta
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Archivo PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Error al generar PDF
+
+  /vet/consultas/{id}/pdf/enviar:
+    post:
+      tags: [Veterinario – Consultas]
+      summary: Enviar PDF de consulta por email al propietario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /vet/consultas/{id} con mensaje flash
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # VETERINARIO — MASCOTAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /vet/mascotas:
+    get:
+      tags: [Veterinario – Mascotas]
+      summary: Directorio de mascotas (solo lectura, con búsqueda)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryKeyword"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /vet/mascotas/{id}/editar:
+    get:
+      tags: [Veterinario – Mascotas]
+      summary: Formulario para editar datos físicos de mascota
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Veterinario – Mascotas]
+      summary: Actualizar datos físicos de mascota
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nombre, especie, sexo]
+              properties:
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+                archivo:
+                  type: string
+                  format: binary
+      responses:
+        "302":
+          description: Redirige a /vet/historial/{id}
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # HISTORIAL (edición compartida, rol-aware)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /mascota/historial/editar/{idMascota}:
+    get:
+      tags: [Historial (legacy)]
+      summary: Formulario para editar historia clínica de mascota
+      description: >
+        Disponible para veterinarios y clientes. El returnUrl se calcula
+        según el rol del usuario autenticado.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdMascota"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+        "302":
+          description: Redirige si no tiene acceso
+    post:
+      tags: [Historial (legacy)]
+      summary: Guardar cambios en historia clínica
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdMascota"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                alergias:
+                  type: string
+                enfermedadesCronicas:
+                  type: string
+                notasGenerales:
+                  type: string
+      responses:
+        "302":
+          description: Redirige al historial correspondiente según el rol
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CITAS LEGACY (controlador compartido /citas)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /citas:
+    get:
+      tags: [Citas (legacy)]
+      summary: Lista de citas del usuario autenticado (cliente o veterinario)
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /citas/nueva:
+    get:
+      tags: [Citas (legacy)]
+      summary: Formulario para agendar nueva cita (legacy)
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Citas (legacy)]
+      summary: Agendar nueva cita (legacy)
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [idMascota, idVeterinario, tipoCita, fechaHora, motivo]
+              properties:
+                idMascota:
+                  type: integer
+                idVeterinario:
+                  type: integer
+                tipoCita:
+                  $ref: "#/components/schemas/TipoCita"
+                fechaHora:
+                  type: string
+                  description: "Formato: yyyy-MM-dd'T'HH:mm"
+                motivo:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /citas
+        "200":
+          description: Formulario con errores
+
+  /citas/{id}/comprobante:
+    get:
+      tags: [Citas (legacy)]
+      summary: Descargar comprobante PDF de la cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Archivo PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /citas/{id}/cancelar:
+    post:
+      tags: [Citas (legacy)]
+      summary: Cancelar una cita (legacy) y enviar email de cancelación
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /citas
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MASCOTAS LEGACY (/mascotas)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /mascotas:
+    get:
+      tags: [Mascotas (legacy)]
+      summary: Lista de mascotas del propietario autenticado
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /mascotas/nueva:
+    get:
+      tags: [Mascotas (legacy)]
+      summary: Formulario de registro de mascota (legacy)
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Mascotas (legacy)]
+      summary: Registrar mascota (legacy)
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombre, especie, sexo]
+              properties:
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+      responses:
+        "302":
+          description: Redirige a /mascotas
+        "200":
+          description: Formulario con errores
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — DASHBOARD
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/dashboard:
+    get:
+      tags: [Admin – Dashboard]
+      summary: Panel principal del administrador
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — PAGOS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/pagos:
+    get:
+      tags: [Admin – Pagos]
+      summary: Vista general de pagos registrados
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/pagos/pendientes:
+    get:
+      tags: [Admin – Pagos]
+      summary: Lista de citas completadas sin pago registrado
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/pagos/registrar/{idCita}:
+    get:
+      tags: [Admin – Pagos]
+      summary: Formulario para registrar pago manual de una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdCita"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Pagos]
+      summary: Registrar pago manual para una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathIdCita"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [monto, metodoPago]
+              properties:
+                monto:
+                  type: number
+                  format: double
+                metodoPago:
+                  $ref: "#/components/schemas/MetodoPago"
+                referencia:
+                  type: string
+                observaciones:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /admin/pagos con mensaje flash
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — MERCADO PAGO
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/pagos/mp/crear-preferencia:
+    post:
+      tags: [Admin – Mercado Pago]
+      summary: Crear preferencia MP desde el panel de administración
+      description: Devuelve JSON con preference_id y sandboxInitPoint.
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenciaMPRequest"
+      responses:
+        "200":
+          description: Preferencia creada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preferenceId:
+                    type: string
+                  sandboxInitPoint:
+                    type: string
+        "400":
+          description: Error de la API de Mercado Pago
+        "500":
+          description: Error de conexión con Mercado Pago
+
+  /admin/pagos/mp/exito:
+    get:
+      tags: [Admin – Mercado Pago]
+      summary: Callback de pago exitoso de MP (flujo admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: collection_status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /admin/pagos con mensaje flash
+
+  /admin/pagos/mp/pendiente:
+    get:
+      tags: [Admin – Mercado Pago]
+      summary: Callback de pago pendiente de MP (flujo admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /admin/pagos
+
+  /admin/pagos/mp/fallo:
+    get:
+      tags: [Admin – Mercado Pago]
+      summary: Callback de pago fallido de MP (flujo admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: external_reference
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirige a /admin/pagos
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — PRODUCTOS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/productos:
+    get:
+      tags: [Admin – Productos]
+      summary: Lista de todos los productos / medicamentos
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/productos/nuevo:
+    get:
+      tags: [Admin – Productos]
+      summary: Formulario para crear nuevo producto
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Productos]
+      summary: Crear nuevo producto
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombre, precio, stock]
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                precio:
+                  type: number
+                  format: double
+                stock:
+                  type: integer
+                categoria:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /admin/productos
+        "200":
+          description: Formulario con errores
+
+  /admin/productos/{id}:
+    get:
+      tags: [Admin – Productos]
+      summary: Ver detalle de un producto
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/productos/{id}/editar:
+    get:
+      tags: [Admin – Productos]
+      summary: Formulario para editar producto
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Productos]
+      summary: Actualizar producto
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                descripcion:
+                  type: string
+                precio:
+                  type: number
+                  format: double
+                stock:
+                  type: integer
+                categoria:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /admin/productos
+
+  /admin/productos/{id}/desactivar:
+    post:
+      tags: [Admin – Productos]
+      summary: Desactivar producto del inventario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/productos
+
+  /admin/productos/{id}/activar:
+    post:
+      tags: [Admin – Productos]
+      summary: Reactivar producto del inventario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/productos
+
+  /admin/productos/{id}/reponer:
+    post:
+      tags: [Admin – Productos]
+      summary: Reponer stock de un producto
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [cantidad]
+              properties:
+                cantidad:
+                  type: integer
+                  minimum: 1
+      responses:
+        "302":
+          description: Redirige a /admin/productos
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — CITAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/citas:
+    get:
+      tags: [Admin – Citas]
+      summary: Lista de todas las citas con filtros
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryKeyword"
+        - $ref: "#/components/parameters/QueryFecha"
+        - name: estado
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/EstadoCita"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/citas/nueva:
+    get:
+      tags: [Admin – Citas]
+      summary: Formulario para agendar cita en nombre de un cliente
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Citas]
+      summary: Agendar cita en nombre de un cliente
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [idMascota, idVeterinario, tipoCita, fechaHora, motivo]
+              properties:
+                idMascota:
+                  type: integer
+                idVeterinario:
+                  type: integer
+                tipoCita:
+                  $ref: "#/components/schemas/TipoCita"
+                fechaHora:
+                  type: string
+                  description: "Formato: yyyy-MM-dd'T'HH:mm o yyyy-MM-dd'T'HH:mm:ss"
+                motivo:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /admin/citas
+
+  /admin/citas/{id}:
+    get:
+      tags: [Admin – Citas]
+      summary: Ver detalle de una cita con su consulta asociada
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/citas/editar/{id}:
+    get:
+      tags: [Admin – Citas]
+      summary: Formulario para editar cita existente
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Citas]
+      summary: Actualizar datos de una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                estado:
+                  $ref: "#/components/schemas/EstadoCita"
+                fechaHora:
+                  type: string
+                motivo:
+                  type: string
+      responses:
+        "302":
+          description: Redirige a /admin/citas
+
+  /admin/citas/cancelar/{id}:
+    post:
+      tags: [Admin – Citas]
+      summary: Cancelar una cita
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/citas
+
+  /admin/consultas/{id}/pdf/descargar:
+    get:
+      tags: [Admin – Citas]
+      summary: Descargar PDF de consulta (vista admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Archivo PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/consultas/{id}/pdf/enviar:
+    post:
+      tags: [Admin – Citas]
+      summary: Enviar PDF de consulta por email al propietario (vista admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/citas/{citaId} con mensaje flash
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — USUARIOS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/usuarios:
+    get:
+      tags: [Admin – Usuarios]
+      summary: Lista de todos los usuarios del sistema
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryKeyword"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/usuarios/nuevo:
+    get:
+      tags: [Admin – Usuarios]
+      summary: Formulario para crear nuevo usuario
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Usuarios]
+      summary: Crear nuevo usuario (cualquier rol)
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombres, apellidos, email, password, rol]
+              properties:
+                nombres:
+                  type: string
+                apellidos:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                telefono:
+                  type: string
+                dni:
+                  type: string
+                rol:
+                  $ref: "#/components/schemas/RolUsuario"
+      responses:
+        "302":
+          description: Redirige a /admin/usuarios
+        "200":
+          description: Formulario con errores
+
+  /admin/usuarios/{id}:
+    get:
+      tags: [Admin – Usuarios]
+      summary: Ver detalle de un usuario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/usuarios/{id}/editar:
+    get:
+      tags: [Admin – Usuarios]
+      summary: Formulario para editar usuario (incluye cambio de rol)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Usuarios]
+      summary: Actualizar datos personales y rol de un usuario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [nombres, apellidos, email]
+              properties:
+                nombres:
+                  type: string
+                apellidos:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                telefono:
+                  type: string
+                dni:
+                  type: string
+                direccion:
+                  type: string
+                referencia:
+                  type: string
+                nuevoRol:
+                  $ref: "#/components/schemas/RolUsuario"
+      responses:
+        "302":
+          description: Redirige a /admin/usuarios
+
+  /admin/usuarios/{id}/rol:
+    post:
+      tags: [Admin – Usuarios]
+      summary: Cambiar rol de un usuario (endpoint rápido)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [rol]
+              properties:
+                rol:
+                  $ref: "#/components/schemas/RolUsuario"
+      responses:
+        "302":
+          description: Redirige a /admin/usuarios
+
+  /admin/usuarios/{id}/desactivar:
+    post:
+      tags: [Admin – Usuarios]
+      summary: Desactivar cuenta de usuario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/usuarios
+
+  /admin/usuarios/{id}/activar:
+    post:
+      tags: [Admin – Usuarios]
+      summary: Reactivar cuenta de usuario
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/usuarios
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — MASCOTAS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/mascotas:
+    get:
+      tags: [Admin – Mascotas]
+      summary: Listado de todas las mascotas con búsqueda
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/QueryKeyword"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/mascotas/nueva:
+    get:
+      tags: [Admin – Mascotas]
+      summary: Formulario para registrar mascota (asignada a cliente)
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Mascotas]
+      summary: Registrar nueva mascota con propietario explícito
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [idPropietario, nombre, especie, sexo]
+              properties:
+                idPropietario:
+                  type: integer
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+                alergias:
+                  type: string
+                enfermedadesCronicas:
+                  type: string
+                notasGenerales:
+                  type: string
+                foto:
+                  type: string
+                  format: binary
+      responses:
+        "302":
+          description: Redirige a /admin/mascotas
+        "200":
+          description: Formulario con errores
+
+  /admin/mascotas/{id}/historial:
+    get:
+      tags: [Admin – Mascotas]
+      summary: Ver historial clínico de una mascota (vista admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+
+  /admin/mascotas/editar/{id}:
+    get:
+      tags: [Admin – Mascotas]
+      summary: Formulario para editar mascota (admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Mascotas]
+      summary: Actualizar mascota e historia clínica (admin)
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nombre, especie, sexo]
+              properties:
+                nombre:
+                  type: string
+                especie:
+                  type: string
+                raza:
+                  type: string
+                color:
+                  type: string
+                fechaNacimiento:
+                  type: string
+                  format: date
+                sexo:
+                  $ref: "#/components/schemas/Sexo"
+                peso:
+                  type: number
+                  format: double
+                alergias:
+                  type: string
+                enfermedadesCronicas:
+                  type: string
+                notasGenerales:
+                  type: string
+                foto:
+                  type: string
+                  format: binary
+      responses:
+        "302":
+          description: Redirige a /admin/mascotas
+
+  /admin/mascotas/{id}/baja:
+    post:
+      tags: [Admin – Mascotas]
+      summary: Dar de baja (desactivar) una mascota
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/mascotas
+
+  /admin/mascotas/{id}/activar:
+    post:
+      tags: [Admin – Mascotas]
+      summary: Reactivar una mascota dada de baja
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "302":
+          description: Redirige a /admin/mascotas
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN — VETERINARIOS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/veterinarios/nuevo:
+    get:
+      tags: [Admin – Veterinarios]
+      summary: Formulario para asignar / editar perfil médico de veterinario
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
+    post:
+      tags: [Admin – Veterinarios]
+      summary: Guardar horario y perfil del veterinario
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: integer
+                  description: ID del usuario con rol veterinario
+                horarioAtencion:
+                  type: string
+                  description: "Texto libre, e.g. 'Lun–Vie 09:00–17:00'"
+      responses:
+        "302":
+          description: Redirige a /admin/dashboard
+        "200":
+          description: Formulario con errores
+
+  /admin/veterinarios/editar/{id}:
+    get:
+      tags: [Admin – Veterinarios]
+      summary: Formulario para editar perfil de veterinario existente
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          $ref: "#/components/responses/HtmlOk"
